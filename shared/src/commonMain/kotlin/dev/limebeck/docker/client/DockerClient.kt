@@ -4,18 +4,15 @@ import dev.limebeck.docker.client.model.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 
 class DockerClient(
@@ -56,9 +53,7 @@ class DockerClient(
             return@withContext it.asError()
         }.getOrNull() ?: return@withContext ErrorResponse("Container not found").asError()
 
-        val logs = MutableSharedFlow<LogLine>()
-
-        scope.launch {
+        val logs = flow {
             client.prepareGet("/containers/${id}/logs") {
                 parameter("follow", parameters.follow.toString())
                 parameter("timestamps", parameters.timestamps.toString())
@@ -119,10 +114,8 @@ class DockerClient(
                         )
                     }
 
-                    logs.emit(message)
+                    emit(message)
                 }
-                println("End stream")
-                currentCoroutineContext().cancel()
             }
         }
 
