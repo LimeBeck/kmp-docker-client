@@ -10,6 +10,7 @@ import io.ktor.http.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 
 private object ContainersKey
@@ -34,11 +35,13 @@ class DockerContainersApi(val dockerClient: DockerClient) {
     ): Result<Flow<LogLine>, ErrorResponse> = with(dockerClient) {
         coroutineScope {
             val container = getInfo(id).onError {
-                return@coroutineScope it.asError()
-            }.getOrNull() ?: return@coroutineScope ErrorResponse("Container not found").asError()
+                return@coroutineScope Result.error(it)
+            }.getOrNull() ?: return@coroutineScope Result.error(ErrorResponse("Container not found"))
 
             val logs = flow {
                 client.prepareGet("/containers/${id}/logs") {
+                    applyConnectionConfig()
+
                     parameter("follow", parameters.follow.toString())
                     parameter("timestamps", parameters.timestamps.toString())
                     parameter("stdout", parameters.stdout.toString())
@@ -48,62 +51,16 @@ class DockerContainersApi(val dockerClient: DockerClient) {
                     parameters.since?.let { parameter("since", it) }
                     parameters.tail?.let { parameter("tail", it) }
 
-                    unixSocket("/var/run/docker.sock")
                     timeout {
                         requestTimeoutMillis = 100_000
                     }
                 }.execute {
                     val channel = it.bodyAsChannel()
-                    while (!channel.isClosedForRead) {
-                        val message = if (container.config?.tty != true) {
-                            val header = ByteArray(8)
-                            try {
-                                // Пытаемся прочитать ровно 8 байт
-                                channel.readFully(header)
-                            } catch (e: Exception) {
-                                // Если поток закрылся или данных меньше 8 байт (EOF)
-                                break
-                            }
-
-                            // 2. Определяем тип потока (первый байт)
-                            val streamType = header[0].toInt()
-
-                            // 3. Определяем размер payload (последние 4 байта, Big Endian)
-                            val payloadSize = (
-                                    ((header[4].toInt() and 0xFF) shl 24) or
-                                            ((header[5].toInt() and 0xFF) shl 16) or
-                                            ((header[6].toInt() and 0xFF) shl 8) or
-                                            (header[7].toInt() and 0xFF)
-                                    )
-
-                            // Проверка на адекватность размера (на всякий случай)
-                            if (payloadSize < 0) break
-
-                            // 4. Читаем само сообщение ровно указанной длины
-                            val payloadBuffer = ByteArray(payloadSize)
-                            channel.readFully(payloadBuffer)
-
-                            LogLine(
-                                line = payloadBuffer.decodeToString(),
-                                type = when (streamType) {
-                                    1 -> LogLine.Type.STDOUT
-                                    2 -> LogLine.Type.STDERR
-                                    else -> LogLine.Type.UNKNOWN
-                                }
-                            )
-                        } else {
-                            LogLine(
-                                line = channel.readUTF8Line() ?: "",
-                                type = LogLine.Type.UNKNOWN
-                            )
-                        }
-
-                        emit(message)
-                    }
+                    emitAll(channel.readLogLines(container.config?.tty == true))
                 }
             }
 
-            return@coroutineScope logs.asSuccess()
+            Result.success(logs)
         }
     }
 
@@ -146,5 +103,216 @@ class DockerContainersApi(val dockerClient: DockerClient) {
         }.validateOnly()
     }
 
+    suspend fun restart(
+        id: String,
+        signal: String? = null,
+        t: Int? = null
+    ): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/restart") {
+            signal?.let { parameter("signal", signal) }
+            t?.let { parameter("t", t.toString()) }
+        }.validateOnly()
+    }
 
+    suspend fun kill(
+        id: String,
+        signal: String? = null
+    ): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/kill") {
+            signal?.let { parameter("signal", signal) }
+        }.validateOnly()
+    }
+
+    suspend fun update(
+        id: String,
+        config: ContainerUpdateRequest
+    ): Result<ContainerUpdateResponse, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/update") {
+            contentType(ContentType.Application.Json)
+            setBody(config)
+        }.parse()
+    }
+
+    suspend fun rename(
+        id: String,
+        name: String
+    ): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/rename") {
+            parameter("name", name)
+        }.validateOnly()
+    }
+
+    suspend fun pause(id: String): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/pause").validateOnly()
+    }
+
+    suspend fun unpause(id: String): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/unpause").validateOnly()
+    }
+
+    suspend fun prune(
+        filters: Map<String, List<String>>? = null
+    ): Result<ContainerPruneResponse, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/prune") {
+            filters?.let { parameter("filters", json.encodeToString(it)) }
+        }.parse()
+    }
+
+    suspend fun getTop(
+        id: String,
+        psArgs: String? = null
+    ): Result<ContainerTopResponse, ErrorResponse> = with(dockerClient) {
+        return client.get("/containers/$id/top") {
+            psArgs?.let { parameter("ps_args", it) }
+        }.parse()
+    }
+
+    suspend fun getChanges(id: String): Result<List<FilesystemChange>, ErrorResponse> = with(dockerClient) {
+        return client.get("/containers/$id/changes").parse()
+    }
+
+    suspend fun getStats(
+        id: String,
+        stream: Boolean = true,
+        oneShot: Boolean = false
+    ): Result<Flow<ContainerStatsResponse>, ErrorResponse> = with(dockerClient) {
+        if (!stream) {
+            val response: Result<ContainerStatsResponse, ErrorResponse> = client.get("/containers/$id/stats") {
+                parameter("stream", "false")
+                parameter("one-shot", oneShot.toString())
+            }.parse()
+            return response.map { flow { emit(it) } }
+        }
+
+        val statsFlow = flow {
+            client.prepareGet("/containers/$id/stats") {
+                applyConnectionConfig()
+                parameter("stream", "true")
+                parameter("one-shot", oneShot.toString())
+            }.execute { response ->
+                val channel = response.bodyAsChannel()
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
+                    if (line.isEmpty()) continue
+                    val stats = json.decodeFromString<ContainerStatsResponse>(line)
+                    emit(stats)
+                }
+            }
+        }
+        return statsFlow.asSuccess()
+    }
+
+    suspend fun resize(
+        id: String,
+        h: Int,
+        w: Int
+    ): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/resize") {
+            parameter("h", h.toString())
+            parameter("w", w.toString())
+        }.validateOnly()
+    }
+
+    suspend fun wait(
+        id: String,
+        condition: String? = null
+    ): Result<ContainerWaitResponse, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/wait") {
+            condition?.let { parameter("condition", it) }
+        }.parse()
+    }
+
+    suspend fun export(id: String): Result<ByteReadChannel, ErrorResponse> = with(dockerClient) {
+        val response = client.get("/containers/$id/export")
+        return if (response.status.isSuccess()) {
+            response.bodyAsChannel().asSuccess()
+        } else {
+            json.decodeFromString<ErrorResponse>(response.bodyAsText()).asError()
+        }
+    }
+
+    suspend fun getArchiveInfo(
+        id: String,
+        path: String
+    ): Result<String, ErrorResponse> = with(dockerClient) {
+        val response = client.head("/containers/$id/archive") {
+            parameter("path", path)
+        }
+        return if (response.status.isSuccess()) {
+            (response.headers["X-Docker-Container-Path-Stat"] ?: "").asSuccess()
+        } else {
+            json.decodeFromString<ErrorResponse>(response.bodyAsText()).asError()
+        }
+    }
+
+    suspend fun getArchive(
+        id: String,
+        path: String
+    ): Result<ByteReadChannel, ErrorResponse> = with(dockerClient) {
+        val response = client.get("/containers/$id/archive") {
+            parameter("path", path)
+        }
+        return if (response.status.isSuccess()) {
+            response.bodyAsChannel().asSuccess()
+        } else {
+            json.decodeFromString<ErrorResponse>(response.bodyAsText()).asError()
+        }
+    }
+
+    suspend fun putArchive(
+        id: String,
+        path: String,
+        body: ByteReadChannel,
+        noOverwriteDirNonDir: Boolean? = null,
+        copyUIDGID: Boolean? = null
+    ): Result<Unit, ErrorResponse> = with(dockerClient) {
+        return client.put("/containers/$id/archive") {
+            parameter("path", path)
+            noOverwriteDirNonDir?.let { parameter("noOverwriteDirNonDir", it.toString()) }
+            copyUIDGID?.let { parameter("copyUIDGID", it.toString()) }
+            setBody(body)
+        }.validateOnly()
+    }
+
+    suspend fun execCreate(
+        id: String,
+        config: ExecConfig
+    ): Result<IDResponse, ErrorResponse> = with(dockerClient) {
+        return client.post("/containers/$id/exec") {
+            contentType(ContentType.Application.Json)
+            setBody(config)
+        }.parse()
+    }
+
+    suspend fun attach(
+        id: String,
+        detachKeys: String? = null,
+        logs: Boolean = false,
+        stream: Boolean = false,
+        stdin: Boolean = false,
+        stdout: Boolean = false,
+        stderr: Boolean = false
+    ): Result<Flow<LogLine>, ErrorResponse> = with(dockerClient) {
+        coroutineScope {
+            val container = getInfo(id).onError {
+                return@coroutineScope Result.error(it)
+            }.getOrNull() ?: return@coroutineScope Result.error(ErrorResponse("Container not found"))
+
+            val attachFlow = flow {
+                client.preparePost("/containers/$id/attach") {
+                    applyConnectionConfig()
+                    detachKeys?.let { parameter("detachKeys", it) }
+                    parameter("logs", logs.toString())
+                    parameter("stream", stream.toString())
+                    parameter("stdin", stdin.toString())
+                    parameter("stdout", stdout.toString())
+                    parameter("stderr", stderr.toString())
+                }.execute { response ->
+                    val channel = response.bodyAsChannel()
+                    emitAll(channel.readLogLines(container.config?.tty == true))
+                }
+            }
+            Result.success(attachFlow)
+        }
+    }
 }
