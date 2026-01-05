@@ -1,5 +1,6 @@
 import arrow.continuations.SuspendApp
 import dev.limebeck.docker.client.DockerClient
+import dev.limebeck.docker.client.api.containers
 import dev.limebeck.docker.client.model.ContainerConfig
 import dev.limebeck.docker.client.model.ContainerLogsParameters
 import kotlinx.coroutines.NonCancellable
@@ -9,14 +10,14 @@ import kotlin.coroutines.cancellation.CancellationException
 fun main() = SuspendApp {
     val dockerClient = DockerClient()
 
-    dockerClient.removeContainer("hello-world", force = true).onError {
+    dockerClient.containers.remove("hello-world", force = true).onError {
         println(it.message)
     }.onSuccess {
         println("Removed existing container hello-world")
     }
 
-    val createdContainer = dockerClient.createContainer(
-        "hello-world",
+    val createdContainer = dockerClient.containers.create(
+        name = "hello-world",
         config = ContainerConfig(
             cmd = listOf("-c", "while true; do date; sleep 2; done"),
             image = "bash"
@@ -25,17 +26,17 @@ fun main() = SuspendApp {
 
     println(createdContainer)
 
-    dockerClient.startContainer(createdContainer!!.id).getOrNull()
+    dockerClient.containers.start(createdContainer!!.id).getOrNull()
 
     try {
-        val containers = dockerClient.getContainersList().getOrNull()!!
+        val containers = dockerClient.containers.getList().getOrNull()!!
         println(containers)
         val id = createdContainer.id
-        val container = dockerClient.getContainerInfo(id).getOrNull()!!
+        val container = dockerClient.containers.getInfo(id).getOrNull()!!
         println(container)
 
-        val logs = dockerClient.getContainerLogs(
-            id,
+        val logs = dockerClient.containers.getLogs(
+            id = id,
             parameters = ContainerLogsParameters(
                 follow = true,
                 tail = "10"
@@ -46,9 +47,9 @@ fun main() = SuspendApp {
         }
     } catch (e: CancellationException) {
         withContext(NonCancellable) {
-            dockerClient.stopContainer(createdContainer.id, signal = "SIGINT", t = 10).getOrNull()
+            dockerClient.containers.stop(createdContainer.id, signal = "SIGINT", t = 10).getOrNull()
             println("Stopped container ${createdContainer.id}")
-            dockerClient.removeContainer(createdContainer.id).getOrNull()
+            dockerClient.containers.remove(createdContainer.id).getOrNull()
             println("Removed container ${createdContainer.id}")
         }
     }

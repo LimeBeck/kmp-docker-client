@@ -82,5 +82,5 @@ value class Result<out T, out E>(
 }
 
 // Extension-функции остаются, но ссылаются на компаньон
-internal fun <T> T.asSuccess(): Result<T, Nothing> = Result.success(this)
-internal fun <E> E.asError(): Result<Nothing, E> = Result.error(this)
+fun <T> T.asSuccess(): Result<T, Nothing> = Result.success(this)
+fun <E> E.asError(): Result<Nothing, E> = Result.error(this)
