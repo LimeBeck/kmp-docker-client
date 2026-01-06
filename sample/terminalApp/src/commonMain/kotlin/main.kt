@@ -43,10 +43,11 @@ fun main() = SuspendApp {
             )
         ).getOrNull()!!
         logs.collect {
-            println("${it.type}: ${it.line}")
+            print("${it.type}: ${it.line}")
         }
     } catch (e: CancellationException) {
         withContext(NonCancellable) {
+            println("Stopping container ${createdContainer.id}")
             dockerClient.containers.stop(createdContainer.id, signal = "SIGINT", t = 10).getOrNull()
             println("Stopped container ${createdContainer.id}")
             dockerClient.containers.remove(createdContainer.id).getOrNull()

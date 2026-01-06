@@ -1,5 +1,6 @@
 package dev.limebeck.docker.client.dslUtils
 
+import kotlin.jvm.JvmName
 import kotlin.reflect.KProperty
 
 interface ApiCacheHolder {
@@ -18,4 +19,5 @@ fun <T : Any, R : ApiCacheHolder> api(factory: (R) -> T) = ApiDelegate(factory)
 
 typealias ApiFactory<T, R> = (R) -> T
 
+@JvmName("apiDelegateExtension")
 fun <T : Any, R : ApiCacheHolder> ApiFactory<T,R>.api() = ApiDelegate(this)

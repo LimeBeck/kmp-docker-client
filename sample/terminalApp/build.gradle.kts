@@ -9,6 +9,7 @@ kotlin {
     ).forEach {
         it.binaries.executable {
             entryPoint = "main"
+            binaryOption("smallBinary", "true")
         }
     }
 
