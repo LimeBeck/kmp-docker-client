@@ -1,4 +1,4 @@
-# Игнорируем файлы системы сборки
+# Ignore build system files
 build.gradle.kts
 build.gradle
 settings.gradle.kts
@@ -8,12 +8,12 @@ gradlew
 gradlew.bat
 gradle/
 
-# Игнорируем документацию и git
+# Ignore documentation and git
 README.md
 .gitignore
 .gitlab-ci.yml
 .travis.yml
 
-# Если не нужны тесты (иногда проще отключить их тут)
+# If tests are not needed (sometimes it's easier to disable them here)
 src/commonTest/*
 src/jvmTest/*

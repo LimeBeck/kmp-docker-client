@@ -14,7 +14,6 @@ A Docker Remote API client library written in Kotlin Multiplatform using Ktor.
 
 - Currently, supports only Linux (due to Unix socket dependency).
 - Only Unix sockets are supported for now.
-- No authentication support yet.
 
 ## Supported Platforms
 

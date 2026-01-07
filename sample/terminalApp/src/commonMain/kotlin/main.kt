@@ -22,17 +22,17 @@ fun main() = SuspendApp {
             cmd = listOf("-c", "while true; do date; sleep 2; done"),
             image = "bash"
         )
-    ).onError { println(it.message) }.getOrNull()
+    ).onError { println(it.message) }.getOrThrow()
 
     println(createdContainer)
 
-    dockerClient.containers.start(createdContainer!!.id).getOrNull()
+    dockerClient.containers.start(createdContainer.id).getOrNull()
 
     try {
-        val containers = dockerClient.containers.getList().getOrNull()!!
+        val containers = dockerClient.containers.getList().getOrThrow()
         println(containers)
         val id = createdContainer.id
-        val container = dockerClient.containers.getInfo(id).getOrNull()!!
+        val container = dockerClient.containers.getInfo(id).getOrThrow()
         println(container)
 
         val logs = dockerClient.containers.getLogs(
@@ -41,16 +41,16 @@ fun main() = SuspendApp {
                 follow = true,
                 tail = "10"
             )
-        ).getOrNull()!!
+        ).getOrThrow()
         logs.collect {
             print("${it.type}: ${it.line}")
         }
     } catch (e: CancellationException) {
         withContext(NonCancellable) {
             println("Stopping container ${createdContainer.id}")
-            dockerClient.containers.stop(createdContainer.id, signal = "SIGINT", t = 10).getOrNull()
+            dockerClient.containers.stop(createdContainer.id, signal = "SIGINT", t = 10).getOrThrow()
             println("Stopped container ${createdContainer.id}")
-            dockerClient.containers.remove(createdContainer.id).getOrNull()
+            dockerClient.containers.remove(createdContainer.id).getOrThrow()
             println("Removed container ${createdContainer.id}")
         }
     }

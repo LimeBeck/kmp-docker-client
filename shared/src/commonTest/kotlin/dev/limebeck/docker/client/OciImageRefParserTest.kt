@@ -8,7 +8,7 @@ import kotlin.test.assertFailsWith
 class OciImageRefParserTest {
 
     @Test
-    fun `parse should correctly handle image with registry, name, and tag`() {
+    fun `parse should correctly handle image with registry name and tag`() {
         val input = "registry.example.com/my-image:1.0.0"
         val parsed = OciImageRefParser.parse(input)
         assertEquals("registry.example.com", parsed.registry)
@@ -28,7 +28,7 @@ class OciImageRefParserTest {
     }
 
     @Test
-    fun `parse should correctly handle image with registry, name, and digest`() {
+    fun `parse should correctly handle image with registry name and digest`() {
         val input =
             "registry.example.com/my-image@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
         val parsed = OciImageRefParser.parse(input)

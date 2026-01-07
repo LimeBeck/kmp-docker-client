@@ -6,8 +6,8 @@ import kotlin.jvm.JvmInline
 value class Result<out T, out E>(
     @PublishedApi internal val unboxed: Any?
 ) {
-    // Вспомогательный класс-маркер для ошибки.
-    // Он нужен, чтобы отличить Success<String> от Error<String>.
+    // Helper marker class for errors.
+    // It is necessary to distinguish Success<String> from Error<String>.
     class Failure(val error: Any?) {
         override fun toString() = "Failure($error)"
     }
@@ -15,11 +15,11 @@ value class Result<out T, out E>(
     companion object {
         fun <T> success(value: T): Result<T, Nothing> = Result(value)
 
-        // Оборачиваем ошибку в маркер Failure
+        // Wrap error in Failure marker
         fun <E> error(value: E): Result<Nothing, E> = Result(Failure(value))
     }
 
-    // Проверяем, что внутри: маркер Failure или данные
+    // Check what's inside: Failure marker or data
     val isSuccess: Boolean get() = unboxed !is Failure
     val isError: Boolean get() = unboxed is Failure
 
@@ -28,6 +28,12 @@ value class Result<out T, out E>(
 
     @Suppress("UNCHECKED_CAST")
     fun errorOrNull(): E? = if (isError) (unboxed as Failure).error as E else null
+
+    @Suppress("UNCHECKED_CAST")
+    fun getOrThrow(): T {
+        if (isSuccess) return unboxed as T
+        throw IllegalStateException("Result is an error: ${errorOrNull()}")
+    }
 
     override fun toString(): String = if (isSuccess) "Success($unboxed)" else "Error(${errorOrNull()})"
 
@@ -47,10 +53,10 @@ value class Result<out T, out E>(
     inline fun <R> map(transform: (T) -> R): Result<R, E> {
         return if (isSuccess) {
             @Suppress("UNCHECKED_CAST")
-            Result.success(transform(unboxed as T))
+            success(transform(unboxed as T))
         } else {
             @Suppress("UNCHECKED_CAST")
-            Result(unboxed) // Просто перекидываем ошибку без перепаковки
+            Result(unboxed) // Just pass the error through without repacking
         }
     }
 
@@ -81,6 +87,6 @@ value class Result<out T, out E>(
     }
 }
 
-// Extension-функции остаются, но ссылаются на компаньон
+// Extension functions remain but refer to a companion
 fun <T> T.asSuccess(): Result<T, Nothing> = Result.success(this)
 fun <E> E.asError(): Result<Nothing, E> = Result.error(this)

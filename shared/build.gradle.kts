@@ -23,7 +23,7 @@ kotlin {
         commonMain {
             kotlin.srcDir("$buildDir/generated/openapi/src/main/kotlin")
             dependencies {
-                implementation(kotlin("stdlib")) // Обязательно
+                implementation(kotlin("stdlib")) // Required
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.kotlinx.serialization.json)
@@ -71,26 +71,26 @@ openApiGenerate {
 
     globalProperties.set(
         mapOf(
-            "models" to "", // Генерировать модели
+            "models" to "", // Generate models
 
-            // ОТКЛЮЧАЕМ МУСОР:
-            "apis" to "false",   // Не Генерировать API
-            "supportingFiles" to "false", // Не генерировать вспомогательные файлы (ApiClient и т.д.)
-            "modelDocs" to "false", // Не генерировать доки для моделей (markdown)
-            "apiDocs" to "false",   // Не генерировать доки для API (markdown)
-            "modelTests" to "false", // Не генерировать тесты моделей
-            "apiTests" to "false"    // Не генерировать тесты API
+            // DISABLE JUNK:
+            "apis" to "false",   // Do not generate API
+            "supportingFiles" to "false", // Do not generate supporting files (ApiClient etc.)
+            "modelDocs" to "false", // Do not generate model docs (markdown)
+            "apiDocs" to "false",   // Do not generate API docs (markdown)
+            "modelTests" to "false", // Do not generate model tests
+            "apiTests" to "false"    // Do not generate API tests
         )
     )
 
     configOptions.set(
         mapOf(
-            // ЭТОТ ПАРАМЕТР ВКЛЮЧАЕТ KTOR
+            // THIS PARAMETER ENABLES KTOR
             "library" to "multiplatform",
             "dateLibrary" to "kotlinx-datetime",
             "useCoroutines" to "true",
 
-            // Опционально: не генерировать инфраструктурные классы, если хотите свой setup
+            // Optional: do not generate infrastructure classes if you want your own setup
             "omitGradlePluginVersions" to "true",
             "omitGradleWrapper" to "true",
             "enumPropertyNaming" to "UPPERCASE"
