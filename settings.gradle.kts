@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 include(":lib")
 include(":sample:terminalApp")
+include(":sample:htmxDashboard")
