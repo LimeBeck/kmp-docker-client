@@ -116,11 +116,18 @@ class MyCustom(val dockerClient: DockerClient) {
 - `lib`: The main module containing the Docker client implementation and generated models.
 - `specs`: Contains the Docker API OpenAPI specification.
 - `sample/terminalApp`: A sample console application using the library.
+- `sample/htmxDashboard`: A sample web dashboard using Ktor and HTMX to monitor containers.
 
-### Running the Sample
+### Running the Samples
 
+Terminal App:
 ```bash
 ./gradlew :sample:terminalApp:runDebugExecutableLinuxX64
+```
+
+HTMX Dashboard:
+```bash
+./gradlew :sample:htmxDashboard:runDebugExecutableLinuxX64
 ```
 
 ## 🛠 Development
