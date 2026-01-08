@@ -7,7 +7,7 @@ interface ApiCacheHolder {
     val apiCache: MutableMap<Any, Any>
 }
 
-class ApiDelegate<T : Any, R : dev.limebeck.libs.docker.client.dslUtils.ApiCacheHolder>(val factory: (R) -> T) {
+class ApiDelegate<T : Any, R : ApiCacheHolder>(val factory: (R) -> T) {
     operator fun getValue(thisRef: R, property: KProperty<*>): T {
         return thisRef.apiCache.getOrPut(property.name) {
             factory(thisRef)
@@ -15,11 +15,11 @@ class ApiDelegate<T : Any, R : dev.limebeck.libs.docker.client.dslUtils.ApiCache
     }
 }
 
-fun <T : Any, R : dev.limebeck.libs.docker.client.dslUtils.ApiCacheHolder> api(factory: (R) -> T) =
-    _root_ide_package_.dev.limebeck.libs.docker.client.dslUtils.ApiDelegate(factory)
+fun <T : Any, R : ApiCacheHolder> api(factory: (R) -> T) =
+    ApiDelegate(factory)
 
 typealias ApiFactory<T, R> = (R) -> T
 
 @JvmName("apiDelegateExtension")
-fun <T : Any, R : dev.limebeck.libs.docker.client.dslUtils.ApiCacheHolder> dev.limebeck.libs.docker.client.dslUtils.ApiFactory<T, R>.api() =
-    _root_ide_package_.dev.limebeck.libs.docker.client.dslUtils.ApiDelegate(this)
+fun <T : Any, R : ApiCacheHolder> ApiFactory<T, R>.api() =
+    ApiDelegate(this)

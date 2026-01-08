@@ -13,12 +13,12 @@ value class Result<out T, out E>(
     }
 
     companion object {
-        fun <T> success(value: T): dev.limebeck.libs.docker.client.model.Result<T, Nothing> =
-            _root_ide_package_.dev.limebeck.libs.docker.client.model.Result(value)
+        fun <T> success(value: T): Result<T, Nothing> =
+            Result(value)
 
         // Wrap error in Failure marker
-        fun <E> error(value: E): dev.limebeck.libs.docker.client.model.Result<Nothing, E> =
-            _root_ide_package_.dev.limebeck.libs.docker.client.model.Result(Failure(value))
+        fun <E> error(value: E): Result<Nothing, E> =
+            Result(Failure(value))
     }
 
     // Check what's inside: Failure marker or data
@@ -90,8 +90,8 @@ value class Result<out T, out E>(
 }
 
 // Extension functions remain but refer to a companion
-fun <T> T.asSuccess(): dev.limebeck.libs.docker.client.model.Result<T, Nothing> =
-    _root_ide_package_.dev.limebeck.libs.docker.client.model.Result.success(this)
+fun <T> T.asSuccess(): Result<T, Nothing> =
+    Result.success(this)
 
-fun <E> E.asError(): dev.limebeck.libs.docker.client.model.Result<Nothing, E> =
-    _root_ide_package_.dev.limebeck.libs.docker.client.model.Result.error(this)
+fun <E> E.asError(): Result<Nothing, E> =
+    Result.error(this)

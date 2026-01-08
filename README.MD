@@ -2,7 +2,7 @@
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.3.0-blue.svg?logo=kotlin)](https://kotlinlang.org)
 [![Ktor](https://img.shields.io/badge/ktor-3.3.3-orange.svg?logo=ktor)](https://ktor.io)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A Docker Remote API client library written in Kotlin Multiplatform using Ktor.
 
