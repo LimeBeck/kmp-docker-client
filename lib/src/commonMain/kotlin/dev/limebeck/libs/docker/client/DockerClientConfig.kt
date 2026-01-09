@@ -5,6 +5,8 @@ import kotlinx.serialization.json.Json
 data class DockerClientConfig(
     val json: Json = Json {
         ignoreUnknownKeys = true
+        explicitNulls = false
+        coerceInputValues = true
     },
     val connectionConfig: ConnectionConfig = ConnectionConfig.SocketConnection("/var/run/docker.sock"),
     val auth: MutableMap<String, Auth> = mutableMapOf(),

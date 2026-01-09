@@ -48,10 +48,11 @@ open class DockerClient(
     }
 
     suspend inline fun <reified T> HttpResponse.parse(): Result<T, ErrorResponse> {
+        val text = bodyAsText()
         return if (status.isSuccess()) {
-            json.decodeFromString<T>(bodyAsText()).asSuccess()
+            json.decodeFromString<T>(text).asSuccess()
         } else {
-            json.decodeFromString<ErrorResponse>(bodyAsText()).asError()
+            json.decodeFromString<ErrorResponse>(text).asError()
         }
     }
 

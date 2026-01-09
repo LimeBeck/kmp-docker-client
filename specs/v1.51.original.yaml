@@ -2143,7 +2143,7 @@ definitions:
           from a registry, or if the image was pushed to a registry, which is when
           the manifest is generated and its digest calculated.
         type: "array"
-        x-nullable: true
+        x-nullable: false
         items:
           type: "string"
         example:
@@ -2185,7 +2185,7 @@ definitions:
       Labels:
         description: "User-defined key/value metadata."
         type: "object"
-        x-nullable: true
+        x-nullable: false
         additionalProperties:
           type: "string"
         example:
@@ -2228,7 +2228,6 @@ definitions:
 
   AuthConfig:
     type: "object"
-    required: [username, password]
     properties:
       username:
         type: "string"
@@ -2318,7 +2317,6 @@ definitions:
         $ref: "#/definitions/ClusterVolume"
       Options:
         type: "object"
-        x-nullable: true
         description: |
           The driver specific options used when creating the volume.
         additionalProperties:
@@ -4068,7 +4066,7 @@ definitions:
               [hosts(5)](http://man7.org/linux/man-pages/man5/hosts.5.html)
               man page:
 
-                  IP_address canonical_hostname aliases...
+                  IP_address canonical_hostname [aliases...]
             items:
               type: "string"
           DNSConfig:
@@ -7618,11 +7616,11 @@ definitions:
               Total is the total size (in bytes) of all the locally present
               data (both distributable and non-distributable) that's related to
               this manifest and its children.
-              This equal to the sum of Content size AND all the sizes in the
-              Size struct present in the Kind-specific data struct.
+              This equal to the sum of [Content] size AND all the sizes in the
+              [Size] struct present in the Kind-specific data struct.
               For example, for an image kind (Kind == "image")
               this would include the size of the image content and unpacked
-              image snapshots (Size.Content + ImageData.Size.Unpacked).
+              image snapshots ([Size.Content] + [ImageData.Size.Unpacked]).
           Content:
             description: |
               Content is the size (in bytes) of all the locally present

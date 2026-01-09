@@ -103,6 +103,16 @@ openApiGenerate {
         )
     )
 
+    typeMappings.set(mapOf(
+        "object" to "JsonObject",
+        "AnyType" to "JsonElement"
+    ))
+
+    importMappings.set(mapOf(
+        "JsonObject" to "kotlinx.serialization.json.JsonObject",
+        "JsonElement" to "kotlinx.serialization.json.JsonElement"
+    ))
+
     configOptions.set(
         mapOf(
             // THIS PARAMETER ENABLES KTOR
