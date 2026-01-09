@@ -9,6 +9,7 @@ ktor = "3.3.3"
 arrow = "2.2.1.1"
 dokka = "2.1.0"
 kotlinx-html = "0.11.0"
+limebeck-libs = "1.0.2"
 
 [libraries]
 
@@ -30,6 +31,8 @@ ktor-server-html-builder = { module = "io.ktor:ktor-server-html-builder", versio
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 arrow-suspendapp = { module = "io.arrow-kt:suspendapp", version.ref = "arrow" }
 kotlinx-html = { module = "org.jetbrains.kotlinx:kotlinx-html", version.ref = "kotlinx-html" }
+
+limebeck-common = { module = "dev.limebeck.libs:common", version.ref = "limebeck-libs" }
 
 [plugins]
 

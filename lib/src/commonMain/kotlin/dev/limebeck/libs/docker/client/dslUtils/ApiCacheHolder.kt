@@ -8,6 +8,7 @@ interface ApiCacheHolder {
 }
 
 class ApiDelegate<T : Any, R : ApiCacheHolder>(val factory: (R) -> T) {
+    @Suppress("UNCHECKED_CAST")
     operator fun getValue(thisRef: R, property: KProperty<*>): T {
         return thisRef.apiCache.getOrPut(property.name) {
             factory(thisRef)

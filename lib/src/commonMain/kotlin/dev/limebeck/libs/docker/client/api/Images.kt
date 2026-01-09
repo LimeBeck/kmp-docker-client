@@ -50,6 +50,12 @@ class Images(private val dockerClient: DockerClient) {
         platform: String? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
+            val registry = try {
+                OciImageRefParser.normalize(fromImage).registry
+            } catch (e: IllegalArgumentException) {
+                return@with ErrorResponse("Invalid image name: $fromImage: ${e.message}").asError()
+            }
+
             client.post("/images/create") {
                 parameter("fromImage", fromImage)
 
@@ -60,11 +66,7 @@ class Images(private val dockerClient: DockerClient) {
                 changes?.forEach { parameter("changes", it) }
                 platform?.let { parameter("platform", it) }
 
-                applyAuthForRegistry(
-                    OciImageRefParser.normalize(
-                        fromImage
-                    ).registry
-                )
+                applyAuthForRegistry(registry)
             }.validateOnly()
         }
 
@@ -109,11 +111,17 @@ class Images(private val dockerClient: DockerClient) {
         platform: String? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
+            val registry = try {
+                OciImageRefParser.normalize(name).registry
+            } catch (e: IllegalArgumentException) {
+                return@with ErrorResponse("Invalid image name: $name: ${e.message}").asError()
+            }
+
             client.post("/images/$name/push") {
                 tag?.let { parameter("tag", it) }
                 platform?.let { parameter("platform", it) }
 
-                applyAuthForRegistry(OciImageRefParser.normalize(name).registry)
+                applyAuthForRegistry(registry)
             }.validateOnly()
         }
 

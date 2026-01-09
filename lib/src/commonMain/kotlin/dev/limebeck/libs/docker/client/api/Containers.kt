@@ -23,10 +23,19 @@ class Containers(private val dockerClient: DockerClient) {
      * Note that it uses a different, smaller representation of a container than inspecting a single container.
      * For example, the list of linked containers is not propagated.
      */
-    suspend fun getList(): Result<List<ContainerSummary>, ErrorResponse> =
+    suspend fun getList(
+        all: Boolean = false,
+        limit: Int? = null,
+        size: Boolean = false,
+        filters: Map<String, List<String>>? = null,
+    ): Result<List<ContainerSummary>, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/containers/json")
-                .parse()
+            return client.get("/containers/json") {
+                parameter("all", all.toString())
+                parameter("size", size.toString())
+                limit?.let { parameter("limit", it.toString()) }
+                filters?.let { parameter("filters", json.encodeToString(it)) }
+            }.parse()
         }
 
     /**
