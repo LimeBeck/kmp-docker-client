@@ -16,6 +16,7 @@ kotlin {
             implementation(libs.ktor.server.cio)
             implementation(libs.ktor.server.html.builder)
             implementation(libs.kotlinx.html)
+            implementation(libs.limebeck.common)
         }
     }
 }
