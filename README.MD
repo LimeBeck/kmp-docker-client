@@ -27,7 +27,7 @@ Add dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:0.0.1")
+    implementation("dev.limebeck.libs:docker-client:0.0.5")
 }
 ```
 
