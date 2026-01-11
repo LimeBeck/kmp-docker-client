@@ -1,15 +1,20 @@
 package dev.limebeck.libs.docker.client.api
 
 import dev.limebeck.libs.docker.client.DockerClient
-import dev.limebeck.libs.docker.client.dslUtils.api
-import dev.limebeck.libs.docker.client.dslUtils.readLogLines
+import dev.limebeck.libs.docker.client.dsl.api
 import dev.limebeck.libs.docker.client.model.*
+import dev.limebeck.libs.docker.client.utils.prependLeftover
+import dev.limebeck.libs.docker.client.utils.readHttp11Headers
+import dev.limebeck.libs.docker.client.utils.readLogLines
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 val DockerClient.exec by ::Exec.api()
 
@@ -18,7 +23,7 @@ class Exec(private val dockerClient: DockerClient) {
      * Start an exec instance
      *
      * Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting
-     * the command. Otherwise, it sets up an interactive session with the command.
+     * the command.
      */
     suspend fun startAndForget(
         id: String,
@@ -31,39 +36,72 @@ class Exec(private val dockerClient: DockerClient) {
     }
 
     /**
-     * Start an exec instance and receive output
+     * Start an exec instance
+     *
+     * Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting
+     * the command.
      */
-    suspend fun startFlow(
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun startInteractive(
         id: String,
-        config: ExecStartConfig = ExecStartConfig()
-    ): Result<Flow<LogLine>, ErrorResponse> =
-        with(dockerClient) {
-            coroutineScope {
-                val execInfo = getInfo(id).onError {
-                    return@coroutineScope Result.error(it)
-                }.getOrNull()
-                    ?: return@coroutineScope Result.error(
-                        ErrorResponse("Exec not found")
-                    )
+        config: ExecStartConfig = ExecStartConfig(tty = true)
+    ): Result<ExecSession, ErrorResponse> = with(dockerClient) {
+        coroutineScope {
+            val execInfo = getInfo(id).getOrNull()
+            val isTty = execInfo?.processConfig?.tty == true || config.tty == true
 
-                val container = dockerClient.containers.getInfo(execInfo.containerID!!).onError {
-                    return@coroutineScope Result.error(it)
-                }.getOrNull()
-                    ?: return@coroutineScope Result.error(ErrorResponse("Container not found by ID"))
+            val conn = openRawConnection()
 
-                val logs = flow {
-                    client.preparePost("/exec/$id/start") {
-                        contentType(ContentType.Application.Json)
-                        setBody(config)
-                        applyConnectionConfig()
-                    }.execute {
-                        val channel = it.bodyAsChannel()
-                        channel.readLogLines(container.config?.tty == true, this@flow)
-                    }
+            try {
+                val body = dockerClient.json.encodeToString(config)
+                val encodedBody = body.encodeToByteArray()
+
+                // Build hijack headers
+                val request = buildString {
+                    append("POST /exec/$id/start HTTP/1.1\r\n")
+                    append("Host: docker\r\n")
+                    append("Content-Type: application/json\r\n")
+                    append("Connection: Upgrade\r\n")
+                    append("Upgrade: tcp\r\n")
+                    append("Content-Length: ${encodedBody.size}\r\n")
+                    append("\r\n")
                 }
-                return@coroutineScope Result.success(logs)
+
+                conn.write.writeFully(request.encodeToByteArray())
+                conn.write.writeFully(encodedBody)
+                conn.write.flush()
+
+                DockerClient.logger.debug { "Send request: \n$request$body" }
+
+                val hs = readHttp11Headers(conn.read)
+
+                // Typically 101, but sometimes may be 200.
+                if (hs.status != 101 && hs.status != 200) {
+                    conn.close()
+                    return@coroutineScope Result.error(
+                        ErrorResponse(
+                            message = "Docker hijack failed: HTTP ${hs.status}",
+                        )
+                    )
+                }
+
+                val incomingChannel = prependLeftover(hs.leftover, conn.read)
+
+                val incomingFlow: Flow<LogLine> = flow {
+                    incomingChannel.readLogLines(isTty, this@flow)
+                }
+
+                val session = ExecSession(incomingFlow, conn)
+
+                return@coroutineScope Result.success(session)
+            } catch (t: Throwable) {
+                runCatching { conn.close() }
+                return@coroutineScope Result.error(
+                    ErrorResponse(message = t.message ?: "startInteractive failed")
+                )
             }
         }
+    }
 
     /**
      * Inspect an exec instance

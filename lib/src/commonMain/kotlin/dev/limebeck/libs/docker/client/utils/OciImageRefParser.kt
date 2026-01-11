@@ -1,4 +1,4 @@
-package dev.limebeck.libs.docker.client.dslUtils
+package dev.limebeck.libs.docker.client.utils
 
 object OciImageRefParser {
 

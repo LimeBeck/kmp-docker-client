@@ -1,4 +1,4 @@
-package dev.limebeck.libs.docker.client.dslUtils
+package dev.limebeck.libs.docker.client.dsl
 
 import kotlin.jvm.JvmName
 import kotlin.reflect.KProperty

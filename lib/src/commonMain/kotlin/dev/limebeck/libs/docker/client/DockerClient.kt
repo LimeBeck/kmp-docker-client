@@ -3,15 +3,19 @@ package dev.limebeck.libs.docker.client
 import dev.limebeck.libs.docker.client.DockerClientConfig.Auth
 import dev.limebeck.libs.docker.client.api.AUTH_HEADER
 import dev.limebeck.libs.docker.client.api.resolveServerForRegistry
-import dev.limebeck.libs.docker.client.dslUtils.ApiCacheHolder
+import dev.limebeck.libs.docker.client.dsl.ApiCacheHolder
 import dev.limebeck.libs.docker.client.model.ErrorResponse
 import dev.limebeck.libs.docker.client.model.Result
 import dev.limebeck.libs.docker.client.model.asError
 import dev.limebeck.libs.docker.client.model.asSuccess
+import dev.limebeck.libs.docker.client.socket.DockerRawConnection
+import dev.limebeck.libs.docker.client.socket.openRawConnectionUnix
+import dev.limebeck.libs.logger.logger
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -26,6 +30,7 @@ open class DockerClient(
 ) : ApiCacheHolder {
     companion object {
         const val API_VERSION = "1.51"
+        val logger = DockerClient::class.logger()
     }
 
     val json = config.json
@@ -34,6 +39,14 @@ open class DockerClient(
 
     val client = HttpClient(CIO) {
         install(SSE)
+        install(Logging) {
+            logger = object : Logger {
+                override fun log(message: String) {
+                    DockerClient.logger.debug { message }
+                }
+            }
+            level = LogLevel.ALL
+        }
         defaultRequest {
             when (config.connectionConfig) {
                 is DockerClientConfig.ConnectionConfig.SocketConnection -> {
@@ -96,5 +109,12 @@ open class DockerClient(
             AUTH_HEADER,
             Base64.encode(json.encodeToString(authHeader).toByteArray())
         )
+    }
+
+    suspend fun openRawConnection(): DockerRawConnection = when (config.connectionConfig) {
+        is DockerClientConfig.ConnectionConfig.SocketConnection -> {
+            logger.debug { "Open raw socket connection" }
+            openRawConnectionUnix(config.connectionConfig.socketPath)
+        }
     }
 }

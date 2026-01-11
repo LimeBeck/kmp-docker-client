@@ -1,7 +1,7 @@
 package dev.limebeck.libs.docker.client.api
 
 import dev.limebeck.libs.docker.client.DockerClient
-import dev.limebeck.libs.docker.client.dslUtils.api
+import dev.limebeck.libs.docker.client.dsl.api
 import dev.limebeck.libs.docker.client.model.*
 import io.ktor.client.request.*
 import io.ktor.http.*

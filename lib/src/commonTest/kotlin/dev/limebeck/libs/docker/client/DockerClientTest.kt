@@ -1,6 +1,7 @@
 package dev.limebeck.libs.docker.client
 
-import dev.limebeck.libs.docker.client.dslUtils.readLogLines
+import dev.limebeck.libs.docker.client.model.LogLine
+import dev.limebeck.libs.docker.client.utils.readLogLines
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
@@ -31,7 +32,7 @@ class DockerClientTest {
 
         assertEquals(1, logs.size)
         assertEquals("Hello, Docker!", logs[0].line)
-        assertEquals(_root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine.Type.STDOUT, logs[0].type)
+        assertEquals(LogLine.Type.STDOUT, logs[0].type)
     }
 
     @Test

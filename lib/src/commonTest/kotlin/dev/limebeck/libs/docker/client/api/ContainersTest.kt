@@ -4,8 +4,8 @@ import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.model.ContainerConfig
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
-import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ContainersTest {
@@ -41,13 +41,13 @@ class ContainersTest {
 
             // Get Info
             val info = client.containers.getInfo(containerId).getOrThrow()
-            assertTrue(info.state?.running == true)
+            assertEquals(info.state?.running, true)
 
             // Stop
             client.containers.stop(containerId).getOrThrow()
             
             val infoAfterStop = client.containers.getInfo(containerId).getOrThrow()
-            assertTrue(infoAfterStop.state?.running == false)
+            assertEquals(infoAfterStop.state?.running, false)
         } finally {
             // Remove
             client.containers.remove(containerId, force = true).getOrThrow()
@@ -74,6 +74,33 @@ class ContainersTest {
             
             val logs = client.containers.getLogs(containerId).getOrThrow().toList()
             assertTrue(logs.any { it.line.contains("hello world") })
+        } finally {
+            client.containers.remove(containerId, force = true).getOrThrow()
+        }
+    }
+
+    @Test
+    fun testAttach() = runTest {
+        val imageName = "alpine:latest"
+        client.images.create(fromImage = imageName).getOrThrow()
+
+        val containerName = "test-attach-ws-${kotlin.random.Random.nextInt(1000)}"
+        val createResponse = client.containers.create(
+            name = containerName,
+            config = ContainerConfig(
+                image = imageName,
+                cmd = listOf("ping", "-c", "1", "localhost"),
+                attachStdin = true,
+                attachStdout = true,
+                attachStderr = true,
+                openStdin = true
+            )
+        ).getOrThrow()
+        val containerId = createResponse.id
+
+        try {
+            client.containers.start(containerId).getOrThrow()
+
         } finally {
             client.containers.remove(containerId, force = true).getOrThrow()
         }

@@ -1,11 +1,12 @@
-package dev.limebeck.libs.docker.client.dslUtils
+package dev.limebeck.libs.docker.client.utils
 
+import dev.limebeck.libs.docker.client.model.LogLine
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.FlowCollector
 
 suspend fun ByteReadChannel.readLogLines(
     isTty: Boolean,
-    collector: FlowCollector<dev.limebeck.libs.docker.client.model.LogLine>
+    collector: FlowCollector<LogLine>
 ) {
     while (!isClosedForRead) {
         val message = if (!isTty) {
@@ -33,13 +34,13 @@ suspend fun ByteReadChannel.readLogLines(
                 break
             }
 
-            _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine(
+            LogLine(
                 line = payloadBuffer.decodeToString(),
                 type = when (streamType) {
-                    0 -> _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine.Type.STDOUT // stdin is written on stdout
-                    1 -> _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine.Type.STDOUT
-                    2 -> _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine.Type.STDERR
-                    else -> _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine.Type.UNKNOWN
+                    0 -> LogLine.Type.STDOUT // stdin is written on stdout
+                    1 -> LogLine.Type.STDOUT
+                    2 -> LogLine.Type.STDERR
+                    else -> LogLine.Type.UNKNOWN
                 }
             )
         } else {
@@ -48,9 +49,9 @@ suspend fun ByteReadChannel.readLogLines(
             } catch (e: Throwable) {
                 null
             } ?: break
-            _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine(
+            LogLine(
                 line = line,
-                type = _root_ide_package_.dev.limebeck.libs.docker.client.model.LogLine.Type.UNKNOWN
+                type = LogLine.Type.UNKNOWN
             )
         }
 

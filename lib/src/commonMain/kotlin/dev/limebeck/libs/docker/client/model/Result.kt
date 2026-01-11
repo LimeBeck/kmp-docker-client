@@ -52,27 +52,27 @@ value class Result<out T, out E>(
         }
     }
 
-    inline fun <R> map(transform: (T) -> R): dev.limebeck.libs.docker.client.model.Result<R, E> {
+    inline fun <R> map(transform: (T) -> R): Result<R, E> {
         return if (isSuccess) {
             @Suppress("UNCHECKED_CAST")
-            (dev.limebeck.libs.docker.client.model.Result.success(transform(unboxed as T)))
+            (success(transform(unboxed as T)))
         } else {
             @Suppress("UNCHECKED_CAST")
-            (dev.limebeck.libs.docker.client.model.Result(unboxed)) // Just pass the error through without repacking
+            (Result(unboxed)) // Just pass the error through without repacking
         }
     }
 
-    inline fun <R> mapError(transform: (E) -> R): dev.limebeck.libs.docker.client.model.Result<T, R> {
+    inline fun <R> mapError(transform: (E) -> R): Result<T, R> {
         return if (isError) {
             @Suppress("UNCHECKED_CAST")
-            Result.error(transform((unboxed as Failure).error as E))
+            (error(transform((unboxed as Failure).error as E)))
         } else {
             @Suppress("UNCHECKED_CAST")
-            (dev.limebeck.libs.docker.client.model.Result(unboxed))
+            (Result(unboxed))
         }
     }
 
-    inline fun onSuccess(action: (T) -> Unit): dev.limebeck.libs.docker.client.model.Result<T, E> {
+    inline fun onSuccess(action: (T) -> Unit): Result<T, E> {
         if (isSuccess) {
             @Suppress("UNCHECKED_CAST")
             action(unboxed as T)
@@ -80,7 +80,7 @@ value class Result<out T, out E>(
         return this
     }
 
-    inline fun onError(action: (E) -> Unit): dev.limebeck.libs.docker.client.model.Result<T, E> {
+    inline fun onError(action: (E) -> Unit): Result<T, E> {
         if (isError) {
             @Suppress("UNCHECKED_CAST")
             action((unboxed as Failure).error as E)

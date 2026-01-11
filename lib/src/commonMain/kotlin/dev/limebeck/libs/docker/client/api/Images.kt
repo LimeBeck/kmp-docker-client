@@ -1,9 +1,9 @@
 package dev.limebeck.libs.docker.client.api
 
 import dev.limebeck.libs.docker.client.DockerClient
-import dev.limebeck.libs.docker.client.dslUtils.OciImageRefParser
-import dev.limebeck.libs.docker.client.dslUtils.api
+import dev.limebeck.libs.docker.client.dsl.api
 import dev.limebeck.libs.docker.client.model.*
+import dev.limebeck.libs.docker.client.utils.OciImageRefParser
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
