@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- ci: retain JUnit reports when build tests fail
+- test: avoid Docker container name collisions in exec scenarios
