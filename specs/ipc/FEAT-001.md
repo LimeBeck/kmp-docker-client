@@ -1,6 +1,6 @@
 # FEAT-001: Initial Expansion Roadmap for Missing Docker Domains {#root}
 
-Status: DRAFT  
+Status: DRAFT — deferred behind the accepted single-host 1.0.0 goal
 Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md`
 
 ## Goal {#goal}
@@ -16,6 +16,8 @@ Define phased expansion for Docker API groups currently outside implemented base
 - Plugin
 
 ## Phase plan {#phases}
+
+Priority: these expansion phases follow `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#goal`; they are not gates for version 1.0.0.
 
 ### Phase A: Discovery and model readiness {#phases.a}
 - Validate OpenAPI sections for each missing domain.
@@ -44,4 +46,5 @@ Target small, high-signal operations first:
 - Required test strategy against local Docker daemon in CI.
 
 ## Changelog {#changelog}
+- 2026-09-11: deferred domain expansion behind the accepted single-host dashboard readiness goal.
 - 2026-03-07: initial roadmap spec drafted from README implementation matrix.

@@ -1,9 +1,11 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Release 0.0.9 authorized: merge PR #3, publish tag v0.0.9, and verify Maven Central publication.
+- Release 0.0.9 in progress: PR #3 merged, tag v0.0.9 published at 7a760876cacc1d49a5720cdef5d124047f8eb58d.
 
 ## Completed in Last Session
+- Accepted 1.0.0 target: reliable support for a single-host Docker management panel. Recorded priorities and acceptance gates in `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#goal`; deferred FEAT-001 expansion. This documentation does not change the v0.0.9 tag.
+- Started Release CI: https://github.com/LimeBeck/kmp-docker-client/actions/runs/34642498375; Maven Central publication is not yet confirmed.
 - Prepared the README dependency example for 0.0.9. Release follows `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#publish`.
 - Fixed container table overflow: bounded columns, wrapping image digests/names, scrollable keyboard-focusable region, and responsive viewport/navigation. Spec: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md#samples.dashboard`.
 - Debug and release dashboard builds passed. Browser validation at desktop and 390px widths confirmed visible columns, no page-wide overflow, keyboard scrolling, and correct styles after HTMX navigation. Local dashboard restarted with the fix.
@@ -24,7 +26,7 @@
 ## Next Steps
 1. Complete release 0.0.9 and verify the tag-triggered build/test/publish pipeline.
 2. Prioritize broader transport lifecycle coverage and compatibility/release guarantees before API expansion.
-3. Expand domains following `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md#phases` after stabilization.
+3. Prioritize terminal/stream reliability and single-host workflows per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#priorities`.
 
 ## Known Risks / Constraints
 - Cold Flow preparation success is not HTTP request success; collection errors use DockerApiException. README and specs document this contract.
@@ -34,7 +36,7 @@
 - Temporary review probes in `/tmp/ktor-review` describe old failures and are not part of the regression suite.
 
 ## Decisions Pending
-- Accept remaining roadmap scope and ordering.
+- Define the detailed terminal/stream API design within the accepted single-host scope.
 - Define byte/chunk vs line streaming API and connection ownership beyond the preserved cold Flow contract.
 - Define supported Docker daemon matrix and release compatibility guarantees.
 

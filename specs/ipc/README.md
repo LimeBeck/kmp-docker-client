@@ -9,6 +9,8 @@ Base URI namespace:
 - [`PROP-002.md`](./PROP-002.md) — CI/CD release pipeline contract.
 - [`FEAT-001.md`](./FEAT-001.md) — initial expansion roadmap for missing Docker domains.
 
+- [`FEAT-002.md`](./FEAT-002.md) — accepted single-host dashboard readiness goal and 1.0.0 gates.
+
 ## Usage rule {#usage}
 For new implementation work:
 1. Link task to one or more explicit spec URIs.
