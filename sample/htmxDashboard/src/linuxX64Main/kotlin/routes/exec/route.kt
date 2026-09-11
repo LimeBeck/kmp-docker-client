@@ -5,13 +5,7 @@ import dev.limebeck.libs.docker.client.api.containers
 import dev.limebeck.libs.docker.client.api.exec
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-import io.ktor.utils.io.*
-import io.ktor.websocket.*
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.launch
-import logger
+import routes.bridgeTerminal
 import routes.respondSmart
 
 fun Routing.execRoute(dockerClient: DockerClient) {
@@ -31,39 +25,7 @@ fun Routing.execRoute(dockerClient: DockerClient) {
 
             val execConnection = dockerClient.exec.startInteractive(execId).getOrThrow()
 
-            val input = incoming.consumeAsFlow().map {
-                if (it is Frame.Text) {
-                    it.readText()
-                } else {
-                    ""
-                }
-            }
-
-            val job = launch {
-                val buffer = ByteArray(8192)
-                val channel = execConnection.connection.read
-                while (!channel.isClosedForRead) {
-                    val bytesRead = channel.readAvailable(buffer)
-                    logger.trace { "Exec $execId: Read $bytesRead bytes" }
-                    send(
-                        Frame.Binary(
-                            true,
-                            buffer.copyOfRange(0, bytesRead)
-                        )
-                    )
-                }
-                close(CloseReason(CloseReason.Codes.NORMAL, "Exec finished"))
-            }
-
-            input.onCompletion {
-                logger.info { "Exec $execId: Close" }
-                execConnection.close()
-            }.collect {
-                logger.trace { "Exec $execId: Send $it" }
-                execConnection.send(it)
-            }
-
-            job.join()
+            execConnection.use { bridgeTerminal(it) }
         }
     }
 }

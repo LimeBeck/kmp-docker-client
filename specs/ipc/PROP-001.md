@@ -51,6 +51,15 @@ Must provide create/list/inspect/remove/prune operations.
 ## Exec behavior {#exec}
 Must support command execution lifecycle including interactive session/hijack flows where implemented.
 
+### Interactive output and ownership {#exec.streams}
+- `ExecSession.incomingChunks` delivers binary output as soon as bytes arrive, including TTY prompts without a newline, CR/ANSI sequences, and bytes received with the HTTP upgrade headers.
+- Non-TTY chunks carry stdout/stderr identity with Docker framing removed. Chunk boundaries are arbitrary, including within UTF-8 characters; consumers must use a streaming decoder when converting to text. Individual chunks are bounded to 16 KiB.
+- Truncated multiplex headers/payloads and transport failures terminate collection with an exception; clean EOF completes normally. Cancellation and consumer exceptions propagate unchanged.
+- A session owns its raw connection. Exactly one collection of either `incomingChunks` or the compatibility `incoming` flow is allowed. Completion, cancellation, or failure closes the connection; explicit `close()` is idempotent and is required if output is never collected. Sending after close fails.
+- `startInteractive` defaults to TTY for compatibility and accepts an explicit `tty` matching the exec creation config.
+- `incoming` retains its existing line-oriented TTY behavior. Terminal applications must use `incomingChunks`, not read `connection.read` directly.
+- A cancelled handshake closes the acquired connection and propagates cancellation. Prefix forwarding is scoped to collection, with no detached forwarding job.
+
 ## System behavior {#system}
 Must provide:
 - info/version/ping/data usage
@@ -67,5 +76,6 @@ Must provide:
 - Events may skip malformed JSON records, but must propagate downstream exceptions and cancellation unchanged.
 
 ## Changelog {#changelog}
+- 2026-09-11: defined binary terminal output, single-collection ownership, and session cleanup.
 - 2026-09-11: defined image progress completion and cold-stream HTTP error/cancellation semantics after review.
 - 2026-03-07: initial API-surface spec extracted from implemented modules.

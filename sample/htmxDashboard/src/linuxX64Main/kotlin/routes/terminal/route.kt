@@ -4,13 +4,7 @@ import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.api.containers
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-import io.ktor.utils.io.*
-import io.ktor.websocket.*
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.launch
-import logger
+import routes.bridgeTerminal
 import routes.respondSmart
 
 fun Routing.terminalRoute(dockerClient: DockerClient) {
@@ -35,40 +29,10 @@ fun Routing.terminalRoute(dockerClient: DockerClient) {
                 logs = true,
             ).getOrThrow()
 
-            // Start
-            dockerClient.containers.start(containerId).getOrThrow()
-
-            val input = incoming.consumeAsFlow().map {
-                if (it is Frame.Text) {
-                    it.readText()
-                } else {
-                    ""
-                }
+            session.use {
+                dockerClient.containers.start(containerId).getOrThrow()
+                bridgeTerminal(it)
             }
-
-            val job = launch {
-                val buffer = ByteArray(8192)
-                val channel = session.connection.read
-                while (!channel.isClosedForRead) {
-                    val bytesRead = channel.readAvailable(buffer)
-                    logger.trace { "Read $bytesRead bytes" }
-                    send(
-                        Frame.Binary(
-                            true,
-                            buffer.copyOfRange(0, bytesRead)
-                        )
-                    )
-                }
-                close(CloseReason(CloseReason.Codes.NORMAL, "Container finished"))
-            }
-
-            input.onCompletion {
-                session.close()
-            }.collect {
-                session.send(it)
-            }
-
-            job.join()
         }
     }
 }

@@ -218,6 +218,26 @@ supplies the published library version. Local builds use `snapshot` unless `-Pli
 
 Project contracts and the continuation log are in [`specs/ipc`](specs/ipc/README.md) and [`WAL.md`](WAL.md).
 
+## Interactive terminal output
+
+Use `incomingChunks` for exec/attach terminals. It delivers bytes immediately, including prompts without a newline, preserves CR/ANSI sequences, and removes Docker multiplex headers for non-TTY sessions.
+
+```kotlin
+client.exec.startInteractive(execId).getOrThrow().use { session ->
+    session.incomingChunks.collect { chunk ->
+        terminal.write(chunk.bytes) // Feed binary data to your terminal or a streaming UTF-8 decoder.
+    }
+}
+```
+
+Run input forwarding concurrently using `session.send(bytes)` or `session.send(text)`. For an exec created with `tty = false`, also pass `tty = false` to `startInteractive`. `chunk.type` distinguishes stdout/stderr for non-TTY output. Chunk boundaries can split UTF-8 characters; decoding each chunk independently can corrupt text.
+
+Collect exactly one of `incomingChunks` and the compatibility `incoming` flow, once per session. Collection completion, cancellation (including `first()`/`take()`), or failure closes the connection. Close the session explicitly if you never collect output. `close()` is idempotent; sending after close fails. Avoid reading `session.connection.read` directly: this bypasses buffered handshake bytes, framing, and collection cleanup. The older `incoming` API still buffers TTY text until a line ending.
+
+Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams`.
+
+Migration from 0.0.10: `incoming.first()` now closes the session, and output cannot be collected again. Use one long-lived collector to process multiple messages. The unscoped `prependLeftover` utility has been removed; use the session output API, which owns forwarding and cleanup.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

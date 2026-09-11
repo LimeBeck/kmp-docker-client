@@ -1,35 +1,37 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Version 0.0.10 is published and publicly available in Maven Central.
-- Next target: reliable support for a single-host Docker management panel, per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#goal`.
+- Completed the terminal/session portion of 0.1 on `codex/terminal-session-lifecycle`.
+- Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams`; target remains the single-host panel in FEAT-002.
+- Published baseline remains 0.0.10; no release is part of this change.
 
 ## Completed in Last Session
-- Merged PR #3, including dependency modernization, eight review fixes, regression coverage, and responsive dashboard layout.
-- v0.0.9 CI failed because the runner daemon supported API 1.48 while the SDK requires 1.51. Maven publication was skipped; the tag is preserved.
-- Fixed CI by provisioning Docker 28.5.2, exposing its Unix socket at the SDK path, and checking /v1.51/_ping before build/test. Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#runtime`.
-- Released v0.0.10 at 73b8968. All release jobs passed: https://github.com/LimeBeck/kmp-docker-client/actions/runs/34643318776.
-- Central deployment a1caeaa6-cceb-4074-a0eb-23f7b372d320 validated and published automatically. Confirmed HTTP 200 and version 0.0.10 for POMs, Gradle metadata, and referenced files of docker-client, docker-client-jvm, docker-client-js, and docker-client-linuxx64.
-- Earlier local full build/Dokka and 116 test executions passed; dashboard debug/release builds and desktop/mobile/HTMX checks passed. The local dashboard was restarted with the layout fix.
-- Accepted the single-host 1.0.0 goal in FEAT-002; deferred Swarm/domain expansion in FEAT-001.
-- Recorded the user's requested deprecation cleanup before 1.0.0, starting with readUTF8Line. Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#maintenance.deprecations`.
+- Added `ExecSession.incomingChunks`: immediate binary TTY output, bounded multiplex parsing, stdout/stderr identity, and preservation of HTTP-upgrade leftover bytes.
+- Sessions allow one output collector and close on EOF, consumer failure, cancellation, or explicit close. Handshake cancellation propagates. Prefix forwarding has collection scope.
+- Preserved the line API and existing constructors/startInteractive calls; added explicit non-TTY exec mode. README explains single-collection ownership and migration from the removed unscoped prependLeftover utility.
+- JVM uses independent SocketChannel read/write operations. Node.js pauses incoming data and awaits write callbacks. Linux uses shutdown, idempotent close, and defers descriptor release until I/O jobs finish.
+- Dashboard WebSockets use the session byte stream and scoped cleanup, including failed container starts.
+- Added common parser/lifecycle tests, a real-Docker no-newline prompt/input test on all platforms, and JVM Unix-socket tests for duplex I/O, handshake cancellation, and repeated disconnects.
+- Final tests passed: 161 executions (71 JVM, 45 Node.js, 45 Linux), including the 20-session disconnect regression. Final `build :lib:dokkaGenerateHtml` passed, including debug/release sample executables.
 
 ## Next Steps
-1. Define and implement terminal/stream lifecycle contracts and regression cases under FEAT-002.
-2. Validate single-host container workflows, persistence, operation progress, and application-level Compose integration.
-3. Resolve Kotlin, Gradle/plugin, and CI deprecation warnings at their source; do not hide them with blanket suppression.
+1. Review and merge the terminal change; it is not a 0.1 release by itself.
+2. Address logs/stats/events reconnect and bounded-resource behavior, then expose image-operation progress.
+3. Resolve remaining Kotlin, Gradle/plugin, and CI deprecations at their source, per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#maintenance.deprecations`.
 
 ## Known Risks / Constraints
-- API 1.51 is fixed; version negotiation is not implemented. README documents the daemon requirement.
-- Cold Flow preparation success is not HTTP success; collection errors use DockerApiException.
-- TTY newline buffering remains open. Authentication/roles/audit belong to the dashboard application; the sample binds only to loopback.
-- The review report is intentionally local and excluded via .git/info/exclude; never add it to commits.
-- Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
+- API 1.51 is fixed; no version negotiation. Docker 28.5.2 is provisioned in release CI.
+- incoming.first()/take() now closes the session; reuse requires one long-lived collector. Binary chunks may split UTF-8; use a streaming decoder.
+- Old line-oriented non-TTY logs still allocate a whole frame; the bounded byte parser applies to incomingChunks. Broader log-stream hardening is follow-up work.
+- Three readUTF8Line deprecations remain in DockerClient, Containers stats, and System events. The readLogLines call now uses readLine.
+- Authentication/roles/audit belong to the application; sample still binds to loopback.
+- The review report is local and excluded via .git/info/exclude; never commit it.
+- Do not move v0.0.9/v0.0.10 or re-upload the published Maven version. v0.0.10 publication and Central artifacts were verified in the previous session.
 
 ## Decisions Pending
-- Detailed byte/chunk terminal API, connection ownership, and the supported daemon/platform matrix for 1.0.0.
+- Supported Docker/platform matrix and API compatibility gates for 1.0.0.
 
 ## Resume Commands
 - `git diff --check`
-- `./gradlew :lib:jvmTest --tests '*DockerHttpRegressionTest' --console=plain --max-workers=2`
+- `./gradlew :lib:jvmTest --tests '*TerminalSessionTest' --tests '*DockerHttpRegressionTest' --console=plain --max-workers=2`
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`

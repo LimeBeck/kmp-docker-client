@@ -1,5 +1,6 @@
 package dev.limebeck.libs.docker.client.socket
 
+import io.ktor.utils.io.close
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
@@ -17,6 +18,9 @@ import kotlinx.coroutines.SupervisorJob
 import platform.linux.sockaddr_un
 import platform.posix.*
 
+import kotlin.concurrent.atomics.*
+
+@OptIn(ExperimentalAtomicApi::class)
 private class NativeUnixRawConnection(
     private val fd: Int,
     override val read: ByteReadChannel,
@@ -24,10 +28,20 @@ private class NativeUnixRawConnection(
     private val scope: CoroutineScope,
     private val jobs: List<Job>,
 ) : DockerRawConnection {
+    private val closed = AtomicBoolean(false)
+
     override fun close() {
+        if (!closed.compareAndSet(false, true)) return
         jobs.forEach { it.cancel() }
         scope.cancel()
-        runCatching { close(fd) }
+        runCatching { shutdown(fd, SHUT_RDWR) }
+        // Keep the descriptor allocated until both I/O jobs stop using it.
+        val remaining = AtomicInt(jobs.size)
+        jobs.forEach { job ->
+            job.invokeOnCompletion {
+                if (remaining.decrementAndFetch() == 0) runCatching { close(fd) }
+            }
+        }
         runCatching { (read as? ByteChannel)?.close() }
         runCatching { (write as? ByteChannel)?.close() }
     }
@@ -77,12 +91,13 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
                     val e = errno
                     // EINTR можно продолжить
                     if (e == EINTR) continue
-                    break
+                    error("Unix socket read failed: errno=$e")
                 }
                 incoming.writeFully(buf, 0, n)
                 incoming.flush()
             }
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            incoming.close(error)
         } finally {
             incoming.close()
         }
@@ -95,18 +110,20 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
                 val n = outgoing.readAvailable(buf, 0, buf.size)
                 if (n < 0) break
                 var off = 0
-                while (off < n) {
-                    val w = write(fd, buf.refTo(off), (n - off).convert()).toInt()
+                while (isActive && off < n) {
+                    val w = send(fd, buf.refTo(off), (n - off).convert(), MSG_NOSIGNAL).toInt()
                     if (w < 0) {
                         val e = errno
                         if (e == EINTR) continue
-                        // EPIPE = peer closed
-                        break
+                        error("Unix socket write failed: errno=$e")
                     }
+                    check(w > 0) { "Unix socket write made no progress" }
                     off += w
                 }
             }
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            outgoing.close(error)
+            incoming.close(error)
         } finally {
             outgoing.close()
         }

@@ -13,6 +13,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import org.khronos.webgl.Uint8Array
 import org.khronos.webgl.get
 import org.khronos.webgl.set
@@ -27,6 +30,8 @@ private external object Net {
 private external interface NetSocket {
     fun on(event: String, cb: (arg: dynamic) -> Unit): NetSocket
     fun write(data: dynamic, cb: (() -> Unit)? = definedExternally): Boolean
+    fun pause(): NetSocket
+    fun resume(): NetSocket
     fun end()
     fun destroy()
 }
@@ -67,26 +72,37 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
 
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    socket.on("connect") {
-        console.log("Connected to docker unix socket:", path)
-    }
-
-    // Reader: data(Buffer|Uint8Array) -> ByteChannel (через coroutine, потому что writeFully suspend)
+    val chunks = Channel<ByteArray>(1)
     socket.on("data") { chunk ->
-        val u8 = chunk.unsafeCast<Uint8Array>() // Node Buffer обычно совместим с Uint8Array
-        val bytes = uint8ArrayToByteArray(u8)
-        scope.launch {
-            incoming.writeFully(bytes)
-            incoming.flush()
+        socket.pause()
+        val bytes = uint8ArrayToByteArray(chunk.unsafeCast<Uint8Array>())
+        if (chunks.trySend(bytes).isFailure) {
+            val error = IllegalStateException("Socket delivered data while paused")
+            chunks.close(error)
+            incoming.close(error)
+            socket.destroy()
         }
     }
-
-    socket.on("end") {
-        incoming.close()
-    }
-
+    socket.on("end") { chunks.close() }
     socket.on("error") { err ->
-        incoming.close(RuntimeException(err?.toString() ?: "socket error"))
+        val error = RuntimeException(err?.toString() ?: "socket error")
+        chunks.close(error)
+        incoming.close(error)
+        outgoing.close(error)
+    }
+    val readerJob = scope.launch {
+        try {
+            for (bytes in chunks) {
+                incoming.writeFully(bytes)
+                incoming.flush()
+                socket.resume()
+            }
+        } catch (error: Throwable) {
+            incoming.close(error)
+        } finally {
+            incoming.close()
+            chunks.cancel()
+        }
     }
 
     // Writer: ByteChannel -> socket.write(Uint8Array)
@@ -97,8 +113,13 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
                 val n = outgoing.readAvailable(buf, 0, buf.size)
                 if (n < 0) break
                 if (n == 0) continue
-                socket.write(byteArrayToUint8Array(buf, n))
+                suspendCancellableCoroutine<Unit> { continuation ->
+                    socket.write(byteArrayToUint8Array(buf, n)) { continuation.resume(Unit) }
+                }
             }
+        } catch (error: Throwable) {
+            outgoing.close(error)
+            incoming.close(error)
         } finally {
             runCatching { socket.end() }
             outgoing.close()
@@ -110,6 +131,6 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
         read = incoming,
         write = outgoing,
         scope = scope,
-        jobs = listOf(writerJob),
+        jobs = listOf(readerJob, writerJob),
     )
 }

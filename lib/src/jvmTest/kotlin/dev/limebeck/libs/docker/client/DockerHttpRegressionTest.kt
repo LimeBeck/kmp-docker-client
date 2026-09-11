@@ -62,6 +62,77 @@ class DockerHttpRegressionTest {
         }
     }
 
+    @Test fun ttyPromptArrivesWhileSocketRemainsOpenAndFirstReleasesSocket() = runBlocking {
+        withDaemon(DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true)) { client, daemon ->
+            val session = client.exec.startInteractive("probe").getOrThrow()
+            assertEquals("prompt> ", session.incomingChunks.first().bytes.decodeToString())
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun cancellingIdleTerminalReleasesSocket() = runBlocking {
+        withDaemon(DockerReply("", "101 Switching Protocols", keepOpen = true)) { client, daemon ->
+            val session = client.exec.startInteractive("probe").getOrThrow()
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { session.incomingChunks.collect() }
+            collector.cancelAndJoin()
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun terminalCanSendWhileWaitingForMoreOutput() = runBlocking {
+        withDaemon(DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true, expectedInput = "hello")) { client, daemon ->
+            val session = client.exec.startInteractive("probe").getOrThrow()
+            val prompt = CompletableDeferred<Unit>()
+            val reader = async {
+                val output = StringBuilder()
+                session.incomingChunks.first {
+                    output.append(it.bytes.decodeToString())
+                    if (output.contains("prompt> ")) prompt.complete(Unit)
+                    output.contains("accepted")
+                }
+            }
+            prompt.await()
+            session.send("hello")
+            reader.await()
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun repeatedTerminalSessionsReleaseConnectionsIncludingUncollectedOutput() = runBlocking {
+        val replies = Array(20) { DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true) }
+        withDaemon(*replies) { client, daemon ->
+            repeat(replies.size) { index ->
+                client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
+                    if (index % 2 == 0) session.incomingChunks.first()
+                }
+            }
+            assertEquals(replies.size, daemon.requests.size)
+        }
+    }
+
+    @Test fun cancellingHandshakePropagatesAndReleasesSocket() = runBlocking {
+        withDaemon(DockerReply(sendResponse = false)) { client, daemon ->
+            var returned = false
+            val handshake = launch {
+                client.exec.startInteractive("probe")
+                returned = true
+            }
+            while (daemon.requests.isEmpty()) delay(10)
+            handshake.cancelAndJoin()
+            assertFalse(returned)
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun execCanReadMultiplexedOutputWithoutTty() = runBlocking {
+        withDaemon(DockerReply("\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0003err", "101 Switching Protocols")) { client, daemon ->
+            val chunk = client.exec.startInteractive("probe", tty = false).getOrThrow().incomingChunks.first()
+            assertEquals(dev.limebeck.libs.docker.client.model.LogLine.Type.STDERR, chunk.type)
+            assertEquals("err", chunk.bytes.decodeToString())
+            assertTrue(daemon.requests.single().body.contains("\"Tty\":false"))
+        }
+    }
+
     @Test fun pullReportsErrorAfterProgress() = runBlocking {
         withDaemon(DockerReply("{\"status\":\"Pulling\"}\n{\"errorDetail\":{\"message\":\"pull failed\"}}\n")) { client, _ ->
             assertEquals("pull failed", client.images.create("alpine:latest").errorOrNull()?.message)

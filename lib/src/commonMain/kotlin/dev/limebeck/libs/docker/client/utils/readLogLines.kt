@@ -10,11 +10,8 @@ suspend fun ByteReadChannel.readLogLines(
     while (!isClosedForRead) {
         val message = if (!isTty) {
             val header = ByteArray(8)
-            try {
-                readFully(header)
-            } catch (_: Throwable) {
-                break
-            }
+            if (readAvailable(header, 0, 1) < 0) break
+            readFully(header, 1, header.size)
 
             val streamType = header[0].toInt()
             val payloadSize = (
@@ -24,14 +21,10 @@ suspend fun ByteReadChannel.readLogLines(
                             (header[7].toInt() and 0xFF)
                     )
 
-            if (payloadSize < 0) break
+            check(payloadSize >= 0) { "Invalid Docker multiplex payload size" }
 
             val payloadBuffer = ByteArray(payloadSize)
-            try {
-                readFully(payloadBuffer)
-            } catch (_: Throwable) {
-                break
-            }
+            readFully(payloadBuffer)
 
             LogLine(
                 line = payloadBuffer.decodeToString(),
@@ -43,11 +36,7 @@ suspend fun ByteReadChannel.readLogLines(
                 }
             )
         } else {
-            val line = try {
-                readUTF8Line()
-            } catch (_: Throwable) {
-                null
-            } ?: break
+            val line = readLine() ?: break
             LogLine(
                 line = line,
                 type = LogLine.Type.UNKNOWN
@@ -56,4 +45,5 @@ suspend fun ByteReadChannel.readLogLines(
 
         onMessage(message)
     }
+    closedCause?.let { throw it }
 }

@@ -16,6 +16,8 @@ internal data class DockerReply(
     val status: String = "200 OK",
     val headers: Map<String, String> = emptyMap(),
     val keepOpen: Boolean = false,
+    val expectedInput: String? = null,
+    val sendResponse: Boolean = true,
 )
 
 internal data class DockerRequest(val line: String, val headers: Map<String, String>, val body: String)
@@ -72,6 +74,10 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
                         input.readNBytes(headers["content-length"]?.toInt() ?: 0)
                     }
                     requests.add(DockerRequest(requestLine, headers, body.decodeToString()))
+                    if (!reply.sendResponse) {
+                        peerClosed.set(input.read() == -1)
+                        return@use
+                    }
                     val payload = reply.body.encodeToByteArray()
                     val output = Channels.newOutputStream(socket)
                     val response = buildString {
@@ -85,6 +91,11 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
                     output.write(payload)
                     output.flush()
                     responseSent.set(true)
+                    reply.expectedInput?.let { expected ->
+                        check(input.readNBytes(expected.encodeToByteArray().size).decodeToString() == expected)
+                        output.write("accepted".encodeToByteArray())
+                        output.flush()
+                    }
                     if (reply.keepOpen) peerClosed.set(input.read() == -1)
                 }
                 activeSocket.set(null)
