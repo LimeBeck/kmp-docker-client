@@ -26,6 +26,8 @@ Pipeline must include these sequential jobs:
 
 Test artifacts:
 - XML unit test reports from `lib/build/test-results/**/*.xml` must be uploaded even when tests fail (`if: always()`).
+- Both `build` and `test` jobs must upload their reports with distinct artifact names (`unit-test-results-build` and `unit-test-results-test`).
+- Report publication must run after both jobs reach a terminal state, including when `test` is skipped because `build` failed, and download only `unit-test-results-*` artifacts.
 
 ## Publish contract {#publish}
 - Publishing is Maven Central-oriented and must depend on successful `test` job.
@@ -68,8 +70,10 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-11: required JUnit artifacts from both build/test jobs and publication after an upstream failure.
 - 2026-03-07: initial CI/CD release pipeline contract added based on `.github/workflows/main.yml`.
 - 2026-03-07: added Dokka GitHub Pages publication contract.
 - 2026-03-07: split CI/CD into separate release/docs workflows.
 - 2026-03-07: release version source fixed to Git tag (`v*` -> `libVersion`).
 - 2026-03-08: required `checks: write` permission for unit test result publication.
+- 2026-09-10: added docs checkout permission and version catalog cache invalidation.

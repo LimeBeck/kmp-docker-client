@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- fix: bind the Docker dashboard to loopback
+- ci: retain JUnit reports when build tests fail
