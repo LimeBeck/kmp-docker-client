@@ -23,6 +23,7 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 - Parse behavior:
   - HTTP 2xx => decode as success payload type
   - non-2xx => decode as `ErrorResponse`
+- Missing or malformed error bodies, including HEAD responses, must fall back to an `ErrorResponse` containing the HTTP status.
 
 ## Auth contract {#auth}
 - Registry auth shall be cached in `DockerClientConfig.auth`.

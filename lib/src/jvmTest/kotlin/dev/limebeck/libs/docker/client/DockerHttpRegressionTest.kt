@@ -61,6 +61,22 @@ class DockerHttpRegressionTest {
         }
     }
 
+    @Test fun headErrorsReturnResultWithoutJsonDecoding() = runBlocking {
+        for (status in listOf("404 Not Found", "500 Internal Server Error")) {
+            withDaemon(DockerReply(status = status)) { client, _ ->
+                val result = client.containers.getArchiveInfo("missing", "/missing")
+                assertTrue(result.isError)
+                assertTrue(result.errorOrNull()!!.message.contains(status))
+            }
+        }
+    }
+
+    @Test fun headSuccessPreservesPathStatHeader() = runBlocking {
+        withDaemon(DockerReply(headers = mapOf("X-Docker-Container-Path-Stat" to "eyJuYW1lIjoiYSJ9"))) { client, _ ->
+            assertEquals("eyJuYW1lIjoiYSJ9", client.containers.getArchiveInfo("container", "/a").getOrThrow())
+        }
+    }
+
     @Test fun httpLogsNeverExposeAuthOrBodies() = runBlocking {
         val messages = ConcurrentLinkedQueue<String>()
         val logger = LoggerFactory.getLogger(DockerClient::class.java) as Logger

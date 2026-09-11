@@ -23,6 +23,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.serialization.SerializationException
 import kotlin.io.encoding.Base64
 
 open class DockerClient(
@@ -79,11 +80,10 @@ open class DockerClient(
     }
 
     suspend inline fun <reified T> HttpResponse.parse(): Result<T, ErrorResponse> {
-        val text = bodyAsText()
         return if (status.isSuccess()) {
-            json.decodeFromString<T>(text).asSuccess()
+            json.decodeFromString<T>(bodyAsText()).asSuccess()
         } else {
-            json.decodeFromString<ErrorResponse>(text).asError()
+            errorResponse().asError()
         }
     }
 
@@ -91,7 +91,20 @@ open class DockerClient(
         return if (status.isSuccess()) {
             Unit.asSuccess()
         } else {
-            json.decodeFromString<ErrorResponse>(bodyAsText()).asError()
+            errorResponse().asError()
+        }
+    }
+
+    /** Handles bodyless HEAD errors and non-JSON daemon/proxy responses. */
+    suspend fun HttpResponse.errorResponse(): ErrorResponse {
+        val fallback = ErrorResponse("Docker API returned HTTP ${status.value} ${status.description}")
+        if (request.method == HttpMethod.Head) return fallback
+        val text = bodyAsText()
+        if (text.isBlank()) return fallback
+        return try {
+            json.decodeFromString<ErrorResponse>(text)
+        } catch (_: SerializationException) {
+            fallback
         }
     }
 

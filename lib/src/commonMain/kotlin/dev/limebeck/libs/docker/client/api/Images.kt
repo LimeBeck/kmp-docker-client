@@ -208,7 +208,7 @@ class Images(private val dockerClient: DockerClient) {
             if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                json.decodeFromString<ErrorResponse>(response.bodyAsText()).asError()
+                response.errorResponse().asError()
             }
         }
 
@@ -229,7 +229,7 @@ class Images(private val dockerClient: DockerClient) {
             if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                json.decodeFromString<ErrorResponse>(response.bodyAsText()).asError()
+                response.errorResponse().asError()
             }
         }
 

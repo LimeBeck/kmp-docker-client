@@ -369,9 +369,7 @@ class Containers(private val dockerClient: DockerClient) {
             return if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                json.decodeFromString<ErrorResponse>(
-                    response.bodyAsText()
-                ).asError()
+                response.errorResponse().asError()
             }
         }
 
@@ -391,9 +389,7 @@ class Containers(private val dockerClient: DockerClient) {
             return if (response.status.isSuccess()) {
                 (response.headers["X-Docker-Container-Path-Stat"] ?: "").asSuccess()
             } else {
-                json.decodeFromString<ErrorResponse>(
-                    response.bodyAsText()
-                ).asError()
+                response.errorResponse().asError()
             }
         }
 
@@ -414,9 +410,7 @@ class Containers(private val dockerClient: DockerClient) {
             return if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                json.decodeFromString<ErrorResponse>(
-                    response.bodyAsText()
-                ).asError()
+                response.errorResponse().asError()
             }
         }
 
