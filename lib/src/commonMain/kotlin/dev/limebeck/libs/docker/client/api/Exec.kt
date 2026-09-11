@@ -22,7 +22,7 @@ class Exec(private val dockerClient: DockerClient) {
         id: String,
         config: ExecStartConfig = ExecStartConfig()
     ): Result<Unit, ErrorResponse> = with(dockerClient) {
-        client.post("/exec/$id/start") {
+        client.post(apiPath("/exec/$id/start")) {
             contentType(ContentType.Application.Json)
             setBody(config)
         }.validateOnly()
@@ -70,7 +70,7 @@ class Exec(private val dockerClient: DockerClient) {
      */
     suspend fun getInfo(id: String): Result<ExecInspectResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/exec/$id/json").parse()
+            return client.get(apiPath("/exec/$id/json")).parse()
         }
 
     /**
@@ -85,7 +85,7 @@ class Exec(private val dockerClient: DockerClient) {
         w: Int
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/exec/$id/resize") {
+            return client.post(apiPath("/exec/$id/resize")) {
                 parameter("h", h.toString())
                 parameter("w", w.toString())
             }.validateOnly()

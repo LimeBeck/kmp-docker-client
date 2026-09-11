@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- build: update Kotlin toolchain and dependency configuration
+- fix: apply Docker API version to HTTP and hijack requests

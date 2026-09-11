@@ -126,7 +126,7 @@ suspend fun DockerClient.createInteractiveSession(
 
     val headers = buildHttpHeader(
         method = method,
-        path = path,
+        path = apiPath(path),
         parameters = parameters,
         headers = headers + buildMap {
             body?.let { set("Content-Length", body.size.toString()) }

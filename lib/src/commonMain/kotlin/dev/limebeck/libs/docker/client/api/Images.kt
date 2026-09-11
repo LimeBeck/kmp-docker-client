@@ -26,7 +26,7 @@ class Images(private val dockerClient: DockerClient) {
         manifests: Boolean = false
     ): Result<List<ImageSummary>, ErrorResponse> =
         with(dockerClient) {
-            client.get("/images/json") {
+            client.get(apiPath("/images/json")) {
                 parameter("all", all)
                 filters?.let { parameter("filters", json.encodeToString(it)) }
                 parameter("shared-size", sharedSize)
@@ -56,7 +56,7 @@ class Images(private val dockerClient: DockerClient) {
                 return@with ErrorResponse("Invalid image name: $fromImage: ${e.message}").asError()
             }
 
-            client.post("/images/create") {
+            client.post(apiPath("/images/create")) {
                 parameter("fromImage", fromImage)
 
                 fromSrc?.let { parameter("fromSrc", it) }
@@ -80,7 +80,7 @@ class Images(private val dockerClient: DockerClient) {
         manifests: Boolean = false
     ): Result<ImageInspect, ErrorResponse> =
         with(dockerClient) {
-            client.get("/images/$name/json") {
+            client.get(apiPath("/images/$name/json")) {
                 parameter("manifests", manifests)
             }.parse()
         }
@@ -92,7 +92,7 @@ class Images(private val dockerClient: DockerClient) {
      */
     suspend fun history(name: String): Result<List<HistoryResponseItem>, ErrorResponse> =
         with(dockerClient) {
-            client.get("/images/$name/history").parse()
+            client.get(apiPath("/images/$name/history")).parse()
         }
 
     /**
@@ -117,7 +117,7 @@ class Images(private val dockerClient: DockerClient) {
                 return@with ErrorResponse("Invalid image name: $name: ${e.message}").asError()
             }
 
-            client.post("/images/$name/push") {
+            client.post(apiPath("/images/$name/push")) {
                 tag?.let { parameter("tag", it) }
                 platform?.let { parameter("platform", it) }
 
@@ -136,7 +136,7 @@ class Images(private val dockerClient: DockerClient) {
         tag: String? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            client.post("/images/$name/tag") {
+            client.post(apiPath("/images/$name/tag")) {
                 repo?.let { parameter("repo", it) }
                 tag?.let { parameter("tag", it) }
             }.validateOnly()
@@ -156,7 +156,7 @@ class Images(private val dockerClient: DockerClient) {
         noPrune: Boolean = false
     ): Result<List<ImageDeleteResponseItem>, ErrorResponse> =
         with(dockerClient) {
-            client.delete("/images/$name") {
+            client.delete(apiPath("/images/$name")) {
                 parameter("force", force)
                 parameter("noprune", noPrune)
             }.parse()
@@ -173,7 +173,7 @@ class Images(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<List<ImageSearchResponseItem>, ErrorResponse> =
         with(dockerClient) {
-            client.get("/images/search") {
+            client.get(apiPath("/images/search")) {
                 parameter("term", term)
                 limit?.let { parameter("limit", it) }
                 filters?.let { parameter("filters", json.encodeToString(it)) }
@@ -187,7 +187,7 @@ class Images(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<ImagePruneResponse, ErrorResponse> =
         with(dockerClient) {
-            client.post("/images/prune") {
+            client.post(apiPath("/images/prune")) {
                 filters?.let { parameter("filters", json.encodeToString(it)) }
             }.parse()
         }
@@ -202,7 +202,7 @@ class Images(private val dockerClient: DockerClient) {
         platform: String? = null
     ): Result<ByteReadChannel, ErrorResponse> =
         with(dockerClient) {
-            val response = client.get("/images/$name/get") {
+            val response = client.get(apiPath("/images/$name/get")) {
                 platform?.let { parameter("platform", it) }
             }
             if (response.status.isSuccess()) {
@@ -222,7 +222,7 @@ class Images(private val dockerClient: DockerClient) {
         platform: String? = null
     ): Result<ByteReadChannel, ErrorResponse> =
         with(dockerClient) {
-            val response = client.get("/images/get") {
+            val response = client.get(apiPath("/images/get")) {
                 names?.forEach { parameter("names", it) }
                 platform?.let { parameter("platform", it) }
             }
@@ -243,7 +243,7 @@ class Images(private val dockerClient: DockerClient) {
         body: ByteReadChannel
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            client.post("/images/load") {
+            client.post(apiPath("/images/load")) {
                 parameter("quiet", quiet)
                 setBody(body)
             }.validateOnly()

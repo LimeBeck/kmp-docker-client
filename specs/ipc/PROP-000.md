@@ -12,6 +12,7 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 ## Runtime architecture {#runtime}
 - Main entrypoint is `DockerClient` with configurable JSON and connection settings.
 - API version prefix is fixed at `1.51` unless explicitly revised in spec.
+- All built-in HTTP and raw hijack requests must use the `/v1.51/` path prefix through the same path builder.
 - HTTP transport uses Ktor CIO client + unix socket capability integration.
 
 ## Serialization contract {#serialization}

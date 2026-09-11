@@ -50,13 +50,24 @@ open class DockerClient(
         defaultRequest {
             when (config.connectionConfig) {
                 is DockerClientConfig.ConnectionConfig.SocketConnection -> {
-                    url("http://localhost/${API_VERSION}")
+                    url("http://localhost")
                     unixSocket(config.connectionConfig.socketPath)
                 }
             }
         }
         install(ContentNegotiation) {
             json(json)
+        }
+    }
+
+    /** Builds the path shared by HTTP and raw hijack requests. */
+    fun apiPath(path: String): String {
+        val absolutePath = "/${path.trimStart('/')}"
+        val prefix = "/v$API_VERSION"
+        return if (absolutePath == prefix || absolutePath.startsWith("$prefix/")) {
+            absolutePath
+        } else {
+            "$prefix$absolutePath"
         }
     }
 

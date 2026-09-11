@@ -18,7 +18,7 @@ const val AUTH_HEADER = "X-Registry-Auth"
  * Validate credentials for a registry and, if available, get an identity token for accessing the registry without password.
  */
 suspend fun DockerClient.auth(authConfig: AuthConfig): Result<SystemAuthResponse, ErrorResponse> {
-    return client.post("/auth") {
+    return client.post(apiPath("/auth")) {
         contentType(ContentType.Application.Json)
         setBody(authConfig)
     }.parse<SystemAuthResponse>().onSuccess {

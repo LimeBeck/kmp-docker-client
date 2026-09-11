@@ -32,7 +32,7 @@ class Containers(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null,
     ): Result<List<ContainerSummary>, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/containers/json") {
+            return client.get(apiPath("/containers/json")) {
                 parameter("all", all.toString())
                 parameter("size", size.toString())
                 limit?.let { parameter("limit", it.toString()) }
@@ -47,7 +47,7 @@ class Containers(private val dockerClient: DockerClient) {
      */
     suspend fun getInfo(id: String): Result<ContainerInspectResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/containers/$id/json").parse()
+            return client.get(apiPath("/containers/$id/json")).parse()
         }
 
     /**
@@ -68,7 +68,7 @@ class Containers(private val dockerClient: DockerClient) {
                     ?: return@coroutineScope ErrorResponse("Container not found").asError()
 
                 val logs = channelFlow {
-                    client.prepareGet("/containers/${id}/logs") {
+                    client.prepareGet(apiPath("/containers/${id}/logs")) {
 
                         parameter("follow", parameters.follow.toString())
                         parameter("timestamps", parameters.timestamps.toString())
@@ -101,7 +101,7 @@ class Containers(private val dockerClient: DockerClient) {
         config: ContainerConfig = ContainerConfig()
     ): Result<ContainerCreateResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/create") {
+            return client.post(apiPath("/containers/create")) {
                 name?.let { parameter("name", it) }
                 contentType(ContentType.Application.Json)
                 setBody(config)
@@ -113,7 +113,7 @@ class Containers(private val dockerClient: DockerClient) {
      */
     suspend fun start(id: String): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/start")
+            return client.post(apiPath("/containers/$id/start"))
                 .validateOnly()
         }
 
@@ -126,7 +126,7 @@ class Containers(private val dockerClient: DockerClient) {
         t: Int? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/stop") {
+            return client.post(apiPath("/containers/$id/stop")) {
                 signal?.let { parameter("signal", signal) }
                 t?.let { parameter("t", t.toString()) }
             }.validateOnly()
@@ -142,7 +142,7 @@ class Containers(private val dockerClient: DockerClient) {
         v: Boolean = false
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.delete("/containers/$id") {
+            return client.delete(apiPath("/containers/$id")) {
                 parameter("force", force.toString())
                 parameter("link", link.toString())
                 parameter("v", v.toString())
@@ -158,7 +158,7 @@ class Containers(private val dockerClient: DockerClient) {
         t: Int? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/restart") {
+            return client.post(apiPath("/containers/$id/restart")) {
                 signal?.let { parameter("signal", signal) }
                 t?.let { parameter("t", t.toString()) }
             }.validateOnly()
@@ -174,7 +174,7 @@ class Containers(private val dockerClient: DockerClient) {
         signal: String? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/kill") {
+            return client.post(apiPath("/containers/$id/kill")) {
                 signal?.let { parameter("signal", signal) }
             }.validateOnly()
         }
@@ -189,7 +189,7 @@ class Containers(private val dockerClient: DockerClient) {
         config: ContainerUpdateRequest
     ): Result<ContainerUpdateResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/update") {
+            return client.post(apiPath("/containers/$id/update")) {
                 contentType(ContentType.Application.Json)
                 setBody(config)
             }.parse()
@@ -203,7 +203,7 @@ class Containers(private val dockerClient: DockerClient) {
         name: String
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/rename") {
+            return client.post(apiPath("/containers/$id/rename")) {
                 parameter("name", name)
             }.validateOnly()
         }
@@ -220,7 +220,7 @@ class Containers(private val dockerClient: DockerClient) {
      */
     suspend fun pause(id: String): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/pause")
+            return client.post(apiPath("/containers/$id/pause"))
                 .validateOnly()
         }
 
@@ -231,7 +231,7 @@ class Containers(private val dockerClient: DockerClient) {
      */
     suspend fun unpause(id: String): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/unpause")
+            return client.post(apiPath("/containers/$id/unpause"))
                 .validateOnly()
         }
 
@@ -242,7 +242,7 @@ class Containers(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<ContainerPruneResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/prune") {
+            return client.post(apiPath("/containers/prune")) {
                 filters?.let {
                     parameter(
                         "filters",
@@ -262,7 +262,7 @@ class Containers(private val dockerClient: DockerClient) {
         psArgs: String? = null
     ): Result<ContainerTopResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/containers/$id/top") {
+            return client.get(apiPath("/containers/$id/top")) {
                 psArgs?.let { parameter("ps_args", it) }
             }.parse()
         }
@@ -279,7 +279,7 @@ class Containers(private val dockerClient: DockerClient) {
      */
     suspend fun getChanges(id: String): Result<List<FilesystemChange>, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/containers/$id/changes")
+            return client.get(apiPath("/containers/$id/changes"))
                 .parse()
         }
 
@@ -301,7 +301,7 @@ class Containers(private val dockerClient: DockerClient) {
         with(dockerClient) {
             if (!stream) {
                 val response: Result<ContainerStatsResponse, ErrorResponse> =
-                    client.get("/containers/$id/stats") {
+                    client.get(apiPath("/containers/$id/stats")) {
                         parameter("stream", "false")
                         parameter("one-shot", oneShot.toString())
                     }.parse()
@@ -309,7 +309,7 @@ class Containers(private val dockerClient: DockerClient) {
             }
 
             val statsFlow = flow {
-                client.prepareGet("/containers/$id/stats") {
+                client.prepareGet(apiPath("/containers/$id/stats")) {
                     applyConnectionConfig()
                     parameter("stream", "true")
                     parameter("one-shot", oneShot.toString())
@@ -337,7 +337,7 @@ class Containers(private val dockerClient: DockerClient) {
         w: Int
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/resize") {
+            return client.post(apiPath("/containers/$id/resize")) {
                 parameter("h", h.toString())
                 parameter("w", w.toString())
             }.validateOnly()
@@ -353,7 +353,7 @@ class Containers(private val dockerClient: DockerClient) {
         condition: String? = null
     ): Result<ContainerWaitResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/wait") {
+            return client.post(apiPath("/containers/$id/wait")) {
                 condition?.let { parameter("condition", it) }
             }.parse()
         }
@@ -365,7 +365,7 @@ class Containers(private val dockerClient: DockerClient) {
      */
     suspend fun export(id: String): Result<ByteReadChannel, ErrorResponse> =
         with(dockerClient) {
-            val response = client.get("/containers/$id/export")
+            val response = client.get(apiPath("/containers/$id/export"))
             return if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
@@ -385,7 +385,7 @@ class Containers(private val dockerClient: DockerClient) {
         path: String
     ): Result<String, ErrorResponse> =
         with(dockerClient) {
-            val response = client.head("/containers/$id/archive") {
+            val response = client.head(apiPath("/containers/$id/archive")) {
                 parameter("path", path)
             }
             return if (response.status.isSuccess()) {
@@ -408,7 +408,7 @@ class Containers(private val dockerClient: DockerClient) {
     ): Result<ByteReadChannel, ErrorResponse> =
         with(dockerClient) {
             val response =
-                client.get("/containers/$id/archive") {
+                client.get(apiPath("/containers/$id/archive")) {
                     parameter("path", path)
                 }
             return if (response.status.isSuccess()) {
@@ -433,7 +433,7 @@ class Containers(private val dockerClient: DockerClient) {
         copyUIDGID: Boolean? = null
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.put("/containers/$id/archive") {
+            return client.put(apiPath("/containers/$id/archive")) {
                 parameter("path", path)
                 noOverwriteDirNonDir?.let { parameter("noOverwriteDirNonDir", it.toString()) }
                 copyUIDGID?.let { parameter("copyUIDGID", it.toString()) }
@@ -451,7 +451,7 @@ class Containers(private val dockerClient: DockerClient) {
         config: ExecConfig
     ): Result<IDResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/containers/$id/exec") {
+            return client.post(apiPath("/containers/$id/exec")) {
                 contentType(ContentType.Application.Json)
                 setBody(config)
             }.parse()

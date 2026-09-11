@@ -18,7 +18,7 @@ class Networks(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<List<Network>, ErrorResponse> =
         with(dockerClient) {
-            client.get("/networks") {
+            client.get(apiPath("/networks")) {
                 filters?.let { parameter("filters", json.encodeToString(it)) }
             }.parse()
         }
@@ -34,7 +34,7 @@ class Networks(private val dockerClient: DockerClient) {
         scope: String? = null
     ): Result<Network, ErrorResponse> =
         with(dockerClient) {
-            client.get("/networks/$id") {
+            client.get(apiPath("/networks/$id")) {
                 parameter("verbose", verbose)
                 scope?.let { parameter("scope", it) }
             }.parse()
@@ -47,7 +47,7 @@ class Networks(private val dockerClient: DockerClient) {
         networkConfig: NetworkCreateRequest
     ): Result<NetworkCreateResponse, ErrorResponse> =
         with(dockerClient) {
-            client.post("/networks/create") {
+            client.post(apiPath("/networks/create")) {
                 contentType(ContentType.Application.Json)
                 setBody(networkConfig)
             }.parse()
@@ -58,7 +58,7 @@ class Networks(private val dockerClient: DockerClient) {
      */
     suspend fun remove(id: String): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            client.delete("/networks/$id").validateOnly()
+            client.delete(apiPath("/networks/$id")).validateOnly()
         }
 
     /**
@@ -69,7 +69,7 @@ class Networks(private val dockerClient: DockerClient) {
         connectionConfig: NetworkConnectRequest
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            client.post("/networks/$id/connect") {
+            client.post(apiPath("/networks/$id/connect")) {
                 contentType(ContentType.Application.Json)
                 setBody(connectionConfig)
             }.validateOnly()
@@ -83,7 +83,7 @@ class Networks(private val dockerClient: DockerClient) {
         connectionConfig: NetworkDisconnectRequest
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            client.post("/networks/$id/disconnect") {
+            client.post(apiPath("/networks/$id/disconnect")) {
                 contentType(ContentType.Application.Json)
                 setBody(connectionConfig)
             }.validateOnly()
@@ -96,7 +96,7 @@ class Networks(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<NetworkPruneResponse, ErrorResponse> =
         with(dockerClient) {
-            client.post("/networks/prune") {
+            client.post(apiPath("/networks/prune")) {
                 filters?.let { parameter("filters", json.encodeToString(it)) }
             }.parse()
         }
