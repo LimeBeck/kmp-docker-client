@@ -31,6 +31,11 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
   - identity token
 - Registry server resolution should try canonical and fallback forms.
 
+### HTTP logging {#auth.logging}
+- HTTP logging must not record request or response bodies.
+- Registry auth/config and HTTP authorization headers must be masked, including when DEBUG logging is enabled.
+- Auth endpoint exchanges must be excluded from HTTP logging.
+
 ## Platform support baseline {#platforms}
 - JVM
 - Linux X64

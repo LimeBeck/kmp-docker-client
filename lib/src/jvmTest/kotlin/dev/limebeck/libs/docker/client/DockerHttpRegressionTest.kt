@@ -61,4 +61,51 @@ class DockerHttpRegressionTest {
         }
     }
 
+    @Test fun httpLogsNeverExposeAuthOrBodies() = runBlocking {
+        val messages = ConcurrentLinkedQueue<String>()
+        val logger = LoggerFactory.getLogger(DockerClient::class.java) as Logger
+        val oldLevel = logger.level
+        val appender = object : AppenderBase<ILoggingEvent>() {
+            override fun append(event: ILoggingEvent) { messages.add(event.formattedMessage) }
+        }.apply { start() }
+        logger.level = Level.DEBUG
+        logger.addAppender(appender)
+        try {
+            withDaemon(
+                DockerReply("{\"Status\":\"Login Succeeded\",\"IdentityToken\":\"auth-response-secret\"}"),
+                DockerReply("{\"status\":\"progress-body-secret\"}\n"),
+                DockerReply("{\"status\":\"progress-body-secret\"}\n"),
+                DockerReply("response-body-secret"),
+            ) { client, daemon ->
+                client.auth(AuthConfig(username = "review-user", password = "auth-password-secret")).getOrThrow()
+                client.images.create("alpine:latest").getOrThrow()
+                client.config.auth.clear()
+                client.config.auth["docker.io"] = DockerClientConfig.Auth.Credentials("review-user", "registry-password-secret")
+                client.images.create("alpine:latest").getOrThrow()
+                client.client.post(client.apiPath("/probe")) {
+                    header("aUtHoRiZaTiOn", "Bearer authorization-secret")
+                    header("Proxy-Authorization", "proxy-secret")
+                    header("x-registry-config", "registry-config-secret")
+                    setBody("request-body-secret")
+                }
+                while (messages.count { it.contains("RESPONSE:") } < 3) delay(10)
+                val logs = messages.joinToString("\n")
+                val encodedToken = daemon.requests[1].headers.getValue("x-registry-auth")
+                assertTrue(Base64.decode(encodedToken).decodeToString().contains("auth-response-secret"))
+                assertFalse(logs.contains(encodedToken))
+                val encodedAuth = daemon.requests[2].headers.getValue("x-registry-auth")
+                assertTrue(Base64.decode(encodedAuth).decodeToString().contains("registry-password-secret"))
+                assertFalse(logs.contains(encodedAuth))
+                for (secret in listOf("auth-password-secret", "auth-response-secret", "registry-password-secret", "progress-body-secret", "authorization-secret", "proxy-secret", "registry-config-secret", "request-body-secret", "response-body-secret")) {
+                    assertFalse(logs.contains(secret), "HTTP logs exposed $secret")
+                }
+                assertFalse(logs.contains("/v1.51/auth"))
+                assertTrue(logs.contains("/v1.51/images/create"), "The test must actually capture HTTP logs")
+            }
+        } finally {
+            logger.detachAppender(appender)
+            logger.level = oldLevel
+            appender.stop()
+        }
+    }
 }

@@ -45,7 +45,14 @@ open class DockerClient(
                     DockerClient.logger.debug { message }
                 }
             }
-            level = LogLevel.ALL
+            level = LogLevel.HEADERS
+            sanitizeHeader { header ->
+                header.equals(AUTH_HEADER, ignoreCase = true) ||
+                    header.equals("X-Registry-Config", ignoreCase = true) ||
+                    header.equals(HttpHeaders.Authorization, ignoreCase = true) ||
+                    header.equals(HttpHeaders.ProxyAuthorization, ignoreCase = true)
+            }
+            filter { request -> !request.url.encodedPath.endsWith("/auth") }
         }
         defaultRequest {
             when (config.connectionConfig) {

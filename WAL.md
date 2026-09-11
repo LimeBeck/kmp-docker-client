@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- fix: apply Docker API version to HTTP and hijack requests
+- fix: redact credentials and exclude secret HTTP bodies from logs
