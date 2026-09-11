@@ -8,6 +8,7 @@ import io.ktor.client.statement.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.SerializationException
 
 val DockerClient.system by ::System.api()
 
@@ -17,7 +18,7 @@ class System(private val dockerClient: DockerClient) {
      */
     suspend fun getInfo(): Result<SystemInfo, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/info").parse()
+            return client.get(apiPath("/info")).parse()
         }
 
     /**
@@ -27,7 +28,7 @@ class System(private val dockerClient: DockerClient) {
      */
     suspend fun getVersion(): Result<SystemVersion, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/version").parse()
+            return client.get(apiPath("/version")).parse()
         }
 
     /**
@@ -37,7 +38,7 @@ class System(private val dockerClient: DockerClient) {
      */
     suspend fun ping(): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/_ping").validateOnly()
+            return client.get(apiPath("/_ping")).validateOnly()
         }
 
     /**
@@ -45,7 +46,7 @@ class System(private val dockerClient: DockerClient) {
      */
     suspend fun dataUsage(): Result<SystemDataUsageResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/system/df").parse()
+            return client.get(apiPath("/system/df")).parse()
         }
 
     /**
@@ -85,21 +86,22 @@ class System(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Flow<EventMessage> = with(dockerClient) {
         flow {
-            client.prepareGet("/events") {
+            client.prepareGet(apiPath("/events")) {
                 since?.let { parameter("since", it) }
                 until?.let { parameter("until", it) }
                 filters?.let { parameter("filters", json.encodeToString(it)) }
             }.execute { response ->
+                response.requireStreamSuccess()
                 val channel = response.bodyAsChannel()
                 while (!channel.isClosedForRead) {
-                    val line = channel.readUTF8Line()
-                    if (!line.isNullOrBlank()) {
-                        try {
-                            emit(json.decodeFromString<EventMessage>(line))
-                        } catch (e: Exception) {
-                            // Skip invalid lines
-                        }
+                    val line = channel.readUTF8Line() ?: break
+                    if (line.isBlank()) continue
+                    val event = try {
+                        json.decodeFromString<EventMessage>(line)
+                    } catch (_: SerializationException) {
+                        continue
                     }
+                    emit(event)
                 }
             }
         }

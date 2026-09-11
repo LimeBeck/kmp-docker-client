@@ -16,7 +16,7 @@ class Volumes(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<VolumeListResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/volumes") {
+            return client.get(apiPath("/volumes")) {
                 filters?.let {
                     parameter(
                         "filters",
@@ -33,7 +33,7 @@ class Volumes(private val dockerClient: DockerClient) {
         config: VolumeCreateOptions = VolumeCreateOptions()
     ): Result<Volume, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/volumes/create") {
+            return client.post(apiPath("/volumes/create")) {
                 contentType(ContentType.Application.Json)
                 setBody(config)
             }.parse()
@@ -46,7 +46,7 @@ class Volumes(private val dockerClient: DockerClient) {
      */
     suspend fun getInfo(name: String): Result<Volume, ErrorResponse> =
         with(dockerClient) {
-            return client.get("/volumes/$name").parse()
+            return client.get(apiPath("/volumes/$name")).parse()
         }
 
     /**
@@ -60,7 +60,7 @@ class Volumes(private val dockerClient: DockerClient) {
         force: Boolean = false
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            return client.delete("/volumes/$name") {
+            return client.delete(apiPath("/volumes/$name")) {
                 parameter("force", force.toString())
             }.validateOnly()
         }
@@ -72,7 +72,7 @@ class Volumes(private val dockerClient: DockerClient) {
         filters: Map<String, List<String>>? = null
     ): Result<VolumePruneResponse, ErrorResponse> =
         with(dockerClient) {
-            return client.post("/volumes/prune") {
+            return client.post(apiPath("/volumes/prune")) {
                 filters?.let {
                     parameter(
                         "filters",

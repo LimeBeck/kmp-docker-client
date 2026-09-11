@@ -17,9 +17,7 @@ class ExecTest {
         val imageName = "alpine:latest"
         client.images.create(fromImage = imageName).getOrThrow()
 
-        val containerName = "test-exec-${kotlin.random.Random.nextInt(1000)}"
         val createResponse = client.containers.create(
-            name = containerName,
             config = ContainerConfig(
                 image = imageName,
                 cmd = listOf("sleep", "10000")
@@ -59,9 +57,7 @@ class ExecTest {
         val imageName = "alpine:latest"
         client.images.create(fromImage = imageName).getOrThrow()
 
-        val containerName = "test-exec-${kotlin.random.Random.nextInt(1000)}"
         val createResponse = client.containers.create(
-            name = containerName,
             config = ContainerConfig(
                 image = imageName,
                 cmd = listOf("sleep", "10000")

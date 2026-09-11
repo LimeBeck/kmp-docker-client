@@ -26,6 +26,7 @@ fun main() {
     embeddedServer(CIO, configure = {
         reuseAddress = true
         connector {
+            host = "127.0.0.1"
             port = 8080
         }
     }) {

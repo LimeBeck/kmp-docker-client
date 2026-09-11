@@ -1,8 +1,8 @@
 # KMP Docker Client
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/dev.limebeck.libs/docker-client)](https://central.sonatype.com/artifact/dev.limebeck.libs/docker-client)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.3.0-blue.svg?logo=kotlin)](https://kotlinlang.org)
-[![Ktor](https://img.shields.io/badge/ktor-3.3.3-orange.svg?logo=ktor)](https://ktor.io)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.4.20-blue.svg?logo=kotlin)](https://kotlinlang.org)
+[![Ktor](https://img.shields.io/badge/ktor-3.5.2-orange.svg?logo=ktor)](https://ktor.io)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A Docker Remote API client library written in Kotlin Multiplatform using Ktor.
@@ -10,7 +10,7 @@ A Docker Remote API client library written in Kotlin Multiplatform using Ktor.
 ## 🚀 Features
 
 - **Kotlin Multiplatform**: Supports JVM, Linux X64, and NodeJS.
-- **Ktor Client**: Leverages the power of Ktor for network requests, providing flexible engine support.
+- **Ktor Client**: Uses the CIO engine with Unix domain socket transport.
 - **Type Safety**: Data models are generated from the official Docker OpenAPI specification (v1.51).
 - **Coroutines & Flow**: First-class support for asynchronous operations and streaming (logs, stats) via Kotlin Coroutines and Flow.
 - **Unix Domain Sockets**: Built-in support for connecting via `/var/run/docker.sock`.
@@ -27,7 +27,7 @@ Add dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:0.0.8")
+    implementation("dev.limebeck.libs:docker-client:0.0.9")
 }
 ```
 
@@ -66,7 +66,11 @@ Custom configuration using `DockerClientConfig`:
 
 ```kotlin
 val config = DockerClientConfig(
-    json = Json { ignoreUnknownKeys = true },
+    json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+        coerceInputValues = true
+    },
     connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection("/var/run/docker.sock"),
 )
 val dockerClient = DockerClient(config)
@@ -123,7 +127,7 @@ val DockerClient.myCustomApi by ::MyCustom.api()
 
 class MyCustom(val dockerClient: DockerClient) {
     suspend fun getCustomInfo(): Result<MyCustomResponse, ErrorResponse> = with(dockerClient) {
-        return client.get("/my/custom/endpoint").parse()
+        return client.get(apiPath("/my/custom/endpoint")).parse()
     }
 }
 ```
@@ -152,7 +156,24 @@ HTMX Dashboard:
 ./gradlew :sample:htmxDashboard:runDebugExecutableLinuxX64
 ```
 
+The dashboard listens on `127.0.0.1:8080`. It is a local development example;
+remote access requires a separate authenticated HTTP/WebSocket design.
+
+HTTP diagnostics log headers only, with authorization and registry credentials masked.
+Auth endpoint exchanges and request/response bodies are excluded from HTTP logging.
+
+Logs, streaming stats, and events open their HTTP connection when the Flow is collected.
+A preparation `Result` containing a Flow does not guarantee that the subsequent HTTP request succeeds.
+Non-success HTTP responses during collection throw `DockerApiException`, which exposes `status`
+and the decoded `error: ErrorResponse`. Connections close on completion or cancellation;
+exceptions thrown by event collectors propagate to the caller.
+
 ## 🛠 Development
+
+Use JDK 21 to run the Gradle wrapper. The library targets JVM 17, Linux X64, and NodeJS.
+Dependency versions are maintained in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
+After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and include the updated
+`kotlin-js-store/yarn.lock` in the change.
 
 The project uses OpenAPI Generator to create data models. When building the project, models are automatically generated into the `lib/build/generated/openapi` directory.
 
@@ -160,6 +181,40 @@ To build the project:
 ```bash
 ./gradlew build
 ```
+
+The test suite includes Docker integration tests. They require a running Docker daemon accessible through
+`/var/run/docker.sock` and may pull images and create temporary Docker resources. Run them against
+a development daemon. Native and JS tasks also download their compiler/runtime dependencies.
+
+Run the standalone image reference parser tests without Docker:
+
+```bash
+./gradlew :lib:jvmTest --tests '*OciImageRefParserTest'
+```
+
+Run HTTP regression tests against an in-process Unix socket mock, without Docker:
+
+```bash
+./gradlew :lib:jvmTest --tests '*DockerHttpRegressionTest'
+```
+
+Run all library tests (JVM, Linux X64, and NodeJS):
+
+```bash
+./gradlew :lib:allTests
+```
+
+Generate API documentation locally:
+
+```bash
+./gradlew :lib:dokkaGenerateHtml
+```
+
+The HTML output is in `lib/build/dokka/html`. The docs workflow deploys it to GitHub Pages on pushes
+to `master`. Release tags (`v<semver>`) trigger build, test, and Maven Central publication; the tag
+supplies the published library version. Local builds use `snapshot` unless `-PlibVersion=...` is supplied.
+
+Project contracts and the continuation log are in [`specs/ipc`](specs/ipc/README.md) and [`WAL.md`](WAL.md).
 
 ## 🤝 Contributing
 

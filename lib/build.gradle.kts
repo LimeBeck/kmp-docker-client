@@ -10,6 +10,7 @@ plugins {
 }
 
 val schemaFilePath = "$rootDir/specs/v1.51.yaml"
+val generatedOpenApiDir = layout.buildDirectory.dir("generated/openapi")
 
 kotlin {
     linuxX64()
@@ -32,11 +33,10 @@ kotlin {
 
     sourceSets {
         commonMain {
-            kotlin.srcDir("$buildDir/generated/openapi/src/main/kotlin")
+            kotlin.srcDir(generatedOpenApiDir.map { it.dir("src/main/kotlin") })
             dependencies {
                 implementation(kotlin("stdlib")) // Required
                 implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.ktor.client.core)
@@ -51,6 +51,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
         jvmTest.dependencies {
             implementation(libs.logback)
@@ -94,7 +95,7 @@ tasks.named("linuxX64SourcesJar") {
 openApiGenerate {
     generatorName.set("kotlin")
     inputSpec.set(schemaFilePath)
-    outputDir.set("$buildDir/generated/openapi")
+    outputDir.set(generatedOpenApiDir)
     apiPackage.set("dev.limebeck.libs.docker.api")
     modelPackage.set("dev.limebeck.libs.docker.client.model")
     ignoreFileOverride.set("$rootDir/.openapi-generator-ignore")
@@ -141,7 +142,7 @@ openApiGenerate {
 // Fix for @SerialName(value = "Ports") val ports: kotlin.collections.Map<kotlin.String, kotlin.collections.List<PortBinding>>? = null
 tasks.named("openApiGenerate") {
     doLast {
-        val genDir = file("$buildDir/generated/openapi")
+        val genDir = generatedOpenApiDir.get().asFile
 
         fileTree(genDir).matching { include("**/*.kt") }.forEach { file ->
             val content = file.readText()
@@ -178,7 +179,7 @@ mavenPublishing {
         licenses {
             license {
                 name.set("MIT license")
-                url.set("https://github.com/LimeBeck/kmp-docker-client/blob/master/LICENCE")
+                url.set("https://github.com/LimeBeck/kmp-docker-client/blob/master/LICENSE")
                 distribution.set("repo")
             }
         }

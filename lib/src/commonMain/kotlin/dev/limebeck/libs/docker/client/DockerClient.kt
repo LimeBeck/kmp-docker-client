@@ -5,6 +5,7 @@ import dev.limebeck.libs.docker.client.api.AUTH_HEADER
 import dev.limebeck.libs.docker.client.api.resolveServerForRegistry
 import dev.limebeck.libs.docker.client.dsl.ApiCacheHolder
 import dev.limebeck.libs.docker.client.model.ErrorResponse
+import dev.limebeck.libs.docker.client.model.DockerApiException
 import dev.limebeck.libs.docker.client.model.Result
 import dev.limebeck.libs.docker.client.model.asError
 import dev.limebeck.libs.docker.client.model.asSuccess
@@ -23,6 +24,10 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlin.io.encoding.Base64
 
 open class DockerClient(
@@ -45,12 +50,19 @@ open class DockerClient(
                     DockerClient.logger.debug { message }
                 }
             }
-            level = LogLevel.ALL
+            level = LogLevel.HEADERS
+            sanitizeHeader { header ->
+                header.equals(AUTH_HEADER, ignoreCase = true) ||
+                    header.equals("X-Registry-Config", ignoreCase = true) ||
+                    header.equals(HttpHeaders.Authorization, ignoreCase = true) ||
+                    header.equals(HttpHeaders.ProxyAuthorization, ignoreCase = true)
+            }
+            filter { request -> !request.url.encodedPath.endsWith("/auth") }
         }
         defaultRequest {
             when (config.connectionConfig) {
                 is DockerClientConfig.ConnectionConfig.SocketConnection -> {
-                    url("http://localhost/${API_VERSION}")
+                    url("http://localhost")
                     unixSocket(config.connectionConfig.socketPath)
                 }
             }
@@ -60,12 +72,22 @@ open class DockerClient(
         }
     }
 
-    suspend inline fun <reified T> HttpResponse.parse(): Result<T, ErrorResponse> {
-        val text = bodyAsText()
-        return if (status.isSuccess()) {
-            json.decodeFromString<T>(text).asSuccess()
+    /** Builds the path shared by HTTP and raw hijack requests. */
+    fun apiPath(path: String): String {
+        val absolutePath = "/${path.trimStart('/')}"
+        val prefix = "/v$API_VERSION"
+        return if (absolutePath == prefix || absolutePath.startsWith("$prefix/")) {
+            absolutePath
         } else {
-            json.decodeFromString<ErrorResponse>(text).asError()
+            "$prefix$absolutePath"
+        }
+    }
+
+    suspend inline fun <reified T> HttpResponse.parse(): Result<T, ErrorResponse> {
+        return if (status.isSuccess()) {
+            json.decodeFromString<T>(bodyAsText()).asSuccess()
+        } else {
+            errorResponse().asError()
         }
     }
 
@@ -73,8 +95,47 @@ open class DockerClient(
         return if (status.isSuccess()) {
             Unit.asSuccess()
         } else {
-            json.decodeFromString<ErrorResponse>(bodyAsText()).asError()
+            errorResponse().asError()
         }
+    }
+
+    /** Handles bodyless HEAD errors and non-JSON daemon/proxy responses. */
+    suspend fun HttpResponse.errorResponse(): ErrorResponse {
+        val fallback = ErrorResponse("Docker API returned HTTP ${status.value} ${status.description}")
+        if (request.method == HttpMethod.Head) return fallback
+        val text = bodyAsText()
+        if (text.isBlank()) return fallback
+        return try {
+            json.decodeFromString<ErrorResponse>(text)
+        } catch (_: SerializationException) {
+            fallback
+        }
+    }
+
+    /** Cold streams surface HTTP failures during collection, before decoding data. */
+    suspend fun HttpResponse.requireStreamSuccess() {
+        if (!status.isSuccess()) throw DockerApiException(status, errorResponse())
+    }
+
+    /** Docker can report an operation failure inside a successful NDJSON response. */
+    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> {
+        if (!status.isSuccess()) return errorResponse().asError()
+        val channel = bodyAsChannel()
+        while (!channel.isClosedForRead) {
+            val line = channel.readUTF8Line() ?: break
+            if (line.isBlank()) continue
+            val message = try {
+                json.parseToJsonElement(line) as? JsonObject
+            } catch (_: SerializationException) {
+                null
+            } ?: return ErrorResponse("Invalid Docker image progress response").asError()
+            val detail = (message["errorDetail"] as? JsonObject)?.get("message") as? JsonPrimitive
+            val legacyError = message["error"] as? JsonPrimitive
+            val error = detail?.contentOrNull?.takeIf { it.isNotBlank() }
+                ?: legacyError?.contentOrNull?.takeIf { it.isNotBlank() }
+            if (error != null) return ErrorResponse(error).asError()
+        }
+        return Unit.asSuccess()
     }
 
     @OptIn(InternalAPI::class)

@@ -82,13 +82,13 @@ suspend fun readHttp11Headers(channel: ByteReadChannel): HijackHandshake {
             val leftover = ByteArray(acc.size - headerLen) { acc[headerLen + it] }
 
             val headerText = headerBytes.decodeToString()
-            DockerClient.logger.debug { "Response headers: $headerText" }
             val statusLine = headerText.lineSequence().firstOrNull()
                 ?: error("Bad HTTP response: empty status line")
 
             val status = statusLine.split(' ').getOrNull(1)?.toIntOrNull()
                 ?: error("Bad HTTP status line: $statusLine")
 
+            DockerClient.logger.debug { "Hijack response: HTTP $status" }
             return HijackHandshake(status, leftover)
         }
     }
@@ -126,7 +126,7 @@ suspend fun DockerClient.createInteractiveSession(
 
     val headers = buildHttpHeader(
         method = method,
-        path = path,
+        path = apiPath(path),
         parameters = parameters,
         headers = headers + buildMap {
             body?.let { set("Content-Length", body.size.toString()) }
@@ -138,7 +138,7 @@ suspend fun DockerClient.createInteractiveSession(
         body?.let { conn.write.writeFully(it) }
         conn.write.flush()
 
-        DockerClient.logger.debug { "Send request: \n$headers" }
+        DockerClient.logger.debug { "Send hijack request: ${method.value} ${apiPath(path)}" }
 
         val hs = readHttp11Headers(conn.read)
 

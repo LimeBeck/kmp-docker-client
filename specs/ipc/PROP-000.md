@@ -12,6 +12,7 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 ## Runtime architecture {#runtime}
 - Main entrypoint is `DockerClient` with configurable JSON and connection settings.
 - API version prefix is fixed at `1.51` unless explicitly revised in spec.
+- All built-in HTTP and raw hijack requests must use the `/v1.51/` path prefix through the same path builder.
 - HTTP transport uses Ktor CIO client + unix socket capability integration.
 
 ## Serialization contract {#serialization}
@@ -22,6 +23,7 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 - Parse behavior:
   - HTTP 2xx => decode as success payload type
   - non-2xx => decode as `ErrorResponse`
+- Missing or malformed error bodies, including HEAD responses, must fall back to an `ErrorResponse` containing the HTTP status.
 
 ## Auth contract {#auth}
 - Registry auth shall be cached in `DockerClientConfig.auth`.
@@ -29,6 +31,16 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
   - credentials (username/password)
   - identity token
 - Registry server resolution should try canonical and fallback forms.
+
+### HTTP logging {#auth.logging}
+- HTTP logging must not record request or response bodies.
+- Registry auth/config and HTTP authorization headers must be masked, including when DEBUG logging is enabled.
+- Auth endpoint exchanges must be excluded from HTTP logging.
+
+## Dashboard sample exposure {#samples.dashboard}
+- The dashboard sample must bind to `127.0.0.1` by default.
+- Container tables must wrap long names/image references and keep status/actions reachable using local horizontal scrolling on narrow screens.
+- Remote access is not provided by the sample; adding it requires an explicit authenticated HTTP/WebSocket design.
 
 ## Platform support baseline {#platforms}
 - JVM
@@ -41,4 +53,5 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 - Non-Docker OCI runtime abstractions.
 
 ## Changelog {#changelog}
+- 2026-09-11: clarified versioned requests, error-body fallbacks, safe logging, and dashboard binding after review.
 - 2026-03-07: initial foundational spec created from existing implementation.
