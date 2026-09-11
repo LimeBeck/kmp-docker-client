@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- fix: propagate HTTP and consumer failures from cold streams
+- fix: bind the Docker dashboard to loopback

@@ -37,6 +37,10 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 - Registry auth/config and HTTP authorization headers must be masked, including when DEBUG logging is enabled.
 - Auth endpoint exchanges must be excluded from HTTP logging.
 
+## Dashboard sample exposure {#samples.dashboard}
+- The dashboard sample must bind to `127.0.0.1` by default.
+- Remote access is not provided by the sample; adding it requires an explicit authenticated HTTP/WebSocket design.
+
 ## Platform support baseline {#platforms}
 - JVM
 - Linux X64
@@ -48,4 +52,5 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 - Non-Docker OCI runtime abstractions.
 
 ## Changelog {#changelog}
+- 2026-09-11: clarified versioned requests, error-body fallbacks, safe logging, and dashboard binding after review.
 - 2026-03-07: initial foundational spec created from existing implementation.
