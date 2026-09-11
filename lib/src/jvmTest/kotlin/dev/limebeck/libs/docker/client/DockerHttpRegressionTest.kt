@@ -61,6 +61,56 @@ class DockerHttpRegressionTest {
         }
     }
 
+    @Test fun pullReportsErrorAfterProgress() = runBlocking {
+        withDaemon(DockerReply("{\"status\":\"Pulling\"}\n{\"errorDetail\":{\"message\":\"pull failed\"}}\n")) { client, _ ->
+            assertEquals("pull failed", client.images.create("alpine:latest").errorOrNull()?.message)
+        }
+    }
+
+    @Test fun pushReportsLegacyError() = runBlocking {
+        withDaemon(DockerReply("{\"status\":\"Pushing\"}\n{\"error\":\"push failed\"}\n")) { client, daemon ->
+            assertEquals("push failed", client.images.push("alpine", tag = "latest").errorOrNull()?.message)
+            assertTrue(daemon.requests.single().line.startsWith("POST /v1.51/images/alpine/push?"))
+        }
+    }
+
+    @Test fun loadReportsStreamErrorAndUploadsTheBody() = runBlocking {
+        withDaemon(DockerReply("{\"errorDetail\":{\"message\":\"invalid archive\"}}\n")) { client, daemon ->
+            assertEquals("invalid archive", client.images.load(body = ByteReadChannel("archive".encodeToByteArray())).errorOrNull()?.message)
+            assertEquals("archive", daemon.requests.single().body)
+        }
+    }
+
+    @Test fun completedProgressReturnsSuccess() = runBlocking {
+        withDaemon(DockerReply("{\"status\":\"Pulling\"}\n\n{\"status\":\"Done\"}\n")) { client, _ ->
+            assertTrue(client.images.create("alpine:latest").isSuccess)
+        }
+    }
+
+    @Test fun malformedProgressDoesNotReturnSuccess() = runBlocking {
+        withDaemon(DockerReply("{\"status\":\"Pulling\"}\nnot-json\n")) { client, _ ->
+            assertTrue(client.images.create("alpine:latest").isError)
+        }
+    }
+
+    @Test fun imageHttpErrorRetainsDaemonMessage() = runBlocking {
+        withDaemon(DockerReply("{\"message\":\"denied\"}", "403 Forbidden")) { client, _ ->
+            assertEquals("denied", client.images.create("alpine:latest").errorOrNull()?.message)
+        }
+    }
+
+    @Test fun cancellingImageProgressClosesTheResponse() = runBlocking {
+        withDaemon(DockerReply("{\"status\":\"Pulling\"}\n", keepOpen = true)) { client, daemon ->
+            coroutineScope {
+                val operation = async { client.images.create("alpine:latest") }
+                while (!daemon.responseSent.get()) delay(10)
+                assertFalse(operation.isCompleted)
+                operation.cancelAndJoin()
+                while (!daemon.peerClosed.get()) delay(10)
+            }
+        }
+    }
+
     @Test fun headErrorsReturnResultWithoutJsonDecoding() = runBlocking {
         for (status in listOf("404 Not Found", "500 Internal Server Error")) {
             withDaemon(DockerReply(status = status)) { client, _ ->

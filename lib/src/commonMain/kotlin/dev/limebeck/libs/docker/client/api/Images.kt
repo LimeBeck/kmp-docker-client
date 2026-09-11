@@ -56,7 +56,7 @@ class Images(private val dockerClient: DockerClient) {
                 return@with ErrorResponse("Invalid image name: $fromImage: ${e.message}").asError()
             }
 
-            client.post(apiPath("/images/create")) {
+            client.preparePost(apiPath("/images/create")) {
                 parameter("fromImage", fromImage)
 
                 fromSrc?.let { parameter("fromSrc", it) }
@@ -67,7 +67,7 @@ class Images(private val dockerClient: DockerClient) {
                 platform?.let { parameter("platform", it) }
 
                 applyAuthForRegistry(registry)
-            }.validateOnly()
+            }.execute { it.validateImageProgress() }
         }
 
     /**
@@ -117,12 +117,12 @@ class Images(private val dockerClient: DockerClient) {
                 return@with ErrorResponse("Invalid image name: $name: ${e.message}").asError()
             }
 
-            client.post(apiPath("/images/$name/push")) {
+            client.preparePost(apiPath("/images/$name/push")) {
                 tag?.let { parameter("tag", it) }
                 platform?.let { parameter("platform", it) }
 
                 applyAuthForRegistry(registry)
-            }.validateOnly()
+            }.execute { it.validateImageProgress() }
         }
 
     /**
@@ -243,9 +243,9 @@ class Images(private val dockerClient: DockerClient) {
         body: ByteReadChannel
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
-            client.post(apiPath("/images/load")) {
+            client.preparePost(apiPath("/images/load")) {
                 parameter("quiet", quiet)
                 setBody(body)
-            }.validateOnly()
+            }.execute { it.validateImageProgress() }
         }
 }

@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- fix: preserve Result errors for HEAD and non-JSON responses
+- fix: validate image operation progress through completion

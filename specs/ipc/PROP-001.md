@@ -37,6 +37,11 @@ Must provide pull/list/inspect/remove/prune and related distribution flows alrea
 - image pull must apply registry auth header via `X-Registry-Auth` when matching auth exists.
 - docker hub aliases and registry variants must be resolved using priority candidates.
 
+### Image operation completion {#images.progress}
+- Pull, push, and load must consume the NDJSON progress response through completion.
+- HTTP success alone is insufficient: `errorDetail.message` or `error` in progress must return `Result.error(ErrorResponse)`.
+- Malformed progress messages must report an error; cancellation must propagate.
+
 ## Networks behavior {#networks}
 Must provide create/list/inspect/remove/connect/disconnect/prune operations.
 
