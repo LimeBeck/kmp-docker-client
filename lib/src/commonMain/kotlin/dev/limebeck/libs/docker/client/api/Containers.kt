@@ -84,6 +84,7 @@ class Containers(private val dockerClient: DockerClient) {
                             requestTimeoutMillis = 100_000
                         }
                     }.execute {
+                        it.requireStreamSuccess()
                         val channel = it.bodyAsChannel()
                         channel.readLogLines(container.config?.tty == true) { send(it) }
                     }
@@ -314,6 +315,7 @@ class Containers(private val dockerClient: DockerClient) {
                     parameter("stream", "true")
                     parameter("one-shot", oneShot.toString())
                 }.execute { response ->
+                    response.requireStreamSuccess()
                     val channel = response.bodyAsChannel()
                     while (!channel.isClosedForRead) {
                         val line = channel.readUTF8Line() ?: break

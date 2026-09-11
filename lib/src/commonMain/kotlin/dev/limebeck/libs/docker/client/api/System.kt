@@ -8,6 +8,7 @@ import io.ktor.client.statement.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.SerializationException
 
 val DockerClient.system by ::System.api()
 
@@ -90,16 +91,17 @@ class System(private val dockerClient: DockerClient) {
                 until?.let { parameter("until", it) }
                 filters?.let { parameter("filters", json.encodeToString(it)) }
             }.execute { response ->
+                response.requireStreamSuccess()
                 val channel = response.bodyAsChannel()
                 while (!channel.isClosedForRead) {
-                    val line = channel.readUTF8Line()
-                    if (!line.isNullOrBlank()) {
-                        try {
-                            emit(json.decodeFromString<EventMessage>(line))
-                        } catch (e: Exception) {
-                            // Skip invalid lines
-                        }
+                    val line = channel.readUTF8Line() ?: break
+                    if (line.isBlank()) continue
+                    val event = try {
+                        json.decodeFromString<EventMessage>(line)
+                    } catch (_: SerializationException) {
+                        continue
                     }
+                    emit(event)
                 }
             }
         }

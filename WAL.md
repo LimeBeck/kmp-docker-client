@@ -38,4 +38,4 @@
 - `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
 
 ## MR Packaging Progress
-- fix: validate image operation progress through completion
+- fix: propagate HTTP and consumer failures from cold streams

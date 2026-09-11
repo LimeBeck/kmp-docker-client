@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase
 import dev.limebeck.libs.docker.client.api.*
 import dev.limebeck.libs.docker.client.model.AuthConfig
+import dev.limebeck.libs.docker.client.model.DockerApiException
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
@@ -108,6 +109,71 @@ class DockerHttpRegressionTest {
                 operation.cancelAndJoin()
                 while (!daemon.peerClosed.get()) delay(10)
             }
+        }
+    }
+
+    @Test fun statsIsColdAndRejectsHttpErrorsBeforeEmitting() = runBlocking {
+        withDaemon(DockerReply("{\"message\":\"No such container\"}\n", "404 Not Found")) { client, daemon ->
+            val stats = client.containers.getStats("missing").getOrThrow()
+            assertTrue(daemon.requests.isEmpty())
+            var emitted = false
+            val error = assertFailsWith<DockerApiException> { stats.collect { emitted = true } }
+            assertFalse(emitted)
+            assertEquals(HttpStatusCode.NotFound, error.status)
+            assertEquals("No such container", error.error.message)
+            assertTrue(daemon.requests.single().line.startsWith("GET /v1.51/containers/missing/stats?"))
+        }
+    }
+
+    @Test fun oneShotStatsRetainsResultErrorContract() = runBlocking {
+        withDaemon(DockerReply("{\"message\":\"missing\"}", "404 Not Found")) { client, _ ->
+            assertEquals("missing", client.containers.getStats("missing", stream = false).errorOrNull()?.message)
+        }
+    }
+
+    @Test fun statsEmitsBeforeEofAndClosesAfterTake() = runBlocking {
+        withDaemon(DockerReply("{\"id\":\"container\"}\n", keepOpen = true)) { client, daemon ->
+            val sample = client.containers.getStats("container").getOrThrow().take(1).single()
+            assertEquals("container", sample.id)
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun logsRejectErrorsAfterSuccessfulInspect() = runBlocking {
+        withDaemon(DockerReply("{\"Config\":{\"Tty\":true}}"), DockerReply("{\"message\":\"logs unsupported\"}", "500 Internal Server Error")) { client, _ ->
+            val logs = client.containers.getLogs("container").getOrThrow()
+            val error = assertFailsWith<DockerApiException> { logs.collect { fail("Must not emit HTTP error body") } }
+            assertEquals("logs unsupported", error.error.message)
+        }
+    }
+
+    @Test fun eventsPropagatesTheOriginalConsumerException() = runBlocking {
+        withDaemon(DockerReply("{}\n{}\n")) { client, _ ->
+            val expected = IllegalStateException("consumer failed")
+            val actual = assertFailsWith<IllegalStateException> { client.system.events().collect { throw expected } }
+            assertSame(expected, actual)
+        }
+    }
+
+    @Test fun eventsSkipsMalformedRecords() = runBlocking {
+        withDaemon(DockerReply("{\"Action\":\"start\"}\nnot-json\n{\"Action\":\"stop\"}\n")) { client, daemon ->
+            assertEquals(listOf("start", "stop"), client.system.events().map { it.action }.toList())
+            assertEquals("GET /v1.51/events HTTP/1.1", daemon.requests.single().line)
+        }
+    }
+
+    @Test fun takingOneEventClosesAnOpenStream() = runBlocking {
+        withDaemon(DockerReply("{}\n", keepOpen = true)) { client, daemon ->
+            assertEquals(1, client.system.events().take(1).toList().size)
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun eventsRejectsHttpErrorsWithBodyFallback() = runBlocking {
+        withDaemon(DockerReply("not JSON", "502 Bad Gateway")) { client, _ ->
+            val error = assertFailsWith<DockerApiException> { client.system.events().collect { fail("Unexpected event") } }
+            assertEquals(HttpStatusCode.BadGateway, error.status)
+            assertTrue(error.error.message.contains("502"))
         }
     }
 

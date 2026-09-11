@@ -5,6 +5,7 @@ import dev.limebeck.libs.docker.client.api.AUTH_HEADER
 import dev.limebeck.libs.docker.client.api.resolveServerForRegistry
 import dev.limebeck.libs.docker.client.dsl.ApiCacheHolder
 import dev.limebeck.libs.docker.client.model.ErrorResponse
+import dev.limebeck.libs.docker.client.model.DockerApiException
 import dev.limebeck.libs.docker.client.model.Result
 import dev.limebeck.libs.docker.client.model.asError
 import dev.limebeck.libs.docker.client.model.asSuccess
@@ -109,6 +110,11 @@ open class DockerClient(
         } catch (_: SerializationException) {
             fallback
         }
+    }
+
+    /** Cold streams surface HTTP failures during collection, before decoding data. */
+    suspend fun HttpResponse.requireStreamSuccess() {
+        if (!status.isSuccess()) throw DockerApiException(status, errorResponse())
     }
 
     /** Docker can report an operation failure inside a successful NDJSON response. */

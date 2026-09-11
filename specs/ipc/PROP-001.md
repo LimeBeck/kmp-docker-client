@@ -60,5 +60,12 @@ Must provide:
 - Any non-success HTTP response should map to `ErrorResponse`.
 - Event/log streams should tolerate malformed lines without terminating stream processing globally.
 
+### Cold stream failures {#errors.streams}
+- Logs, streaming stats, and events remain cold: the streaming HTTP request opens on collection and closes on completion or cancellation.
+- Non-success streaming HTTP responses must be decoded into `ErrorResponse` and thrown as `DockerApiException` carrying that error and HTTP status before any data is emitted.
+- A `Result<Flow<...>, ErrorResponse>` only describes preparation; errors when collecting its Flow follow the rule above.
+- Events may skip malformed JSON records, but must propagate downstream exceptions and cancellation unchanged.
+
 ## Changelog {#changelog}
+- 2026-09-11: defined image progress completion and cold-stream HTTP error/cancellation semantics after review.
 - 2026-03-07: initial API-surface spec extracted from implemented modules.
