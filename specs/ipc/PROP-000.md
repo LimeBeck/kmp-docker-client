@@ -39,6 +39,7 @@ Module URI: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md`
 
 ## Dashboard sample exposure {#samples.dashboard}
 - The dashboard sample must bind to `127.0.0.1` by default.
+- Container tables must wrap long names/image references and keep status/actions reachable using local horizontal scrolling on narrow screens.
 - Remote access is not provided by the sample; adding it requires an explicit authenticated HTTP/WebSocket design.
 
 ## Platform support baseline {#platforms}

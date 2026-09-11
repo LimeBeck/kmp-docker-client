@@ -4,6 +4,8 @@
 - PR #3 is open for review: https://github.com/LimeBeck/kmp-docker-client/pull/3.
 
 ## Completed in Last Session
+- Fixed container table overflow: bounded columns, wrapping image digests/names, scrollable keyboard-focusable region, and responsive viewport/navigation. Spec: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md#samples.dashboard`.
+- Debug and release dashboard builds passed. Browser validation at desktop and 390px widths confirmed visible columns, no page-wide overflow, keyboard scrolling, and correct styles after HTMX navigation. Local dashboard restarted with the fix.
 - Kept the review report local as requested: excluded it from PR commits and added a local Git exclusion. Source code and validated build output are unchanged.
 - Opened PR #3 into master; branch published through existing GitHub SSH authentication. No merge or release was performed.
 - Packaged the verified changes into focused commits on `codex/modernize-and-fix-review`; target is `LimeBeck/kmp-docker-client:master`.

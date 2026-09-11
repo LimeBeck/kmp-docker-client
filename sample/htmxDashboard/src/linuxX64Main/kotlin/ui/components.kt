@@ -6,6 +6,7 @@ import kotlinx.html.*
 fun HTML.renderLayout(pageTitle: String, content: FlowContent.() -> Unit) {
     head {
         title(pageTitle)
+        meta(name = "viewport", content = "width=device-width, initial-scale=1")
         script(src = "https://unpkg.com/htmx.org@1.9.10") {}
         script(src = "https://unpkg.com/htmx.org@1.9.10/dist/ext/sse.js") {}
 
@@ -15,12 +16,12 @@ fun HTML.renderLayout(pageTitle: String, content: FlowContent.() -> Unit) {
 
         script(src = "https://cdn.tailwindcss.com") {}
     }
-    body("bg-gray-900 text-gray-100 p-8 font-sans max-w-6xl mx-auto") {
+    body("bg-gray-900 text-gray-100 p-4 sm:p-8 font-sans max-w-6xl mx-auto") {
         div {
             id = "alerts"
             classes = setOf("fixed top-4 right-4 z-50 flex flex-col gap-2")
         }
-        nav("flex gap-6 mb-8 border-b border-gray-700 pb-4") {
+        nav("flex flex-wrap gap-x-6 gap-y-3 mb-8 border-b border-gray-700 pb-4") {
             navLink("Containers", "/containers", "#main-content")
             navLink("Images", "/images", "#main-content")
             navLink("Volumes", "/volumes", "#main-content")

@@ -10,56 +10,63 @@ import ui.infoRow
 
 
 fun FlowContent.containerTable(containers: List<ContainerSummary>) {
-    div("bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700") {
-        table("w-full text-left") {
+    div("bg-gray-800 rounded-lg shadow-lg overflow-x-auto border border-gray-700") {
+        attributes["role"] = "region"
+        attributes["aria-label"] = "Containers"
+        attributes["tabindex"] = "0"
+        table("w-full min-w-[48rem] table-fixed text-left") {
             thead("bg-gray-700 text-gray-400 uppercase text-xs") {
                 tr {
-                    listOf("ID", "Name", "Image", "State", "Actions").forEach { th(classes = "px-6 py-3") { +it } }
+                    listOf("ID" to "w-36", "Name" to "w-1/4", "Image" to "", "State" to "w-28", "Actions" to "w-48").forEach { (label, width) ->
+                        th(classes = "px-4 py-3 $width") { +label }
+                    }
                 }
             }
             tbody("divide-y divide-gray-700") {
                 containers.forEach { container ->
                     tr("hover:bg-gray-700/50 transition-colors") {
-                        td("px-6 py-4 font-mono text-sm") { +(container.id?.take(12) ?: "-") }
-                        td("px-6 py-4 font-mono text-sm") {
+                        td("px-4 py-4 font-mono text-sm") { +(container.id?.take(12) ?: "-") }
+                        td("px-4 py-4 font-mono text-sm [overflow-wrap:anywhere]") {
                             +(container.names?.joinToString(", ") { it.removePrefix("/") } ?: "-")
                         }
-                        td("px-6 py-4") { +(container.image ?: "-") }
-                        td("px-6 py-4") {
+                        td("px-4 py-4 [overflow-wrap:anywhere]") { +(container.image ?: "-") }
+                        td("px-4 py-4") {
                             val dotColor =
                                 if (container.state == ContainerSummary.State.RUNNING) "bg-green-400" else "bg-red-400"
                             div("flex items-center gap-2") {
-                                div("w-2 h-2 rounded-full $dotColor") {}
+                                div("w-2 h-2 shrink-0 rounded-full $dotColor") {}
                                 +(container.state?.value ?: "unknown")
                             }
                         }
-                        td("px-6 py-4 flex gap-3") {
-                            button(classes = "text-blue-400 hover:text-blue-300 font-medium") {
-                                attributes["hx-get"] = "/containers/${container.id}"
-                                attributes["hx-target"] = "#main-content"
-                                attributes["hx-push-url"] = "true"
-                                +"Inspect"
-                            }
-
-                            if (container.state == ContainerSummary.State.RUNNING) {
-                                button(classes = "text-orange-400 hover:text-orange-300 font-medium") {
-                                    attributes["hx-post"] = "/containers/${container.id}/stop"
+                        td("px-4 py-4") {
+                            div("flex flex-wrap gap-x-3 gap-y-2 text-sm") {
+                                button(classes = "text-blue-400 hover:text-blue-300 font-medium") {
+                                    attributes["hx-get"] = "/containers/${container.id}"
                                     attributes["hx-target"] = "#main-content"
-                                    +"Stop"
+                                    attributes["hx-push-url"] = "true"
+                                    +"Inspect"
                                 }
-                            } else {
-                                button(classes = "text-green-400 hover:text-green-300 font-medium") {
-                                    attributes["hx-post"] = "/containers/${container.id}/start"
-                                    attributes["hx-target"] = "#main-content"
-                                    +"Start"
-                                }
-                            }
 
-                            button(classes = "text-red-400 hover:text-red-300 font-medium") {
-                                attributes["hx-delete"] = "/containers/${container.id}"
-                                attributes["hx-target"] = "#main-content"
-                                attributes["hx-confirm"] = "Are you sure you want to remove this container?"
-                                +"Remove"
+                                if (container.state == ContainerSummary.State.RUNNING) {
+                                    button(classes = "text-orange-400 hover:text-orange-300 font-medium") {
+                                        attributes["hx-post"] = "/containers/${container.id}/stop"
+                                        attributes["hx-target"] = "#main-content"
+                                        +"Stop"
+                                    }
+                                } else {
+                                    button(classes = "text-green-400 hover:text-green-300 font-medium") {
+                                        attributes["hx-post"] = "/containers/${container.id}/start"
+                                        attributes["hx-target"] = "#main-content"
+                                        +"Start"
+                                    }
+                                }
+
+                                button(classes = "text-red-400 hover:text-red-300 font-medium") {
+                                    attributes["hx-delete"] = "/containers/${container.id}"
+                                    attributes["hx-target"] = "#main-content"
+                                    attributes["hx-confirm"] = "Are you sure you want to remove this container?"
+                                    +"Remove"
+                                }
                             }
                         }
                     }
