@@ -36,6 +36,12 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 - Public compatibility checks and migration notes cover any breaking changes before 1.0.0; post-1.0 compatibility policy is documented before the stable release.
 - Release validation includes successful build/test/publication and resolution of the published artifacts from Maven Central.
 
+## Deprecation cleanup {#maintenance.deprecations}
+- Before 1.0.0, audit and resolve deprecation warnings from maintained Kotlin code, Gradle/build plugins, and CI actions.
+- Start with deprecated `ByteReadChannel.readUTF8Line` calls; preserve framing, EOF, malformed-input, and cancellation behavior when migrating.
+- Track warnings from generated code or external dependencies separately and fix their generator/dependency source where possible. Do not hide warnings with blanket suppression.
+- This is follow-up maintenance and does not expand the current 0.0.10 release.
+
 ## Deferred expansion {#deferred}
 The missing-domain exploration in `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md#phases` is deferred behind this goal. It must not displace the single-host readiness work unless the project owner revises the priority.
 

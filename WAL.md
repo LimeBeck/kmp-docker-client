@@ -25,6 +25,7 @@
 - Prior modernization remains in the working tree: Kotlin 2.4.20, Gradle 9.7.1, Ktor 3.5.2, updated libraries/plugins, Yarn lockfile, build/POM fixes, README and CI/cache changes.
 
 ## Next Steps
+- User-requested follow-up: resolve deprecation warnings in Kotlin, Gradle/plugins, and CI, starting with `readUTF8Line`; see `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#maintenance.deprecations`. Do not merely suppress them.
 1. Complete release 0.0.10 and verify the tag-triggered build/test/publish pipeline.
 2. Prioritize broader transport lifecycle coverage and compatibility/release guarantees before API expansion.
 3. Prioritize terminal/stream reliability and single-host workflows per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#priorities`.
