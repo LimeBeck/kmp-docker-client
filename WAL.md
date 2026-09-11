@@ -1,9 +1,10 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- PR #3 is open for review: https://github.com/LimeBeck/kmp-docker-client/pull/3.
+- Release 0.0.9 authorized: merge PR #3, publish tag v0.0.9, and verify Maven Central publication.
 
 ## Completed in Last Session
+- Prepared the README dependency example for 0.0.9. Release follows `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#publish`.
 - Fixed container table overflow: bounded columns, wrapping image digests/names, scrollable keyboard-focusable region, and responsive viewport/navigation. Spec: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-000.md#samples.dashboard`.
 - Debug and release dashboard builds passed. Browser validation at desktop and 390px widths confirmed visible columns, no page-wide overflow, keyboard scrolling, and correct styles after HTMX navigation. Local dashboard restarted with the fix.
 - Kept the review report local as requested: excluded it from PR commits and added a local Git exclusion. Source code and validated build output are unchanged.
@@ -21,7 +22,7 @@
 - Prior modernization remains in the working tree: Kotlin 2.4.20, Gradle 9.7.1, Ktor 3.5.2, updated libraries/plugins, Yarn lockfile, build/POM fixes, README and CI/cache changes.
 
 ## Next Steps
-1. Review the PR from `codex/modernize-and-fix-review` into `master`; no merge or release is requested.
+1. Complete release 0.0.9 and verify the tag-triggered build/test/publish pipeline.
 2. Prioritize broader transport lifecycle coverage and compatibility/release guarantees before API expansion.
 3. Expand domains following `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md#phases` after stabilization.
 
