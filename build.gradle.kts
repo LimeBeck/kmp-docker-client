@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.versions)
 }
 
-val libVersion: String by project
+val libVersion = providers.gradleProperty("libVersion").get()
 group = "dev.limebeck.libs"
 version = libVersion
 

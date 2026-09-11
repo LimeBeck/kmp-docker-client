@@ -1,14 +1,14 @@
 [versions]
 
-kotlin = "2.3.10"
-maven-publish = "0.36.0"
-kotlinx-coroutines = "1.10.2"
-kotlinx-serialization = "1.10.0"
-kotlinx-datetime = "0.6.2"
-ktor = "3.4.1"
-arrow = "2.2.2"
-dokka = "2.1.0"
-kotlinx-html = "0.11.0"
+kotlin = "2.4.20"
+maven-publish = "0.37.0"
+kotlinx-coroutines = "1.11.0"
+kotlinx-serialization = "1.11.0"
+kotlinx-datetime = "0.8.0"
+ktor = "3.5.2"
+arrow = "2.2.3"
+dokka = "2.2.0"
+kotlinx-html = "0.12.0"
 limebeck-libs = "1.0.3"
 
 [libraries]
@@ -33,7 +33,7 @@ arrow-suspendapp = { module = "io.arrow-kt:suspendapp", version.ref = "arrow" }
 kotlinx-html = { module = "org.jetbrains.kotlinx:kotlinx-html", version.ref = "kotlinx-html" }
 
 limebeck-common = { module = "dev.limebeck.libs:common", version.ref = "limebeck-libs" }
-logback = { module = "ch.qos.logback:logback-classic", version = "1.5.19" }
+logback = { module = "ch.qos.logback:logback-classic", version = "1.6.3" }
 
 [plugins]
 
@@ -41,6 +41,6 @@ multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotl
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-openapi-generator = { id = "org.openapi.generator", version = "7.20.0" }
-versions = { id = "com.github.ben-manes.versions", version = "0.53.0" }
+openapi-generator = { id = "org.openapi.generator", version = "7.25.0" }
+versions = { id = "io.github.ben-manes.versions", version = "0.61.0" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

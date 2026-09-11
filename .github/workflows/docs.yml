@@ -13,6 +13,7 @@ jobs:
     concurrency: docs-${{ github.ref }}
     environment: github-pages
     permissions:
+      contents: read
       pages: write
       id-token: write
     steps:
@@ -31,7 +32,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             ~/.konan/
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle
 

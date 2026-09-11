@@ -52,6 +52,7 @@ Test artifacts:
   - `actions/upload-pages-artifact`
   - `actions/deploy-pages`
 - Required job permissions:
+  - `contents: read` for repository checkout
   - `pages: write`
   - `id-token: write`
 
@@ -59,6 +60,7 @@ Test artifacts:
 - Runner baseline: `ubuntu-latest`.
 - Java baseline: Temurin JDK 21.
 - Cache should include Gradle and Kotlin/Native directories used by project builds.
+- Cache keys must include `gradle/libs.versions.toml` so dependency updates invalidate the cache.
 
 ## Change control {#change-control}
 - Any CI/CD modification must reference this spec:
