@@ -35,6 +35,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle
 
+      - name: Set up Docker API 1.51 baseline
+        id: docker
+        uses: docker/setup-docker-action@v5
+        with:
+          version: v28.5.2
+
+      - name: Expose and verify the SDK Unix socket
+        env:
+          TEST_DOCKER_SOCKET: ${{ steps.docker.outputs.sock }}
+        run: |
+          sudo systemctl stop docker.service docker.socket
+          socket_path="${TEST_DOCKER_SOCKET#unix://}"
+          test -S "$socket_path"
+          sudo ln -sfn "$socket_path" /var/run/docker.sock
+          docker --host unix:///var/run/docker.sock version
+          test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
+
       - name: Build with Gradle
         run: ./gradlew build -PlibVersion=$LIB_VERSION
 
@@ -76,6 +93,23 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle
+
+      - name: Set up Docker API 1.51 baseline
+        id: docker
+        uses: docker/setup-docker-action@v5
+        with:
+          version: v28.5.2
+
+      - name: Expose and verify the SDK Unix socket
+        env:
+          TEST_DOCKER_SOCKET: ${{ steps.docker.outputs.sock }}
+        run: |
+          sudo systemctl stop docker.service docker.socket
+          socket_path="${TEST_DOCKER_SOCKET#unix://}"
+          test -S "$socket_path"
+          sudo ln -sfn "$socket_path" /var/run/docker.sock
+          docker --host unix:///var/run/docker.sock version
+          test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Run tests with Gradle
         run: ./gradlew :lib:allTests -PlibVersion=$LIB_VERSION

@@ -1,9 +1,10 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Release 0.0.9 in progress: PR #3 merged, tag v0.0.9 published at 7a760876cacc1d49a5720cdef5d124047f8eb58d.
+- Release 0.0.10 preparation: v0.0.9 publication was skipped after CI found the runner daemon only supports API 1.48; the existing tag is preserved.
 
 ## Completed in Last Session
+- Fixed release build/test daemon provisioning: pinned Docker 28.5.2, exposed its Unix socket, and added an API 1.51 preflight. Updated README compatibility and release version.
 - Accepted 1.0.0 target: reliable support for a single-host Docker management panel. Recorded priorities and acceptance gates in `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#goal`; deferred FEAT-001 expansion. This documentation does not change the v0.0.9 tag.
 - Started Release CI: https://github.com/LimeBeck/kmp-docker-client/actions/runs/34642498375; Maven Central publication is not yet confirmed.
 - Prepared the README dependency example for 0.0.9. Release follows `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#publish`.
@@ -24,7 +25,7 @@
 - Prior modernization remains in the working tree: Kotlin 2.4.20, Gradle 9.7.1, Ktor 3.5.2, updated libraries/plugins, Yarn lockfile, build/POM fixes, README and CI/cache changes.
 
 ## Next Steps
-1. Complete release 0.0.9 and verify the tag-triggered build/test/publish pipeline.
+1. Complete release 0.0.10 and verify the tag-triggered build/test/publish pipeline.
 2. Prioritize broader transport lifecycle coverage and compatibility/release guarantees before API expansion.
 3. Prioritize terminal/stream reliability and single-host workflows per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#priorities`.
 

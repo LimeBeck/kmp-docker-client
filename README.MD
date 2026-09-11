@@ -7,6 +7,8 @@
 
 A Docker Remote API client library written in Kotlin Multiplatform using Ktor.
 
+Requires a Docker daemon supporting API 1.51 (Docker 28.3 or later with API 1.51 enabled). API version negotiation is not implemented.
+
 ## 🚀 Features
 
 - **Kotlin Multiplatform**: Supports JVM, Linux X64, and NodeJS.
@@ -27,7 +29,7 @@ Add dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:0.0.9")
+    implementation("dev.limebeck.libs:docker-client:0.0.10")
 }
 ```
 

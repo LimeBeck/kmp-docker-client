@@ -61,6 +61,7 @@ Test artifacts:
 ## Cache/runtime baseline {#runtime}
 - Runner baseline: `ubuntu-latest`.
 - Java baseline: Temurin JDK 21.
+- Build/test jobs must provision Docker 28.5.2 (API 1.51), expose its socket at `/var/run/docker.sock`, and verify `/v1.51/_ping` before Gradle. The runner-provided daemon version is not a supported implicit dependency.
 - Cache should include Gradle and Kotlin/Native directories used by project builds.
 - Cache keys must include `gradle/libs.versions.toml` so dependency updates invalidate the cache.
 
@@ -70,6 +71,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-11: pinned a compatible Docker daemon after v0.0.9 CI rejected API 1.51 on a runner supporting only 1.48.
 - 2026-09-11: required JUnit artifacts from both build/test jobs and publication after an upstream failure.
 - 2026-03-07: initial CI/CD release pipeline contract added based on `.github/workflows/main.yml`.
 - 2026-03-07: added Dokka GitHub Pages publication contract.
