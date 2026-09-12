@@ -14,7 +14,7 @@ import dev.limebeck.libs.docker.client.model.asError
 import dev.limebeck.libs.docker.client.model.asSuccess
 import dev.limebeck.libs.docker.client.socket.DockerRawConnection
 import dev.limebeck.libs.docker.client.socket.openRawConnectionUnix
-import dev.limebeck.libs.logger.logger
+import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
@@ -42,7 +42,7 @@ open class DockerClient(
 ) : ApiCacheHolder {
     companion object {
         const val API_VERSION = "1.51"
-        val logger = DockerClient::class.logger()
+        val logger = KtorSimpleLogger("dev.limebeck.libs.docker.client.DockerClient")
     }
 
     val json = config.json
@@ -55,7 +55,7 @@ open class DockerClient(
         install(Logging) {
             logger = object : Logger {
                 override fun log(message: String) {
-                    DockerClient.logger.debug { message }
+                    DockerClient.logger.debug(message)
                 }
             }
             level = LogLevel.HEADERS
@@ -230,7 +230,7 @@ open class DockerClient(
 
     suspend fun openRawConnection(): DockerRawConnection = when (config.connectionConfig) {
         is DockerClientConfig.ConnectionConfig.SocketConnection -> {
-            logger.debug { "Open raw socket connection" }
+            logger.debug("Open raw socket connection")
             openRawConnectionUnix(config.connectionConfig.socketPath)
         }
     }

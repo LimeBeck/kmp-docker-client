@@ -37,6 +37,9 @@ Must provide:
 - Environment, ports, mounts and network configuration are supplied explicitly for each replacement. Orchestration, rollback, readiness checks and backups belong to the application.
 - Real-Docker tests on all supported targets cover configuration inspection, conflicting/missing-image errors, resource update, recreation with changed environment, and reading retained volume data after both original and replacement removal.
 
+## Storage metadata compatibility {#models.storage}
+- DriverData.Data is nullable: Docker 29 with containerd image storage returns null for container/image inspection. The local schema explicitly corrects this wire compatibility mismatch; preserve non-null driver maps without replacing null with invented metadata.
+
 ## Images behavior {#images}
 Must provide pull/list/inspect/remove/prune and related distribution flows already present in code.
 
@@ -102,6 +105,7 @@ Must provide:
 - Event recovery should resume from a saved timestamp with overlap/deduplication and refresh resource state, since event history is finite. Logs need an explicit since/tail policy; stats may simply resubscribe. Cancellation and downstream errors must not trigger retries.
 
 ## Changelog {#changelog}
+- 2026-09-12: corrected nullable storage metadata for Docker 29 and removed the library logger dependency requiring Java 21.
 - 2026-09-12: owner requested generic operation-specific aux; push now uses ImagePushResult, create/load use Unit, with no JSON fields in public progress models.
 - 2026-09-12: owner requested explicit serializable image progress models instead of a raw JSON wrapper; invalid counts are rejected rather than treated as absent.
 - 2026-09-12: exposed ordered image progress callbacks while retaining final Result outcomes and existing signatures.

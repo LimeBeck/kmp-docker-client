@@ -8,6 +8,10 @@ Existing `containers.create(config = ContainerConfig(...))` and image create/pus
 
 Image operations now have suspending progress callbacks, with final completion/error still returned as `Result`. Long-operation request/socket-idle timeouts are disabled; use your own coroutine cancellation or deadline. Cancellation releases the request but cannot roll back work already performed by the daemon. See [image progress](IMAGE-PROGRESS.md).
 
+The Docker 29 containerd image store can return `GraphDriver.Data: null`. `DriverData.data` is now nullable; use safe access or `orEmpty()` when appropriate. Non-null metadata is preserved.
+
+`DockerClient.logger` now uses Ktor’s logger type instead of `dev.limebeck.libs.logger.Logger`, removing a runtime dependency compiled for Java 21. Direct users of this companion property must use the Ktor logging API (string messages instead of the old lambda API). Existing logging redaction tests still apply.
+
 Code written against earlier commits in this unpublished RC branch needs these changes:
 
 - Replace `ImageProgress(raw)` with explicit `ImageProgress<TAux>(...)` construction.

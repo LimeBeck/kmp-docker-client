@@ -35,7 +35,8 @@ Use disposable resources with unique names and explicit cleanup. Record dashboar
 ## Evidence
 
 - Local compatibility validation: `./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2` passed, including all 218 library tests and sample builds.
-- Matrix run URL/SHA: pending.
+- Follow-up compatibility fix: actual Temurin 17 `:lib:allTests :lib:updateKotlinAbi` passed with 224 tests (JVM 102, Node.js 61, Linux X64 61), no failures/skips; separate `:lib:checkKotlinAbi` passed. Both used `--warning-mode=fail`. The ABI diff is limited to the documented logger type and storage metadata nullability changes.
+- Matrix run URL/SHA: pending after fixing Java 21 logger bytecode on JDK 17 and nullable Docker 29 containerd metadata discovered by run 34700163603.
 - ABI check and negative probe: passed locally. A simulated removed ImagePushResult getter in the reference snapshot failed checkKotlinAbi; restoring the snapshot restored success. JVM and JS/Linux KLib snapshots are committed.
 - Dashboard application run: pending.
 - Daemon restart/resubscription: deferred.

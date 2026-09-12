@@ -50,7 +50,6 @@ kotlin {
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.client.serialization)
                 implementation(libs.ktor.serialization.json)
-                implementation(libs.limebeck.common)
             }
 
         }

@@ -1846,7 +1846,8 @@ definitions:
           This information is driver-specific, and depends on the storage-driver
           in use, and should be used for informational purposes only.
         type: "object"
-        x-nullable: false
+        x-nullable: true
+        # Compatibility correction: Docker 29 containerd storage returns Data: null.
         additionalProperties:
           type: "string"
         example: {

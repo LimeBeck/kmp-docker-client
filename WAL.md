@@ -7,12 +7,12 @@
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Owner deferred daemon restart/resubscription and requested compatibility/readiness work first. FEAT-002 records the order change without marking recovery passed.
-- PR CI now has Docker 28.5.2/29.0.0 × JDK 17/21 on Ubuntu 24.04; every cell tests JVM/Node/Linux X64 with distinct report artifacts and fail-fast disabled. Node.js is pinned to 24.16.0 using NodeJsEnvSpec.
-- Built-in Kotlin ABI validation enabled for JVM and JS/Linux KLib, including all generated models. References: lib/api/lib.api and lib/api/lib.klib.api. Unsupported targets fail rather than being inferred. CI checks, never updates, snapshots.
-- Kotlin warnings now fail compilation across all modules; Gradle warning-mode=fail and Dokka failOnWarning remain enabled. Generator allOf diagnostics are tracked separately.
-- Added docs/COMPATIBILITY.md, docs/MIGRATION-1.0.0-rc.md and docs/RC-ACCEPTANCE.md, linked from README. Contracts: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.abi and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.pr.
-- Full local build/checkKotlinAbi/Dokka passed in 8m58s, including 218 tests and sample executables. Negative ABI probe failed as expected for a simulated removed getter; restored baseline passed in 2s. Workflow matrix/permissions/artifact checks passed.
+- Diagnosed PR CI run 34700163603: JDK 17 could not load common:1.0.3 logger classes compiled for Java 21; Docker 29 containerd returned GraphDriver.Data=null rejected by generated models.
+- Removed the library common logger dependency in lib/build.gradle.kts and switched DockerClient/ExecSession/HijackHandshake to Ktor logging. The native dashboard retains its own explicit dependency. JDK 17/21 matrix is unchanged.
+- Explicitly corrected DriverData.Data nullability in specs/v1.51.yaml and added common regression tests for both null containerd metadata and preserved overlay2 maps in container/image inspection. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#models.storage.
+- Regenerated JVM and JS/Linux ABI snapshots; reviewed diff contains only the logger type and DriverData nullability changes. Documented migration from 0.1.0. No checks were disabled.
+- Actual Temurin 17 local allTests/updateKotlinAbi passed in 6m52s: JVM 102, Node.js 61, Linux X64 61 tests, no failures/skips. Separate checkKotlinAbi passed in 7s, all with --warning-mode=fail. Focused HTTP logging regressions also passed before the full run.
+- Previous RC work includes complete create configuration, typed generic image progress, terminal cleanup checks, the four-cell Docker/JDK matrix, warning-as-error compilation, ABI guards and acceptance/migration documentation.
 
 ## Next Steps
 1. Check the new four-cell PR CI matrix after push; record run URL/SHA in release evidence.

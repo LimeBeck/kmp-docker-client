@@ -22,7 +22,7 @@ public class dev/limebeck/libs/docker/client/DockerClient : dev/limebeck/libs/do
 }
 
 public final class dev/limebeck/libs/docker/client/DockerClient$Companion {
-	public final fun getLogger ()Ldev/limebeck/libs/logger/Logger;
+	public final fun getLogger ()Lorg/slf4j/Logger;
 }
 
 public final class dev/limebeck/libs/docker/client/DockerClientConfig {

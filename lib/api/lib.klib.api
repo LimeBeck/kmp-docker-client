@@ -2694,16 +2694,16 @@ final class dev.limebeck.libs.docker.client.model/Driver { // dev.limebeck.libs.
 }
 
 final class dev.limebeck.libs.docker.client.model/DriverData { // dev.limebeck.libs.docker.client.model/DriverData|null[0]
-    constructor <init>(kotlin/String, kotlin.collections/Map<kotlin/String, kotlin/String>) // dev.limebeck.libs.docker.client.model/DriverData.<init>|<init>(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+    constructor <init>(kotlin/String, kotlin.collections/Map<kotlin/String, kotlin/String>?) // dev.limebeck.libs.docker.client.model/DriverData.<init>|<init>(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.String>?){}[0]
 
     final val data // dev.limebeck.libs.docker.client.model/DriverData.data|{}data[0]
-        final fun <get-data>(): kotlin.collections/Map<kotlin/String, kotlin/String> // dev.limebeck.libs.docker.client.model/DriverData.data.<get-data>|<get-data>(){}[0]
+        final fun <get-data>(): kotlin.collections/Map<kotlin/String, kotlin/String>? // dev.limebeck.libs.docker.client.model/DriverData.data.<get-data>|<get-data>(){}[0]
     final val name // dev.limebeck.libs.docker.client.model/DriverData.name|{}name[0]
         final fun <get-name>(): kotlin/String // dev.limebeck.libs.docker.client.model/DriverData.name.<get-name>|<get-name>(){}[0]
 
     final fun component1(): kotlin/String // dev.limebeck.libs.docker.client.model/DriverData.component1|component1(){}[0]
-    final fun component2(): kotlin.collections/Map<kotlin/String, kotlin/String> // dev.limebeck.libs.docker.client.model/DriverData.component2|component2(){}[0]
-    final fun copy(kotlin/String = ..., kotlin.collections/Map<kotlin/String, kotlin/String> = ...): dev.limebeck.libs.docker.client.model/DriverData // dev.limebeck.libs.docker.client.model/DriverData.copy|copy(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+    final fun component2(): kotlin.collections/Map<kotlin/String, kotlin/String>? // dev.limebeck.libs.docker.client.model/DriverData.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/Map<kotlin/String, kotlin/String>? = ...): dev.limebeck.libs.docker.client.model/DriverData // dev.limebeck.libs.docker.client.model/DriverData.copy|copy(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.String>?){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.client.model/DriverData.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.client.model/DriverData.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.model/DriverData.toString|toString(){}[0]
@@ -10476,7 +10476,7 @@ open class dev.limebeck.libs.docker.client/DockerClient : dev.limebeck.libs.dock
             final fun <get-API_VERSION>(): kotlin/String // dev.limebeck.libs.docker.client/DockerClient.Companion.API_VERSION.<get-API_VERSION>|<get-API_VERSION>(){}[0]
 
         final val logger // dev.limebeck.libs.docker.client/DockerClient.Companion.logger|{}logger[0]
-            final fun <get-logger>(): dev.limebeck.libs.logger/Logger // dev.limebeck.libs.docker.client/DockerClient.Companion.logger.<get-logger>|<get-logger>(){}[0]
+            final fun <get-logger>(): io.ktor.util.logging/Logger // dev.limebeck.libs.docker.client/DockerClient.Companion.logger.<get-logger>|<get-logger>(){}[0]
     }
 }
 
