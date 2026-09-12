@@ -32,6 +32,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.io.encoding.Base64
 
 open class DockerClient(
@@ -162,8 +163,13 @@ open class DockerClient(
             val error = detail?.contentOrNull?.takeIf { it.isNotBlank() }
                 ?: legacyError?.contentOrNull?.takeIf { it.isNotBlank() }
             if (error != null) return ErrorResponse(error).asError()
+            val progress = try {
+                json.decodeFromJsonElement<ImageProgress>(message)
+            } catch (_: SerializationException) {
+                return ErrorResponse("Invalid Docker image progress response").asError()
+            }
             // Deliberately outside parsing/read catches: consumer failures belong to the caller.
-            onProgress(ImageProgress(message))
+            onProgress(progress)
         }
         channel.closedCause?.let { error ->
             if (error is CancellationException) throw error

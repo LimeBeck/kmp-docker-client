@@ -302,11 +302,11 @@ class DockerHttpRegressionTest {
                 assertEquals(2, records.size)
                 assertEquals("layer", records[0].id)
                 assertEquals("Working", records[0].status)
-                assertEquals(9007199254740993uL, records[0].current)
-                assertEquals(ULong.MAX_VALUE, records[0].total)
+                assertEquals(9007199254740993uL, records[0].progressDetail?.current)
+                assertEquals(ULong.MAX_VALUE, records[0].progressDetail?.total)
                 assertEquals("Loaded image", records[1].stream)
                 assertNotNull(records[1].aux)
-                assertNotNull(records[1].raw["extension"])
+                assertNull(records[1].progressDetail)
                 if (kind == "load") assertEquals("archive", daemon.requests.single().body)
             }
         }
@@ -349,7 +349,7 @@ class DockerHttpRegressionTest {
 
     @Test fun imageCallbacksDoNotTurnFailuresIntoSuccess() = runBlocking {
         for (kind in listOf("pull", "push", "load")) {
-            for (tail in listOf("{\"errorDetail\":{\"message\":\"denied\"}}", "{\"error\":\"denied\"}", "broken")) {
+            for (tail in listOf("{\"errorDetail\":{\"message\":\"denied\"}}", "{\"error\":\"denied\"}", "broken", "{\"progressDetail\":{\"current\":-1}}", "{\"progressDetail\":{\"total\":18446744073709551616}}")) {
                 withDaemon(DockerReply("{\"status\":\"Working\"}\n$tail\n")) { client, _ ->
                     val records = mutableListOf<ImageProgress>()
                     assertTrue(imageOperation(client, kind) { records += it }.isError)

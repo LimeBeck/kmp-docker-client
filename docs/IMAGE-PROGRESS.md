@@ -4,7 +4,7 @@ Available in the upcoming `1.0.0-rc`. Existing calls without a callback keep the
 
 ```kotlin
 val result = client.images.create("alpine:latest") { update ->
-    println("${update.id.orEmpty()}: ${update.status.orEmpty()} ${update.current}/${update.total}")
+    println("${update.id.orEmpty()}: ${update.status.orEmpty()} ${update.progressDetail?.current}/${update.progressDetail?.total}")
 }
 result.fold(
     onSuccess = { println("Pull completed") },
@@ -12,7 +12,7 @@ result.fold(
 )
 ```
 
-`images.push(name, onProgress = { ... })` and `images.load(body = archive, onProgress = { ... })` use the same callback and final result. The callback receives `ImageProgress` with optional `id`, `status`, `stream`, `progress`, `current`, `total`, `aux` and the original `raw` JSON. Counts are exact unsigned integers, including on Node.js; missing or invalid counts remain null. Layer counts are not an overall percentage. Render unknown totals as indeterminate progress, and avoid dividing by zero.
+`images.push(name, onProgress = { ... })` and `images.load(body = archive, onProgress = { ... })` use the same callback and final result. The callback receives `ImageProgress` with optional `id`, `status`, `stream`, `progress`, `progressDetail` and `aux`. Both `ImageProgress` and `ImageProgressDetail` are serializable data classes with explicit fields; only the extensible `aux` payload uses `JsonObject`. Counts in `progressDetail.current` and `progressDetail.total` are exact unsigned integers, including on Node.js. Missing counts remain null; invalid counts fail the operation as malformed progress. Unknown JSON fields are ignored. Layer counts are not an overall percentage. Render unknown totals as indeterminate progress, and avoid dividing by zero.
 
 Callbacks run sequentially as records arrive. A suspending callback applies backpressure; it does not create an unbounded queue. The library does not choose a UI dispatcher, so switch to the appropriate dispatcher before updating UI state. Bound any application-owned progress history.
 

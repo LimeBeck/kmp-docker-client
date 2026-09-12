@@ -2,19 +2,18 @@
 
 ## Current Focus
 - Preparing one release `1.0.0-rc` on `codex/prepare-1.0.0-rc`, based on published 0.1.0 (e12c96a). The owner requested sequential implementation without intermediate releases.
-- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Steps 1–2 are commits 7301be2/a40a266. PR CI 34686728810 exposed a mock-server Broken pipe race; it is now reproduced and fixed. Step 3 image progress is commit fdbe29d.
+- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Steps 1–2 are commits 7301be2/a40a266. PR CI 34686728810 exposed a mock-server Broken pipe race; it is now reproduced and fixed. Step 3 image progress is commit fdbe29d; fixture fix 8ca92af passed PR CI 34687877135.
 - Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.rc`.
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Steps 1–2 already added PR CI, stabilized log snapshots, complete container creation, persistent-volume recreation tests and documentation.
-- Step 3: added suspending onProgress overloads to image create/push/load, retaining old signatures. ImageProgress preserves raw records and optional typed fields with exact unsigned counts. Callbacks are ordered/backpressured; final Result reports daemon completion/errors, cancellation and consumer failures propagate unchanged.
-- Image operations now detect short Content-Length responses and have caller-owned deadlines. Added docs/IMAGE-PROGRESS.md and contract spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress.
-- All 211 tests passed (JVM 97, Node.js 57, Linux 57), including real pull/load and mock push/progress failures/cancellation. Dokka passed with warning-mode=fail.
-- CI terminal failure fixed: the mock now accepts peer aborts only for explicitly marked early-close replies. Latches force 10 uncollected sessions to close before prompt delivery, and the test asserts all 20 requests finish and all 10 early aborts occur. No sleeps or expanded deadlines in the fix. All HTTP regressions passed after the change; mock failures are surfaced immediately when a test fails.
+- Owner requested replacing the raw JSON wrapper with explicit serializable models. ImageProgress now has nullable id/status/stream/progress/progressDetail/aux fields; ImageProgressDetail has nullable ULong current/total. Only aux remains JsonObject.
+- Progress decoding uses the typed serializer after checking Docker error records. Unknown fields are ignored with the default JSON config. Missing counts remain null; invalid typed values return a malformed-progress error before invoking the callback. Consumer exceptions and cancellation remain outside decoder catches.
+- Updated examples, model construction/serialization round-trip tests, unknown-field checks, exact unsigned counters, and HTTP regressions for invalid counts. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress.
+- Previous CI 34687877135 passed, confirming the deterministic terminal mock fix. Typed-model validation passed: all 214 tests (JVM 98, Node.js 58, Linux 58) and Dokka with warning-mode=fail in 4m12s.
 
 ## Next Steps
-1. Verify PR CI after pushing image progress and deterministic mock cleanup fixes.
+1. Verify PR CI after pushing typed image progress models.
 2. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist. Do not restart the user’s real Docker daemon.
 3. Run final acceptance before tagging/publishing 1.0.0-rc.
 
