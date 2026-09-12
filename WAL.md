@@ -2,7 +2,7 @@
 
 ## Current Focus
 - Preparing one release `1.0.0-rc` on `codex/prepare-1.0.0-rc`, based on published 0.1.0 (e12c96a). The owner requested sequential implementation without intermediate releases.
-- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Steps 1–2 are commits 7301be2/a40a266. PR CI 34686728810 failed the repeated terminal test; a mock-server Broken pipe race has now been reproduced with delayed body delivery.
+- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Steps 1–2 are commits 7301be2/a40a266. PR CI 34686728810 exposed a mock-server Broken pipe race; it is now reproduced and fixed. Step 3 image progress is commit fdbe29d.
 - Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.rc`.
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
@@ -11,10 +11,10 @@
 - Step 3: added suspending onProgress overloads to image create/push/load, retaining old signatures. ImageProgress preserves raw records and optional typed fields with exact unsigned counts. Callbacks are ordered/backpressured; final Result reports daemon completion/errors, cancellation and consumer failures propagate unchanged.
 - Image operations now detect short Content-Length responses and have caller-owned deadlines. Added docs/IMAGE-PROGRESS.md and contract spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress.
 - All 211 tests passed (JVM 97, Node.js 57, Linux 57), including real pull/load and mock push/progress failures/cancellation. Dokka passed with warning-mode=fail.
-- CI terminal failure reproduced: after receiving upgrade headers an uncollected session closes before the mock writes its prompt; Broken pipe stops the mock worker and the next handshake times out. A temporary 20 ms body delay reproduced this reliably; remove it and replace with deterministic synchronization/expected peer-close handling before committing the fixture fix.
+- CI terminal failure fixed: the mock now accepts peer aborts only for explicitly marked early-close replies. Latches force 10 uncollected sessions to close before prompt delivery, and the test asserts all 20 requests finish and all 10 early aborts occur. No sleeps or expanded deadlines in the fix. All HTTP regressions passed after the change; mock failures are surfaced immediately when a test fails.
 
 ## Next Steps
-1. Fix the reproduced mock-server early-close race as a separate commit, then verify PR CI.
+1. Verify PR CI after pushing image progress and deterministic mock cleanup fixes.
 2. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist. Do not restart the user’s real Docker daemon.
 3. Run final acceptance before tagging/publishing 1.0.0-rc.
 

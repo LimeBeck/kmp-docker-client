@@ -35,7 +35,12 @@ class DockerHttpRegressionTest {
                 connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(daemon.path.toString())
             ))
             try {
-                withTimeout(timeoutMillis) { block(client, daemon) }
+                try {
+                    withTimeout(timeoutMillis) { block(client, daemon) }
+                } catch (error: Throwable) {
+                    daemon.checkHealthy()
+                    throw error
+                }
                 daemon.checkHealthy()
             } finally {
                 client.client.close()
@@ -223,12 +228,24 @@ class DockerHttpRegressionTest {
     }
 
     @Test fun repeatedTerminalSessionsReleaseConnectionsIncludingUncollectedOutput() = runBlocking {
-        val replies = Array(20) { DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true) }
+        val gates = Array(20) { java.util.concurrent.CountDownLatch(1) }
+        val replies = Array(20) { index ->
+            DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true,
+                allowEarlyClose = index % 2 != 0,
+                beforeBody = if (index % 2 == 0) null else ({
+                    check(gates[index].await(5, java.util.concurrent.TimeUnit.SECONDS)) { "Client did not close session $index" }
+                }),
+            )
+        }
         withDaemon(*replies, timeoutMillis = 30_000) { client, daemon ->
             repeat(replies.size) { index ->
                 withTimeout(5_000) {
-                    client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
-                        if (index % 2 == 0) session.incomingChunks.first()
+                    try {
+                        client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
+                            if (index % 2 == 0) session.incomingChunks.first()
+                        }
+                    } finally {
+                        gates[index].countDown()
                     }
                 }
             }
@@ -238,6 +255,7 @@ class DockerHttpRegressionTest {
             }
             assertTrue(daemon.peerClosed.get(), "The final uncollected session must close its socket")
             assertEquals(replies.size, daemon.requests.size)
+            assertEquals(replies.size / 2, daemon.abortedResponses.get())
         }
     }
 
