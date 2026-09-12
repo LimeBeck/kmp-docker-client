@@ -1,3 +1,5 @@
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+
 plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.kotlin.serialization)
@@ -9,7 +11,9 @@ kotlin {
     ).forEach {
         it.binaries.executable {
             entryPoint = "main"
-            binaryOption("smallBinary", "true")
+            if (buildType == org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.RELEASE) {
+                binaryOption("smallBinary", "true")
+            }
         }
     }
 
