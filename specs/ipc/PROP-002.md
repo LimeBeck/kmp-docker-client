@@ -20,6 +20,7 @@ Define mandatory behavior for GitHub Actions CI/CD pipeline in this repository.
 - Library publish steps must not run for non-tag refs.
 
 ## Build and test contract {#ci.jobs}
+Gradle build, test, and Dokka checks must use `--warning-mode=fail` to reject deprecated Gradle behavior.
 Pipeline must include these sequential jobs:
 1. `build` running `./gradlew build`.
 2. `test` running `./gradlew :lib:allTests` and depending on `build`.
@@ -39,6 +40,10 @@ Test artifacts:
   - GPG material: `GPG_SIGNING_KEY`, `SECRET_PASSPHRASE`, `GPG_PASSWORD`, `GPG_KEY_ID`
   - Maven Central credentials: `OSSRH_USERNAME`, `OSSRH_PASSWORD`
 
+### Development version {#publish.development}
+- The default `libVersion` in `gradle.properties` is `0.1.0`, the next release target.
+- Release tags continue to override this default through `-PlibVersion`; changing the default does not publish a release.
+
 ## Test results publication contract {#test-results}
 - Pipeline must include a dedicated post-test results publication job.
 - It should download CI artifacts and publish JUnit-style reports to GitHub checks UI.
@@ -50,15 +55,16 @@ Test artifacts:
 - Published artifact path must match Dokka output directory (`lib/build/dokka/html`).
 - Docs deployment must be isolated in docs workflow (not combined with release workflow).
 - Deployment must use GitHub Pages actions:
-  - `actions/configure-pages`
-  - `actions/upload-pages-artifact`
-  - `actions/deploy-pages`
+  - `actions/configure-pages@v6`
+  - `actions/upload-pages-artifact@v5`
+  - `actions/deploy-pages@v5`
 - Required job permissions:
   - `contents: read` for repository checkout
   - `pages: write`
   - `id-token: write`
 
 ## Cache/runtime baseline {#runtime}
+- JavaScript actions (including nested composite dependencies) must use Node.js 24 rather than deprecated Node.js 20.
 - Runner baseline: `ubuntu-latest`.
 - Java baseline: Temurin JDK 21.
 - Build/test jobs must provision Docker 28.5.2 (API 1.51), expose its socket at `/var/run/docker.sock`, and verify `/v1.51/_ping` before Gradle. The runner-provided daemon version is not a supported implicit dependency.
@@ -71,6 +77,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-12: migrated JavaScript action runtimes to Node.js 24 and made Gradle deprecations fail CI checks.
 - 2026-09-11: pinned a compatible Docker daemon after v0.0.9 CI rejected API 1.51 on a runner supporting only 1.48.
 - 2026-09-11: required JUnit artifacts from both build/test jobs and publication after an upstream failure.
 - 2026-03-07: initial CI/CD release pipeline contract added based on `.github/workflows/main.yml`.

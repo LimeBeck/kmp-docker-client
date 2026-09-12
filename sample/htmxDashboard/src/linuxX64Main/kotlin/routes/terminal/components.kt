@@ -5,9 +5,7 @@ import kotlinx.html.FlowContent
 import kotlinx.html.a
 import kotlinx.html.div
 import kotlinx.html.h1
-import kotlinx.html.id
-import kotlinx.html.script
-import kotlinx.html.unsafe
+import ui.renderTerminalPanel
 
 fun FlowContent.renderTerminal(containerId: String, info: ContainerInspectResponse?) {
     div("space-y-6") {
@@ -22,63 +20,6 @@ fun FlowContent.renderTerminal(containerId: String, info: ContainerInspectRespon
                 +"← Back to Container"
             }
         }
-        div {
-            div("bg-gray-800 rounded-lg p-4 font-mono text-sm h-96 h-full w-full overflow-hidden border border-gray-700 shadow-inner") {
-                id = "terminal"
-            }
-            script {
-                unsafe {
-                    +"""
-                    (function() {
-                        var terminalContainer = document.getElementById('terminal');
-                        var term = new Terminal({
-                            cursorBlink: true,
-                            convertEol: true,
-                            theme: {
-                                background: '#1f2937'
-                            }
-                        });
-                        
-                        var fitAddon = new FitAddon.FitAddon();
-                        term.loadAddon(fitAddon);
-                        term.open(terminalContainer);
-                        fitAddon.fit();
-            
-                        var socket = new WebSocket('ws://' + window.location.host + '/containers/$containerId/terminal/ws');
-                        
-                        socket.onopen = function() {
-                            term.write('\r\n\x1b[32mConnection established.\x1b[0m\r\n');
-                        }
-            
-                        socket.onmessage = function(event) {
-                            console.log(event)
-                            if (typeof event.data === 'string') {
-                                term.write(event.data);
-                            } else {
-                                const reader = new FileReader();
-                                reader.onload = () => {
-                                     term.write(new Uint8Array(reader.result));
-                                };
-                                reader.readAsArrayBuffer(event.data);
-                            }
-                        };
-                        
-                        socket.onclose = function() {
-                            term.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n');
-                        }
-            
-                        term.onData(function(data) {
-                            console.log(data)
-                            socket.send(data);
-                        });
-            
-                        window.addEventListener('resize', function() {
-                            fitAddon.fit();
-                        });
-                    })();
-                    """.trimIndent()
-                }
-            }
-        }
+        renderTerminalPanel("/containers/$containerId/terminal/ws")
     }
 }

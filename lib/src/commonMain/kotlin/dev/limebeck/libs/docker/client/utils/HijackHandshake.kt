@@ -4,11 +4,10 @@ import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.model.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlin.contracts.ExperimentalContracts
 
@@ -94,24 +93,28 @@ suspend fun readHttp11Headers(channel: ByteReadChannel): HijackHandshake {
     }
 }
 
-fun prependLeftover(
+internal suspend fun <T> withPrefixedChannel(
     leftover: ByteArray,
-    upstream: ByteReadChannel
-): ByteReadChannel {
-    if (leftover.isEmpty()) return upstream
-
-    val out = ByteChannel(autoFlush = false)
-    CoroutineScope(Dispatchers.Default).launch {
+    upstream: ByteReadChannel,
+    block: suspend (ByteReadChannel) -> T
+): T = coroutineScope {
+    if (leftover.isEmpty()) return@coroutineScope block(upstream)
+    val out = ByteChannel(autoFlush = true)
+    val forwarder = launch {
         try {
             out.writeFully(leftover)
-            out.flush()
-            // прокидываем остаток потока
             upstream.copyTo(out)
-        } finally {
-            out.close()
+            out.close(upstream.closedCause)
+        } catch (error: Throwable) {
+            out.close(error)
         }
     }
-    return out
+    try {
+        block(out)
+    } finally {
+        forwarder.cancel()
+        out.cancel()
+    }
 }
 
 suspend fun DockerClient.createInteractiveSession(
@@ -149,17 +152,23 @@ suspend fun DockerClient.createInteractiveSession(
 
         DockerClient.logger.debug { "Connection hjacked" }
 
-        val incomingChannel = prependLeftover(hs.leftover, conn.read)
-
-        val incomingFlow: Flow<LogLine> = channelFlow {
-            incomingChannel.readLogLines(tty) { send(it) }
+        val incomingFlow: Flow<LogLine> = flow {
+            withPrefixedChannel(hs.leftover, conn.read) { channel ->
+                channel.readLogLines(tty) { emit(it) }
+            }
+        }
+        val chunks: Flow<OutputChunk> = flow {
+            withPrefixedChannel(hs.leftover, conn.read) { channel ->
+                channel.readOutputChunks(tty) { emit(it) }
+            }
         }
 
-        val session = ExecSession(incomingFlow, tty, conn)
+        val session = ExecSession(incomingFlow, tty, conn, chunks)
 
         return@coroutineScope session.asSuccess()
     } catch (t: Throwable) {
         runCatching { conn.close() }
+        if (t is CancellationException) throw t
         return@coroutineScope ErrorResponse(message = t.message ?: "createInteractiveSession failed").asError()
     }
 }

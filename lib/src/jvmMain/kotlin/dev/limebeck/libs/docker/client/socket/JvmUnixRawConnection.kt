@@ -1,5 +1,6 @@
 package dev.limebeck.libs.docker.client.socket
 
+import io.ktor.utils.io.close
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
@@ -13,10 +14,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.InputStream
-import java.io.OutputStream
 import java.net.UnixDomainSocketAddress
-import java.nio.channels.Channels
+import java.net.StandardProtocolFamily
+import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
 private class JvmUnixRawConnection(
@@ -39,14 +39,14 @@ private const val DEFAULT_BUF_SIZE = 16 * 1024 // 16 KiB
 
 actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
     val address = UnixDomainSocketAddress.of(path)
-    val socketChannel = withContext(Dispatchers.IO) {
-        SocketChannel.open(address)
+    val socketChannel = SocketChannel.open(StandardProtocolFamily.UNIX)
+    try {
+        withContext(Dispatchers.IO) { socketChannel.connect(address) }
+    } catch (error: Throwable) {
+        socketChannel.close()
+        throw error
     }
 
-    val input: InputStream = Channels.newInputStream(socketChannel)
-    val output: OutputStream = Channels.newOutputStream(socketChannel)
-
-    // Прокидываем blocking streams в ktor ByteChannels (suspend-friendly)
     val incoming = ByteChannel(autoFlush = false)
     val outgoing = ByteChannel(autoFlush = false)
 
@@ -56,13 +56,13 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
         val buf = ByteArray(DEFAULT_BUF_SIZE)
         try {
             while (isActive) {
-                val n = input.read(buf)
+                val n = socketChannel.read(ByteBuffer.wrap(buf))
                 if (n < 0) break
                 incoming.writeFully(buf, 0, n)
                 incoming.flush()
             }
-        } catch (_: Throwable) {
-            // ignore; close below
+        } catch (error: Throwable) {
+            incoming.close(error)
         } finally {
             incoming.close()
         }
@@ -74,13 +74,14 @@ actual suspend fun openRawConnectionUnix(path: String): DockerRawConnection {
             while (isActive) {
                 val n = outgoing.readAvailable(buf, 0, buf.size)
                 if (n < 0) break
-                output.write(buf, 0, n)
-                output.flush()
+                val bytes = ByteBuffer.wrap(buf, 0, n)
+                while (bytes.hasRemaining()) socketChannel.write(bytes)
             }
-        } catch (_: Throwable) {
-            // ignore
+        } catch (error: Throwable) {
+            outgoing.close(error)
+            incoming.close(error)
+            socketChannel.close()
         } finally {
-            runCatching { output.flush() }
             outgoing.close()
         }
     }

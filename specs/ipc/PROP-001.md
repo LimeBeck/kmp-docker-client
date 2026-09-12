@@ -51,6 +51,21 @@ Must provide create/list/inspect/remove/prune operations.
 ## Exec behavior {#exec}
 Must support command execution lifecycle including interactive session/hijack flows where implemented.
 
+### Interactive output and ownership {#exec.streams}
+- `ExecSession.incomingChunks` delivers binary output as soon as bytes arrive, including TTY prompts without a newline, CR/ANSI sequences, and bytes received with the HTTP upgrade headers.
+- Non-TTY chunks carry stdout/stderr identity with Docker framing removed. Chunk boundaries are arbitrary, including within UTF-8 characters; consumers must use a streaming decoder when converting to text. Individual chunks are bounded to 16 KiB.
+- Truncated multiplex headers/payloads and transport failures terminate collection with an exception; clean EOF completes normally. Cancellation and consumer exceptions propagate unchanged.
+- A session owns its raw connection. Exactly one collection of either `incomingChunks` or the compatibility `incoming` flow is allowed. Completion, cancellation, or failure closes the connection; explicit `close()` is idempotent and is required if output is never collected. Sending after close fails.
+- `startInteractive` defaults to TTY for compatibility and accepts an explicit `tty` matching the exec creation config.
+- `incoming` retains its existing line-oriented TTY behavior. Terminal applications must use `incomingChunks`, not read `connection.read` directly.
+- A cancelled handshake closes the acquired connection and propagates cancellation. Prefix forwarding is scoped to collection, with no detached forwarding job.
+
+### Dashboard terminal sizing {#exec.dashboard-sizing}
+- Attach and exec terminal panels fit their available space on initial connection, container layout changes, browser resize, and fullscreen transitions. Changed row/column counts are forwarded to the matching Docker TTY resize endpoint; non-TTY attach skips Docker resize.
+- The shared panel offers browser fullscreen with a visible exit button and supports the browser's normal Escape behavior. If the browser rejects fullscreen, the panel fills the viewport with an explicit exit button and Escape support.
+- Dashboard WebSocket input uses binary UTF-8 frames; text frames carry JSON resize controls with integer rows/cols in 1..1000. Control frames never reach shell stdin.
+- Navigation disposes the terminal, socket, resize observer, animation frame, and document/window listeners.
+
 ## System behavior {#system}
 Must provide:
 - info/version/ping/data usage
@@ -66,6 +81,17 @@ Must provide:
 - A `Result<Flow<...>, ErrorResponse>` only describes preparation; errors when collecting its Flow follow the rule above.
 - Events may skip malformed JSON records, but must propagate downstream exceptions and cancellation unchanged.
 
+### Stream limits and recovery {#errors.streams.recovery}
+- JSON stream records and TTY log lines are limited to 1,048,576 characters; multiplex log payloads are limited to 1,048,576 bytes before allocation. Oversized records and invalid/truncated multiplex framing fail collection and release the response.
+- Stream readers apply backpressure without an internal output queue. Idle streams have no request-duration or socket-idle timeout; callers own cancellation/deadlines.
+- Stats reject malformed JSON. Events continue to skip malformed JSON records. Complete final JSON records without a newline are accepted; transport failures must propagate even at EOF.
+- Docker `uint64` and `uint32` counters must generate Kotlin `ULong` and `UInt`, including nested stats fields, so CPU/memory/network counters do not overflow 32-bit signed integers.
+- CIO reports a disconnect between complete HTTP chunks as EOF, even without a terminal zero chunk. Applications must therefore handle both EOF and exceptions when recovering a live subscription.
+- Clean EOF completes normally. There is no implicit retry on errors or EOF. Each new collection opens a new stream request; after daemon recovery an application can resubscribe explicitly.
+- Event recovery should resume from a saved timestamp with overlap/deduplication and refresh resource state, since event history is finite. Logs need an explicit since/tail policy; stats may simply resubscribe. Cancellation and downstream errors must not trigger retries.
+
 ## Changelog {#changelog}
+- 2026-09-12: bounded stream records, validated HTTP body completion, and documented explicit resubscription.
+- 2026-09-11: defined binary terminal output, single-collection ownership, and session cleanup.
 - 2026-09-11: defined image progress completion and cold-stream HTTP error/cancellation semantics after review.
 - 2026-03-07: initial API-surface spec extracted from implemented modules.

@@ -3,6 +3,8 @@ package dev.limebeck.libs.docker.client.api
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.model.ContainerConfig
 import dev.limebeck.libs.docker.client.model.ExecConfig
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -97,4 +99,35 @@ class ExecTest {
             client.containers.remove(containerId, force = true).getOrThrow()
         }
     }
+    @Test
+    fun `TTY prompt and reply arrive without newline`() = runTest {
+        client.images.create(fromImage = "alpine:latest").getOrThrow()
+        val containerId = client.containers.create(config = ContainerConfig(
+            image = "alpine:latest", cmd = listOf("sleep", "10000")
+        )).getOrThrow().id
+        try {
+            client.containers.start(containerId).getOrThrow()
+            val execId = client.containers.execCreate(containerId, ExecConfig(
+                cmd = listOf("sh", "-c", "printf 'ready> '; read value; printf 'received:%s' \"\$value\""),
+                attachStdin = true, attachStdout = true, attachStderr = true, tty = true
+            )).getOrThrow().id
+            client.exec.startInteractive(execId).getOrThrow().use { session ->
+                val ready = CompletableDeferred<Unit>()
+                val reader = async {
+                    val text = StringBuilder()
+                    session.incomingChunks.first {
+                        text.append(it.bytes.decodeToString())
+                        if (text.contains("ready> ")) ready.complete(Unit)
+                        text.contains("received:ok")
+                    }
+                }
+                ready.await()
+                session.send("ok\n")
+                reader.await()
+            }
+        } finally {
+            client.containers.remove(containerId, force = true, v = true).getOrThrow()
+        }
+    }
+
 }

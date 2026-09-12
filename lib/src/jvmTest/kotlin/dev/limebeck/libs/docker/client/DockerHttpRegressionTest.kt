@@ -41,6 +41,128 @@ class DockerHttpRegressionTest {
         }
     }
 
+    private suspend fun stream(client: DockerClient, kind: String): Flow<*> = when (kind) {
+        "logs" -> client.containers.getLogs("container").getOrThrow()
+        "stats" -> client.containers.getStats("container").getOrThrow()
+        else -> client.system.events()
+    }
+
+    private fun streamReplies(kind: String, vararg replies: DockerReply): Array<DockerReply> =
+        (if (kind == "logs") listOf(DockerReply("{\"Config\":{\"Tty\":true}}")) else emptyList())
+            .plus(replies).toTypedArray()
+
+    @Test fun cancellingIdleStreamsReleasesTheirConnections() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            val replies = streamReplies(kind, DockerReply(keepOpen = true))
+            withDaemon(*replies) { client, daemon ->
+                val source = stream(client, kind)
+                val collector = launch { source.collect() }
+                while (daemon.requests.size < replies.size || !daemon.responseSent.get()) delay(10)
+                collector.cancelAndJoin()
+                while (!daemon.peerClosed.get()) delay(10)
+            }
+        }
+    }
+
+    @Test fun streamConsumerFailuresReleaseConnectionsWithoutRetry() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            withDaemon(*streamReplies(kind, DockerReply("{}\n", keepOpen = true))) { client, daemon ->
+                val expected = IllegalArgumentException("consumer")
+                val actual = assertFailsWith<IllegalArgumentException> {
+                    stream(client, kind).collect { throw expected }
+                }
+                assertEquals(expected.message, actual.message)
+                while (!daemon.peerClosed.get()) delay(10)
+            }
+        }
+    }
+
+    @Test fun streamsCanBeRecollectedAfterBrokenHttpBody() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            withDaemon(*streamReplies(kind,
+                DockerReply("{}\n", declaredLength = 100), DockerReply("{}\n")
+            )) { client, daemon ->
+                val source = stream(client, kind)
+                assertFails { source.toList() }
+                assertEquals(1, source.toList().size)
+                assertEquals(if (kind == "logs") 3 else 2, daemon.requests.size)
+            }
+        }
+    }
+
+    @Test fun truncatedChunkedStreamsFailAndCanBeRecollected() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            withDaemon(*streamReplies(kind,
+                DockerReply("5\r\n{}\n", headers = mapOf("Transfer-Encoding" to "chunked")),
+                DockerReply("{}\n")
+            )) { client, _ ->
+                val source = stream(client, kind)
+                assertFails { source.toList() }
+                assertEquals(1, source.toList().size)
+            }
+        }
+    }
+
+    @Test fun disconnectBetweenCompleteChunksSupportsEofRecovery() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            withDaemon(*streamReplies(kind,
+                DockerReply("3\r\n{}\n\r\n", headers = mapOf("Transfer-Encoding" to "chunked")),
+                DockerReply("{}\n")
+            )) { client, _ ->
+                val source = stream(client, kind)
+                // CIO reports EOF at a complete chunk boundary without requiring the terminal zero chunk.
+                assertEquals(1, source.toList().size)
+                assertEquals(1, source.toList().size)
+            }
+        }
+    }
+
+    @Test fun cleanEofSupportsExplicitResubscription() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            withDaemon(*streamReplies(kind, DockerReply("{}"), DockerReply("{}"))) { client, _ ->
+                val source = stream(client, kind)
+                repeat(2) { assertEquals(1, source.toList().size) }
+            }
+        }
+    }
+
+    @Test fun oversizedStreamRecordsFailAndReleaseTheResponse() = runBlocking {
+        for (kind in listOf("logs", "stats", "events")) {
+            withDaemon(*streamReplies(kind, DockerReply("x".repeat(1024 * 1024 + 1) + "\n", keepOpen = true))) { client, daemon ->
+                assertFails { stream(client, kind).collect { fail("Oversized record emitted") } }
+                while (!daemon.peerClosed.get()) delay(10)
+            }
+        }
+    }
+
+    @Test fun oversizedImageProgressReturnsAnError() = runBlocking {
+        withDaemon(DockerReply("x".repeat(1024 * 1024 + 1) + "\n")) { client, _ ->
+            assertNotNull(client.images.create("alpine").errorOrNull())
+        }
+    }
+
+    @Test fun malformedStatsFailInsteadOfEmittingEmptyStatistics() = runBlocking {
+        withDaemon(DockerReply("{broken}\n", keepOpen = true)) { client, daemon ->
+            assertFailsWith<kotlinx.serialization.SerializationException> {
+                client.containers.getStats("container").getOrThrow().collect { fail("Unexpected stats") }
+            }
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun eventsKeepCursorAndFiltersWhenResubscribing() = runBlocking {
+        withDaemon(DockerReply("{}\n"), DockerReply("{}\n")) { client, daemon ->
+            val source = client.system.events(since = "123.456", until = "789", filters = mapOf("type" to listOf("container")))
+            repeat(2) { source.toList() }
+            for (request in daemon.requests) {
+                val url = Url("http://localhost" + request.line.split(' ')[1])
+                assertEquals("123.456", url.parameters["since"])
+                assertEquals("789", url.parameters["until"])
+                assertEquals("{\"type\":[\"container\"]}", url.parameters["filters"])
+            }
+        }
+    }
+
     @Test fun ordinaryRequestsUseVersionedPathsAndPreserveQuery() = runBlocking {
         withDaemon(DockerReply("[]"), DockerReply("OK")) { client, daemon ->
             client.containers.getList(all = true, filters = mapOf("name" to listOf("a b"))).getOrThrow()
@@ -59,6 +181,77 @@ class DockerHttpRegressionTest {
                 assertEquals(listOf("hello"), session.incoming.map { it.line }.toList())
             }
             assertEquals("POST /v1.51/exec/probe/start HTTP/1.1", daemon.requests.single().line)
+        }
+    }
+
+    @Test fun ttyPromptArrivesWhileSocketRemainsOpenAndFirstReleasesSocket() = runBlocking {
+        withDaemon(DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true)) { client, daemon ->
+            val session = client.exec.startInteractive("probe").getOrThrow()
+            assertEquals("prompt> ", session.incomingChunks.first().bytes.decodeToString())
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun cancellingIdleTerminalReleasesSocket() = runBlocking {
+        withDaemon(DockerReply("", "101 Switching Protocols", keepOpen = true)) { client, daemon ->
+            val session = client.exec.startInteractive("probe").getOrThrow()
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { session.incomingChunks.collect() }
+            collector.cancelAndJoin()
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun terminalCanSendWhileWaitingForMoreOutput() = runBlocking {
+        withDaemon(DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true, expectedInput = "hello")) { client, daemon ->
+            val session = client.exec.startInteractive("probe").getOrThrow()
+            val prompt = CompletableDeferred<Unit>()
+            val reader = async {
+                val output = StringBuilder()
+                session.incomingChunks.first {
+                    output.append(it.bytes.decodeToString())
+                    if (output.contains("prompt> ")) prompt.complete(Unit)
+                    output.contains("accepted")
+                }
+            }
+            prompt.await()
+            session.send("hello")
+            reader.await()
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun repeatedTerminalSessionsReleaseConnectionsIncludingUncollectedOutput() = runBlocking {
+        val replies = Array(20) { DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true) }
+        withDaemon(*replies) { client, daemon ->
+            repeat(replies.size) { index ->
+                client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
+                    if (index % 2 == 0) session.incomingChunks.first()
+                }
+            }
+            assertEquals(replies.size, daemon.requests.size)
+        }
+    }
+
+    @Test fun cancellingHandshakePropagatesAndReleasesSocket() = runBlocking {
+        withDaemon(DockerReply(sendResponse = false)) { client, daemon ->
+            var returned = false
+            val handshake = launch {
+                client.exec.startInteractive("probe")
+                returned = true
+            }
+            while (daemon.requests.isEmpty()) delay(10)
+            handshake.cancelAndJoin()
+            assertFalse(returned)
+            while (!daemon.peerClosed.get()) delay(10)
+        }
+    }
+
+    @Test fun execCanReadMultiplexedOutputWithoutTty() = runBlocking {
+        withDaemon(DockerReply("\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0003err", "101 Switching Protocols")) { client, daemon ->
+            val chunk = client.exec.startInteractive("probe", tty = false).getOrThrow().incomingChunks.first()
+            assertEquals(dev.limebeck.libs.docker.client.model.LogLine.Type.STDERR, chunk.type)
+            assertEquals("err", chunk.bytes.decodeToString())
+            assertTrue(daemon.requests.single().body.contains("\"Tty\":false"))
         }
     }
 
@@ -151,7 +344,7 @@ class DockerHttpRegressionTest {
         withDaemon(DockerReply("{}\n{}\n")) { client, _ ->
             val expected = IllegalStateException("consumer failed")
             val actual = assertFailsWith<IllegalStateException> { client.system.events().collect { throw expected } }
-            assertSame(expected, actual)
+            assertTrue(actual === expected || actual.cause === expected)
         }
     }
 

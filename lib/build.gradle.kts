@@ -116,7 +116,9 @@ openApiGenerate {
 
     typeMappings.set(mapOf(
         "object" to "JsonObject",
-        "AnyType" to "JsonElement"
+        "AnyType" to "JsonElement",
+        "integer+uint64" to "kotlin.ULong",
+        "integer+uint32" to "kotlin.UInt"
     ))
 
     importMappings.set(mapOf(

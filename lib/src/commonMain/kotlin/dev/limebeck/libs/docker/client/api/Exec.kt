@@ -34,22 +34,29 @@ class Exec(private val dockerClient: DockerClient) {
      * Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting
      * the command.
      */
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun startInteractive(
         id: String,
         consoleSize: Pair<Int, Int>? = null
+    ): Result<ExecSession, ErrorResponse> = startInteractive(id, consoleSize, tty = true)
+
+    /** Start interactive output with the same TTY mode used when creating the exec instance. */
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun startInteractive(
+        id: String,
+        consoleSize: Pair<Int, Int>? = null,
+        tty: Boolean
     ): Result<ExecSession, ErrorResponse> = with(dockerClient) {
         coroutineScope {
             val config = ExecStartConfig(
                 detach = false,
-                tty = true,
+                tty = tty,
                 consoleSize = consoleSize?.let { listOf(it.first, it.second) }
             )
             val body = dockerClient.json.encodeToString(config)
             val encodedBody = body.encodeToByteArray()
 
             return@coroutineScope createInteractiveSession(
-                tty = true,
+                tty = tty,
                 method = HttpMethod.Post,
                 path = "/exec/$id/start",
                 headers = buildMap {

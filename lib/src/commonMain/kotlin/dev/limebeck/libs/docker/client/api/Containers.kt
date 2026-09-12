@@ -1,5 +1,7 @@
 package dev.limebeck.libs.docker.client.api
 
+import dev.limebeck.libs.docker.client.utils.readDockerLine
+
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.dsl.api
 import dev.limebeck.libs.docker.client.model.*
@@ -12,8 +14,9 @@ import io.ktor.http.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.buffer
 
 val DockerClient.containers by ::Containers.api()
 
@@ -79,16 +82,13 @@ class Containers(private val dockerClient: DockerClient) {
                         parameters.since?.let { parameter("since", it) }
                         parameters.tail?.let { parameter("tail", it) }
 
-                        applyConnectionConfig()
-                        timeout {
-                            requestTimeoutMillis = 100_000
-                        }
+                        applyStreamConfig()
                     }.execute {
-                        it.requireStreamSuccess()
-                        val channel = it.bodyAsChannel()
-                        channel.readLogLines(container.config?.tty == true) { send(it) }
+                        it.consumeStream { channel ->
+                            channel.readLogLines(container.config?.tty == true) { send(it) }
+                        }
                     }
-                }
+                }.buffer(0)
 
                 return@coroutineScope logs.asSuccess()
             }
@@ -309,22 +309,22 @@ class Containers(private val dockerClient: DockerClient) {
                 return response.map { flow { emit(it) } }
             }
 
-            val statsFlow = flow {
+            val statsFlow = channelFlow {
                 client.prepareGet(apiPath("/containers/$id/stats")) {
-                    applyConnectionConfig()
+                    applyStreamConfig()
                     parameter("stream", "true")
                     parameter("one-shot", oneShot.toString())
                 }.execute { response ->
-                    response.requireStreamSuccess()
-                    val channel = response.bodyAsChannel()
-                    while (!channel.isClosedForRead) {
-                        val line = channel.readUTF8Line() ?: break
-                        if (line.isEmpty()) continue
-                        val stats = json.decodeFromString<ContainerStatsResponse>(line)
-                        emit(stats)
+                    response.consumeStream { channel ->
+                        while (true) {
+                            val line = channel.readDockerLine() ?: break
+                            if (line.isBlank()) continue
+                            val stats = json.decodeFromString<ContainerStatsResponse>(line)
+                            send(stats)
+                        }
                     }
                 }
-            }
+            }.buffer(0)
             return statsFlow.asSuccess()
         }
 

@@ -5,7 +5,9 @@ plugins {
 kotlin {
     linuxX64().binaries.executable {
         entryPoint = "main"
-        binaryOption("smallBinary", "true")
+        if (buildType == org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.RELEASE) {
+            binaryOption("smallBinary", "true")
+        }
     }
 
     sourceSets {

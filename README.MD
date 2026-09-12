@@ -158,6 +158,8 @@ HTMX Dashboard:
 ./gradlew :sample:htmxDashboard:runDebugExecutableLinuxX64
 ```
 
+Terminal and Exec panels automatically fit their available space and update the Docker TTY dimensions. Use **Full screen** to expand the terminal and **Exit full screen** or **Esc** to return. If browser fullscreen is unavailable, the panel expands within the tab.
+
 The dashboard listens on `127.0.0.1:8080`. It is a local development example;
 remote access requires a separate authenticated HTTP/WebSocket design.
 
@@ -214,9 +216,46 @@ Generate API documentation locally:
 
 The HTML output is in `lib/build/dokka/html`. The docs workflow deploys it to GitHub Pages on pushes
 to `master`. Release tags (`v<semver>`) trigger build, test, and Maven Central publication; the tag
-supplies the published library version. Local builds use `snapshot` unless `-PlibVersion=...` is supplied.
+supplies the published library version. Local builds target the upcoming `0.1.0` release unless `-PlibVersion=...` is supplied.
+The dependency example above uses the latest published version, `0.0.10`.
 
 Project contracts and the continuation log are in [`specs/ipc`](specs/ipc/README.md) and [`WAL.md`](WAL.md).
+
+## Interactive terminal output
+
+Use `incomingChunks` for exec/attach terminals. It delivers bytes immediately, including prompts without a newline, preserves CR/ANSI sequences, and removes Docker multiplex headers for non-TTY sessions.
+
+```kotlin
+client.exec.startInteractive(execId).getOrThrow().use { session ->
+    session.incomingChunks.collect { chunk ->
+        terminal.write(chunk.bytes) // Feed binary data to your terminal or a streaming UTF-8 decoder.
+    }
+}
+```
+
+Run input forwarding concurrently using `session.send(bytes)` or `session.send(text)`. For an exec created with `tty = false`, also pass `tty = false` to `startInteractive`. `chunk.type` distinguishes stdout/stderr for non-TTY output. Chunk boundaries can split UTF-8 characters; decoding each chunk independently can corrupt text.
+
+Collect exactly one of `incomingChunks` and the compatibility `incoming` flow, once per session. Collection completion, cancellation (including `first()`/`take()`), or failure closes the connection. Close the session explicitly if you never collect output. `close()` is idempotent; sending after close fails. Avoid reading `session.connection.read` directly: this bypasses buffered handshake bytes, framing, and collection cleanup. The older `incoming` API still buffers TTY text until a line ending.
+
+Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams`.
+
+Migration from 0.0.10: `incoming.first()` now closes the session, and output cannot be collected again. Use one long-lived collector to process multiple messages. The unscoped `prependLeftover` utility has been removed; use the session output API, which owns forwarding and cleanup.
+
+## Logs, stats and events: lifetime and recovery
+
+Stream requests open on collection and close on EOF, failure, or cancellation (`first()`/`take()` included). Stats with `stream = false` remain an ordinary one-shot request. `getLogs` inspects the container during preparation to determine TTY mode; the log request itself opens on collection. Output processing applies backpressure. There is no fixed request-duration or idle timeout for these streams; use coroutine cancellation or `withTimeout` when the application needs a deadline.
+
+TTY lines and JSON stream records are limited to 1,048,576 characters, and multiplex log frames to 1,048,576 bytes. Oversized records and invalid/truncated frames fail instead of allocating unbounded memory. Stats fail on malformed JSON; events skip malformed JSON records. CR, LF, CRLF and complete final records without a newline are supported. HTTP failures throw `DockerApiException`; transport and decoding errors propagate to the collector.
+
+Docker unsigned counters now use `ULong`/`UInt` (a model API change in 0.1.0); CPU nanoseconds and byte counters retain their full unsigned range.
+
+CIO can report a disconnect between complete HTTP chunks as normal EOF, even when the terminal zero chunk is missing. Handle both EOF and exceptions when recovering a live subscription. Truncation within a chunk or a declared Content-Length body is reported as an error.
+
+The SDK never reconnects implicitly. Recollect a flow to open a new stream after clean EOF or failure. After a daemon restart, use a bounded exponential delay with jitter at the application level, and retry only transport failures or selected server errors. Do not retry cancellation, consumer failures, invalid records, or permanent HTTP errors. Keep the transport retry boundary upstream of application processing.
+
+For events, create a new `events(since = savedTimestamp, filters = ...)` subscription with a small overlap and deduplicate replayed events. Refresh the container/image/network/volume snapshot after reconnect: event history is finite, so a timestamp alone cannot guarantee gap-free recovery. For logs, choose `since`/`tail` explicitly to control replay; prepare `getLogs` again if the container may have been recreated. Stats can simply subscribe again and treat the first CPU sample as a fresh baseline.
+
+Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.streams.recovery`.
 
 ## 🤝 Contributing
 
