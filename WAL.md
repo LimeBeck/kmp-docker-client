@@ -3,9 +3,10 @@
 ## Current Focus
 - Completed the terminal/session portion of 0.1 on `codex/terminal-session-lifecycle`.
 - Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams`; target remains the single-host panel in FEAT-002.
-- Published baseline remains 0.0.10; no release is part of this change.
+- Next release target is 0.1.0 (`gradle.properties`), as requested by the owner. Published baseline remains 0.0.10; no tag or publication was created.
 
 ## Completed in Last Session
+- Raised the default build version from snapshot to 0.1.0, updated README and `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#publish.development`. The version bump is included in MR #4. `:lib:properties` verified both version and libVersion are 0.1.0; `git diff --check` passed.
 - Added `ExecSession.incomingChunks`: immediate binary TTY output, bounded multiplex parsing, stdout/stderr identity, and preservation of HTTP-upgrade leftover bytes.
 - Sessions allow one output collector and close on EOF, consumer failure, cancellation, or explicit close. Handshake cancellation propagates. Prefix forwarding has collection scope.
 - Preserved the line API and existing constructors/startInteractive calls; added explicit non-TTY exec mode. README explains single-collection ownership and migration from the removed unscoped prependLeftover utility.
@@ -15,7 +16,7 @@
 - Final tests passed: 161 executions (71 JVM, 45 Node.js, 45 Linux), including the 20-session disconnect regression. Final `build :lib:dokkaGenerateHtml` passed, including debug/release sample executables.
 
 ## Next Steps
-1. Review and merge the terminal change; it is not a 0.1 release by itself.
+1. Review and merge MR #4. Publish 0.1.0 via a new release tag when requested; broader 1.0 readiness work remains.
 2. Address logs/stats/events reconnect and bounded-resource behavior, then expose image-operation progress.
 3. Resolve remaining Kotlin, Gradle/plugin, and CI deprecations at their source, per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#maintenance.deprecations`.
 

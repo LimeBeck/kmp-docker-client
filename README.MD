@@ -214,7 +214,8 @@ Generate API documentation locally:
 
 The HTML output is in `lib/build/dokka/html`. The docs workflow deploys it to GitHub Pages on pushes
 to `master`. Release tags (`v<semver>`) trigger build, test, and Maven Central publication; the tag
-supplies the published library version. Local builds use `snapshot` unless `-PlibVersion=...` is supplied.
+supplies the published library version. Local builds target the upcoming `0.1.0` release unless `-PlibVersion=...` is supplied.
+The dependency example above uses the latest published version, `0.0.10`.
 
 Project contracts and the continuation log are in [`specs/ipc`](specs/ipc/README.md) and [`WAL.md`](WAL.md).
 

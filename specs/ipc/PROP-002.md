@@ -39,6 +39,10 @@ Test artifacts:
   - GPG material: `GPG_SIGNING_KEY`, `SECRET_PASSPHRASE`, `GPG_PASSWORD`, `GPG_KEY_ID`
   - Maven Central credentials: `OSSRH_USERNAME`, `OSSRH_PASSWORD`
 
+### Development version {#publish.development}
+- The default `libVersion` in `gradle.properties` is `0.1.0`, the next release target.
+- Release tags continue to override this default through `-PlibVersion`; changing the default does not publish a release.
+
 ## Test results publication contract {#test-results}
 - Pipeline must include a dedicated post-test results publication job.
 - It should download CI artifacts and publish JUnit-style reports to GitHub checks UI.
