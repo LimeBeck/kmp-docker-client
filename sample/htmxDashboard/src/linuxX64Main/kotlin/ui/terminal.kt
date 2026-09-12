@@ -84,11 +84,15 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                         }
                     };
                     function escapeFullscreen(event) {
-                        if (event.key === 'Escape' && expanded) {
+                        if (event.key === 'Escape' && (expanded || document.fullscreenElement === panel)) {
                             event.preventDefault();
                             event.stopPropagation();
-                            expanded = false;
-                            fullscreenChanged();
+                            if (expanded) {
+                                expanded = false;
+                                fullscreenChanged();
+                            } else {
+                                document.exitFullscreen().catch(function() {});
+                            }
                         }
                     }
                     document.addEventListener('keydown', escapeFullscreen, true);

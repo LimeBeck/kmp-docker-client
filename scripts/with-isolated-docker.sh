@@ -4,17 +4,19 @@ set -euo pipefail
 if (( $# == 0 )); then echo "Usage: $0 command [args...]" >&2; exit 2; fi
 socket_dir=$(mktemp -d /tmp/kmp-rc.XXXXXX)
 container_name="kmp-rc-${socket_dir##*.}"
+container_id=""
 cleanup() {
-  docker rm -fv "$container_name" >/dev/null 2>&1 || true
+  if [[ -n "$container_id" ]]; then docker rm -fv "$container_id" >/dev/null 2>&1 || true; fi
+  rm -f "$socket_dir/docker.sock"
   rmdir "$socket_dir" 2>/dev/null || true
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-docker run -d --privileged --name "$container_name" \
+container_id=$(docker run -d --privileged --name "$container_name" \
   --label dev.limebeck.rc-acceptance=true \
   -v "$socket_dir:/rc-run" docker:29.0.0-dind \
-  dockerd --host=unix:///rc-run/docker.sock --tls=false >/dev/null
+  dockerd --host=unix:///rc-run/docker.sock --tls=false)
 export RC_DOCKER_SOCKET="$socket_dir/docker.sock"
 export RC_DOCKER_CONTAINER="$container_name"
 for attempt in {1..90}; do

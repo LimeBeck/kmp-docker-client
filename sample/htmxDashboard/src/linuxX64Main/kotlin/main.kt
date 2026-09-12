@@ -1,4 +1,5 @@
 import dev.limebeck.libs.docker.client.DockerClient
+import dev.limebeck.libs.docker.client.DockerClientConfig
 import dev.limebeck.libs.logger.LogLevel
 import dev.limebeck.libs.logger.logLevel
 import dev.limebeck.libs.logger.logger
@@ -20,14 +21,20 @@ class Application
 
 val logger = Application::class.logger()
 
-fun main() {
+fun main(args: Array<String>) {
+    require(args.size <= 2) { "Usage: htmxDashboard.kexe [docker-socket] [http-port]" }
+    val socket = args.getOrNull(0) ?: "/var/run/docker.sock"
+    val httpPort = args.getOrNull(1)?.toInt() ?: 8080
+    require(httpPort in 1..65535) { "HTTP port must be between 1 and 65535" }
     logLevel = LogLevel.DEBUG
-    val dockerClient = DockerClient()
+    val dockerClient = DockerClient(DockerClientConfig(
+        connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(socket),
+    ))
     embeddedServer(CIO, configure = {
         reuseAddress = true
         connector {
             host = "127.0.0.1"
-            port = 8080
+            port = httpPort
         }
     }) {
         install(WebSockets)

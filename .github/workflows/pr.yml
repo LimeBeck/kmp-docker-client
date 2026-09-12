@@ -67,9 +67,15 @@ jobs:
         if: matrix.docker == 'v29.0.0' && matrix.java == '21'
         run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2
 
+      - name: Verify dashboard application workflows
+        if: matrix.docker == 'v29.0.0' && matrix.java == '21'
+        run: scripts/with-isolated-docker.sh scripts/run-dashboard-acceptance.sh
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: pr-unit-test-results-${{ matrix.docker }}-jdk${{ matrix.java }}
-          path: lib/build/test-results/**/*.xml
+          path: |
+            lib/build/test-results/**/*.xml
+            sample/htmxDashboard/build/acceptance/*

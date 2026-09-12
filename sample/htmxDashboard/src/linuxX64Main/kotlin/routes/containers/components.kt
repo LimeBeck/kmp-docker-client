@@ -7,6 +7,7 @@ import ui.badge
 import ui.card
 import ui.infoCard
 import ui.infoRow
+import ui.renderLiveStream
 
 
 fun FlowContent.containerTable(containers: List<ContainerSummary>) {
@@ -76,7 +77,7 @@ fun FlowContent.containerTable(containers: List<ContainerSummary>) {
     }
 }
 
-fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectResponse?) {
+fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectResponse?, pendingReplacement: Boolean = false) {
     div("space-y-6") {
         div("flex justify-between items-center") {
             h1("text-3xl font-bold text-blue-400") {
@@ -122,6 +123,7 @@ fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectRes
                         classes = "bg-gray-700 text-white p-2 rounded"
                     ) {
                         placeholder = "Command"
+                        value = "/bin/sh"
                     }
                     button(
                         type = ButtonType.submit,
@@ -142,6 +144,28 @@ fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectRes
                 attributes["hx-target"] = "#main-content"
                 attributes["hx-confirm"] = "Are you sure?"
                 +"Delete"
+            }
+        }
+
+        if (info?.config?.labels?.get(MANAGED_LABEL) == "true") {
+            card("space-y-3") {
+                if (pendingReplacement) {
+                    p { +"Replacement started. Verify application readiness and retained data before confirming. The previous container is stopped and retained for rollback." }
+                    p { +"Rollback restores the previous container configuration; it does not undo writes to shared volumes." }
+                    button(classes = "bg-green-700 rounded p-2 mr-3") {
+                        attributes["hx-post"] = "/containers/$id/confirm"
+                        attributes["hx-target"] = "#main-content"
+                        attributes["hx-confirm"] = "Readiness verified? Delete the previous container and retain its named volumes?"
+                        +"Confirm replacement"
+                    }
+                    button(classes = "bg-orange-700 rounded p-2") {
+                        attributes["hx-post"] = "/containers/$id/rollback"
+                        attributes["hx-target"] = "#main-content"
+                        +"Roll back"
+                    }
+                } else {
+                    a(href = "/containers/$id/recreate", classes = "text-blue-400") { +"Recreate with changed configuration" }
+                }
             }
         }
 
@@ -212,46 +236,64 @@ fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectRes
             }
         }
 
-        renderLogsWindow(id)
+        if (info?.state?.running == true) {
+            renderLiveStream("/containers/$id/stats", "stats-view", append = false)
+            renderLogsWindow(id)
+        }
     }
 }
 
 fun FlowContent.renderLogsWindow(containerId: String) {
-    div("bg-black rounded-lg p-4 font-mono text-[10px] h-80 overflow-y-auto border border-gray-700 shadow-inner") {
-        id = "logs-view"
-        attributes.apply {
-            put("hx-ext", "sse")
-            put("sse-connect", "/containers/$containerId/logs")
-            put("sse-swap", "message")
-            put("hx-swap", "beforeend")
-            put("hx-on:htmx:sse-message", "this.scrollTo(0, this.scrollHeight)")
-        }
-        div("text-gray-600 italic mb-2") { +"--- Initializing log stream ---" }
-    }
+    renderLiveStream("/containers/$containerId/logs", "logs-view")
 }
 
-fun FlowContent.renderCreateForm() {
+fun FlowContent.renderCreateForm(info: ContainerInspectResponse? = null, action: String = "/containers/create") {
     div("mb-6 bg-gray-800 rounded-lg p-4 border border-gray-700") {
-        h2("text-xl font-bold mb-4 text-blue-400") { +"Create New Container" }
+        h2("text-xl font-bold mb-4 text-blue-400") { +(if (info == null) "Create New Container" else "Prepare Replacement") }
         form {
-            attributes["hx-post"] = "/containers/create"
+            attributes["hx-post"] = action
             attributes["hx-target"] = "#main-content"
-            div("mb-4") {
-                label(classes = "block text-gray-400 mb-2") { +"Image" }
-                input(type = InputType.text, name = "image", classes = "bg-gray-700 text-white p-2 rounded w-full") {
-                    placeholder = "e.g. ubuntu:latest"
-                    required = true
+            method = FormMethod.post
+            this.action = action
+            fun FlowContent.field(name: String, title: String, content: String, hint: String = "", multiline: Boolean = false) {
+                div("mb-4") {
+                    label(classes = "block text-gray-400 mb-2") { htmlFor = "config-$name"; +title }
+                    if (multiline) {
+                        textArea(classes = "bg-gray-700 text-white p-2 rounded w-full") {
+                            id = "config-$name"; this.name = name; rows = "3"; +content
+                        }
+                    } else {
+                        input(type = InputType.text, name = name, classes = "bg-gray-700 text-white p-2 rounded w-full") {
+                            id = "config-$name"; value = content; required = name == "image"
+                        }
+                    }
+                    if (hint.isNotEmpty()) p("text-sm text-gray-400") { +hint }
                 }
             }
-            div("mb-4") {
-                label(classes = "block text-gray-400 mb-2") { +"Command" }
-                input(type = InputType.text, name = "cmd", classes = "bg-gray-700 text-white p-2 rounded w-full") {
-                    placeholder = "e.g. /bin/bash"
-                    value = "/bin/sh"
-                }
+            if (info == null) field("name", "Name (optional)", "")
+            field("image", "Image", info?.config?.image.orEmpty(), "Pull the image first from Images.")
+            field("cmd", "Command arguments", info?.config?.cmd?.joinToString("\n") ?: "/bin/sh", "One argument per line. Empty uses the image default.", true)
+            details("mb-4") {
+                open = info != null
+                summary("text-blue-400 cursor-pointer mb-3") { +"Environment, ports, volumes and network" }
+                field("env", "Environment", info?.config?.env?.joinToString("\n").orEmpty(), "One KEY=value per line.", true)
+                field("ports", "Published ports", info?.hostConfig?.portBindings.orEmpty().flatMap { (port, bindings) ->
+                    bindings.orEmpty().map { "${it.hostIp}:${it.hostPort}:$port" }
+                }.joinToString("\n"), "One 127.0.0.1:host-port:container-port/tcp per line; host port 0 chooses an available port.", true)
+                field("volumes", "Named volumes", info?.mounts.orEmpty().filter { it.type?.value == "volume" }.joinToString("\n") {
+                    "${it.name}:${it.destination}"
+                }, "One volume-name:/container/path per line. Named volumes survive container deletion; missing volumes are created by Docker.", true)
+                field("network", "Existing network (optional)", info?.networkSettings?.networks?.keys?.singleOrNull()?.takeUnless { it == "bridge" }.orEmpty())
+            }
+            label(classes = "block mb-4") {
+                input(type = InputType.checkBox, name = "tty") { checked = info?.config?.tty ?: true }
+                +" Interactive TTY"
+            }
+            if (info != null) p("text-orange-300 mb-4") {
+                +"The previous container is stopped only after preparation succeeds. Verify the replacement before confirming. Shared-volume writes cannot be rolled back automatically."
             }
             button(type = ButtonType.submit, classes = "bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold") {
-                +"Create and Run"
+                +(if (info == null) "Create and Run" else "Prepare replacement")
             }
         }
     }

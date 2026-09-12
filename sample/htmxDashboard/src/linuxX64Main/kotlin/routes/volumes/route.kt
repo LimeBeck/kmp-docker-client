@@ -11,6 +11,7 @@ import kotlinx.html.body
 import kotlinx.html.div
 import logger
 import routes.respondSmart
+import routes.redirectSmart
 import ui.renderError
 
 fun Route.volumesRoute(dockerClient: DockerClient) {
@@ -29,7 +30,7 @@ fun Route.volumesRoute(dockerClient: DockerClient) {
             result.fold(
                 onSuccess = {
                     logger.debug { "Volume $name created successfully" }
-                    call.respondRedirect("/volumes")
+                    redirectSmart("/volumes")
                 },
                 onError = { error ->
                     logger.error(Exception(error.message)) { "Failed to create volume $name" }
@@ -50,14 +51,14 @@ fun Route.volumesRoute(dockerClient: DockerClient) {
         post("/prune") {
             logger.info { "Pruning volumes" }
             dockerClient.volumes.prune()
-            call.respondRedirect("/volumes")
+            redirectSmart("/volumes")
         }
 
         delete("/{name}") {
             val name = call.parameters["name"]!!
             logger.info { "Removing volume: $name" }
             dockerClient.volumes.remove(name)
-            call.respondRedirect("/volumes")
+            redirectSmart("/volumes")
         }
     }
 }

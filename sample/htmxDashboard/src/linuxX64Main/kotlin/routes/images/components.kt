@@ -24,18 +24,8 @@ import ui.infoRow
 fun FlowContent.renderImagesPage(images: List<ImageSummary>) {
     h1("text-3xl font-bold mb-6 text-purple-400") { +"🖼️ Images" }
 
+    renderPullForm()
     card("mb-6 flex gap-4") {
-        input(classes = "bg-gray-700 border-none rounded px-4 py-2 flex-grow") {
-            id = "image-pull-name"
-            name = "image-pull-name"
-            placeholder = "e.g. nginx:latest"
-        }
-        button(classes = "bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded font-bold") {
-            attributes["hx-post"] = "/images/pull"
-            attributes["hx-include"] = "#image-pull-name"
-            attributes["hx-target"] = "#main-content"
-            +"Pull Image"
-        }
         button(classes = "border border-red-500 text-red-500 hover:bg-red-500/10 px-6 py-2 rounded font-bold") {
             attributes["hx-post"] = "/images/prune"
             attributes["hx-target"] = "#main-content"

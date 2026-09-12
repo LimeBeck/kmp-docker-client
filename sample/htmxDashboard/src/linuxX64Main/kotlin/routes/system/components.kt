@@ -5,6 +5,7 @@ import dev.limebeck.libs.docker.client.model.SystemVersion
 import kotlinx.html.*
 import ui.infoCard
 import ui.infoRow
+import ui.renderLiveStream
 
 
 fun FlowContent.renderSystemPage(info: SystemInfo?, version: SystemVersion?) {
@@ -26,14 +27,5 @@ fun FlowContent.renderSystemPage(info: SystemInfo?, version: SystemVersion?) {
     }
 
     h2("text-xl font-bold mt-8 mb-4 text-orange-400") { +"🔔 Real-time Events" }
-    div("bg-black rounded-lg p-4 font-mono text-[10px] h-64 overflow-y-auto border border-gray-700 shadow-inner") {
-        id = "events-view"
-        attributes.apply {
-            put("hx-ext", "sse")
-            put("sse-connect", "/system/events")
-            put("sse-swap", "message")
-            put("hx-swap", "afterbegin")
-        }
-        div("text-gray-600 italic") { +"--- Waiting for events ---" }
-    }
+    renderLiveStream("/system/events", "events-view")
 }
