@@ -20,6 +20,8 @@ fun Routing.terminalRoute(dockerClient: DockerClient) {
         webSocket("/ws") {
             val containerId = call.parameters["id"]!!
 
+            val info = dockerClient.containers.getInfo(containerId).getOrThrow()
+            val tty = info.config?.tty == true
             val session = dockerClient.containers.attach(
                 id = containerId,
                 stdin = true,
@@ -30,8 +32,15 @@ fun Routing.terminalRoute(dockerClient: DockerClient) {
             ).getOrThrow()
 
             session.use {
-                dockerClient.containers.start(containerId).getOrThrow()
-                bridgeTerminal(it)
+                if (info.state?.running != true) {
+                    val started = dockerClient.containers.start(containerId)
+                    if (started.getOrNull() == null && dockerClient.containers.getInfo(containerId).getOrThrow().state?.running != true) {
+                        started.getOrThrow()
+                    }
+                }
+                bridgeTerminal(it) { rows, cols ->
+                    if (tty) dockerClient.containers.resize(containerId, h = rows, w = cols).getOrThrow()
+                }
             }
         }
     }

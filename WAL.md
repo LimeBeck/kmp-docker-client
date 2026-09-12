@@ -6,19 +6,16 @@
 - Contracts: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams` and `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.streams.recovery`.
 
 ## Completed in Last Session
-- Migrated direct and nested JavaScript CI actions to Node.js 24; validated their upstream action.yml manifests and workflow YAML. CI build/test/Dokka now reject Gradle deprecations. Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#runtime`.
-- Limited smallBinary to release executables and explicitly opted the terminal sample into the experimental Gradle plugin API. No blanket warning suppression was added.
-- Bounded TTY/JSON records to 1,048,576 characters and multiplex log frames to 1,048,576 bytes before allocation. CR/LF/CRLF and complete final unterminated records are preserved.
-- Removed all maintained readUTF8Line calls. Oversized image progress returns ErrorResponse; cancellation propagates.
-- logs/stats/events use rendezvous channelFlow for backpressure and correct operation across CIO dispatchers. Removed the fixed log duration timeout and applied explicit stream lifetime settings.
-- Validate Content-Length after complete consumption; truncated chunk bodies, malformed stats, cancellation, and consumer failures terminate/release streams. Recollection opens a fresh stream without implicit retries.
-- Fixed OpenAPI generation of uint64/uint32 as ULong/UInt. Real stats previously overflowed Int for system_cpu_usage; regression coverage includes ULong.MAX_VALUE and values beyond JavaScript Number precision.
-- Added common parser/counter tests, real-Docker stats/events coverage, and Unix-socket failure/recovery cases. All 195 tests passed (89 JVM, 53 Node.js, 53 Linux). Full build, debug/release samples, and Dokka passed with --warning-mode=fail and no compiler/deprecation warnings.
-- README documents limits, model API changes, event overlap/deduplication/snapshot recovery, and EOF/error resubscription.
-- Earlier terminal work remains: immediate incomingChunks, scoped prefix forwarding, idempotent session close, native descriptor cleanup, and dashboard WebSocket migration.
+- Added a shared Terminal/Exec panel with ResizeObserver fitting, initial size synchronization, deduplicated Docker TTY resize messages, fullscreen and viewport fallback. Escape and the exit button restore the panel. Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.dashboard-sizing`.
+- WebSocket text frames now carry bounded resize dimensions; binary UTF-8 frames carry shell input. Both attach and exec forward sizes to their own Docker endpoint; non-TTY attach skips resizing.
+- Navigation cleans up xterm, socket, observer, animation frame and event listeners. Binary output uses ArrayBuffer to preserve ordering without asynchronous FileReader callbacks.
+- Fixed attach to already-running containers: avoid a redundant start and tolerate a concurrent successful start, instead of closing the session on Docker HTTP 304.
+- Updated shared UI/routes, README and PROP-001. Real Docker WebSocket checks passed for attach and exec at 24x80, 43x137 and 18x62; controls do not leak into stdin.
+- Debug/release dashboard builds passed with --warning-mode=fail. Browser checks confirmed fullscreen viewport fallback, Escape with xterm focused, TTY restoration (30x115), and session closure on HTMX navigation with no console errors. Native browser fullscreen was denied during automation; the fallback was exercised. Test container/server were removed/stopped; port 8080 is free.
+- Previous validation remains: 195 library tests and full build/Dokka passed for stream reliability, unsigned counters and deprecation cleanup.
 
 ## Next Steps
-1. Review/merge MR #4; publish 0.1.0 only when requested.
+1. Review/merge MR #4 including dashboard sizing; publish 0.1.0 only when requested.
 2. Next single-host readiness work: expose image-operation progress, validate persistent-volume/recreate workflows, and establish PR compatibility checks.
 
 ## Known Risks / Constraints
@@ -35,6 +32,7 @@
 - Supported Docker/platform matrix and public API compatibility gates for 1.0.0.
 
 ## Resume Commands
+- `./gradlew :sample:htmxDashboard:linkDebugExecutableLinuxX64 :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2`
 - `git diff --check`
 - `./gradlew :lib:jvmTest --warning-mode=fail --console=plain --max-workers=2`
 - `./gradlew build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2`

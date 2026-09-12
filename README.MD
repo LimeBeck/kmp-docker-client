@@ -158,6 +158,8 @@ HTMX Dashboard:
 ./gradlew :sample:htmxDashboard:runDebugExecutableLinuxX64
 ```
 
+Terminal and Exec panels automatically fit their available space and update the Docker TTY dimensions. Use **Full screen** to expand the terminal and **Exit full screen** or **Esc** to return. If browser fullscreen is unavailable, the panel expands within the tab.
+
 The dashboard listens on `127.0.0.1:8080`. It is a local development example;
 remote access requires a separate authenticated HTTP/WebSocket design.
 

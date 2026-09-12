@@ -60,6 +60,12 @@ Must support command execution lifecycle including interactive session/hijack fl
 - `incoming` retains its existing line-oriented TTY behavior. Terminal applications must use `incomingChunks`, not read `connection.read` directly.
 - A cancelled handshake closes the acquired connection and propagates cancellation. Prefix forwarding is scoped to collection, with no detached forwarding job.
 
+### Dashboard terminal sizing {#exec.dashboard-sizing}
+- Attach and exec terminal panels fit their available space on initial connection, container layout changes, browser resize, and fullscreen transitions. Changed row/column counts are forwarded to the matching Docker TTY resize endpoint; non-TTY attach skips Docker resize.
+- The shared panel offers browser fullscreen with a visible exit button and supports the browser's normal Escape behavior. If the browser rejects fullscreen, the panel fills the viewport with an explicit exit button and Escape support.
+- Dashboard WebSocket input uses binary UTF-8 frames; text frames carry JSON resize controls with integer rows/cols in 1..1000. Control frames never reach shell stdin.
+- Navigation disposes the terminal, socket, resize observer, animation frame, and document/window listeners.
+
 ## System behavior {#system}
 Must provide:
 - info/version/ping/data usage

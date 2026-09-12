@@ -25,7 +25,11 @@ fun Routing.execRoute(dockerClient: DockerClient) {
 
             val execConnection = dockerClient.exec.startInteractive(execId).getOrThrow()
 
-            execConnection.use { bridgeTerminal(it) }
+            execConnection.use {
+                bridgeTerminal(it) { rows, cols ->
+                    dockerClient.exec.resize(execId, h = rows, w = cols).getOrThrow()
+                }
+            }
         }
     }
 }
