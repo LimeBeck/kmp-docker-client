@@ -53,7 +53,7 @@ jobs:
           test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Build with Gradle
-        run: ./gradlew build --warning-mode=fail -PlibVersion=$LIB_VERSION
+        run: ./gradlew build --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Upload Build Test Results
         if: always()
@@ -112,7 +112,7 @@ jobs:
           test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Run tests with Gradle
-        run: ./gradlew :lib:allTests --warning-mode=fail -PlibVersion=$LIB_VERSION
+        run: ./gradlew :lib:allTests --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Upload Unit Test Results
         if: always()

@@ -1,25 +1,24 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Version 0.1.0 in MR #4 (`codex/terminal-session-lifecycle`): terminal/session ownership plus reliable logs/stats/events.
-- Published baseline remains 0.0.10; no new release tag or publication has been created.
-- Contracts: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams` and `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.streams.recovery`.
+- Preparing one release `1.0.0-rc` on `codex/prepare-1.0.0-rc`, based on published 0.1.0 (e12c96a). The owner requested sequential implementation without intermediate releases.
+- Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.rc`.
+- 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Added a shared Terminal/Exec panel with ResizeObserver fitting, initial size synchronization, deduplicated Docker TTY resize messages, fullscreen and viewport fallback. Escape and the exit button restore the panel. Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.dashboard-sizing`.
-- WebSocket text frames now carry bounded resize dimensions; binary UTF-8 frames carry shell input. Both attach and exec forward sizes to their own Docker endpoint; non-TTY attach skips resizing.
-- Navigation cleans up xterm, socket, observer, animation frame and event listeners. Binary output uses ArrayBuffer to preserve ordering without asynchronous FileReader callbacks.
-- Fixed attach to already-running containers: avoid a redundant start and tolerate a concurrent successful start, instead of closing the session on Docker HTTP 304.
-- Updated shared UI/routes, README and PROP-001. Real Docker WebSocket checks passed for attach and exec at 24x80, 43x137 and 18x62; controls do not leak into stdin.
-- Debug/release dashboard builds passed with --warning-mode=fail. Browser checks confirmed fullscreen viewport fallback, Escape with xterm focused, TTY restoration (30x115), and session closure on HTMX navigation with no console errors. Native browser fullscreen was denied during automation; the fallback was exercised. Test container/server were removed/stopped; port 8080 is free.
-- Previous validation remains: 195 library tests and full build/Dokka passed for stream reliability, unsigned counters and deprecation cleanup.
+- Step 1: PR CI with read-only permissions, no release secrets, all-platform build + Dokka, warnings fail, and unconditional XML artifact upload.
+- Stabilized logs snapshot by awaiting container completion. Repeated terminal cleanup now has bounded per-session deadlines, a larger overall budget, and an assertion that the final peer connection closes.
+- Development version is 1.0.0-rc; README points consumers to published 0.1.0. Roadmap explicitly consolidates the remaining scope into this candidate.
+- Focused JVM regressions passed. Full `build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2` passed in 3m45s (JVM/Node/Linux and samples).
 
 ## Next Steps
-1. Review/merge MR #4 including dashboard sizing; publish 0.1.0 only when requested.
-2. Next single-host readiness work: expose image-operation progress, validate persistent-volume/recreate workflows, and establish PR compatibility checks.
+1. Validate lifecycle/recreate with environment, ports, network, and persistent volumes. Discovery found `Containers.create` accepts only ContainerConfig, which cannot carry HostConfig/NetworkingConfig; add typed support and real-Docker coverage.
+2. Expose image progress and terminal outcomes; validate cancellation.
+3. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist.
+4. Run final acceptance before tagging/publishing 1.0.0-rc.
 
 ## Known Risks / Constraints
-- CI workflow changes were statically validated; no remote publish/docs workflow was dispatched during this task.
+- Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
 - API 1.51 is fixed; no version negotiation. Release CI provisions Docker 28.5.2.
 - CIO reports disconnect between complete HTTP chunks as EOF even without a terminal zero chunk. Recovery must handle EOF as well as exceptions; finite event history also requires refreshing resource state.
 - Unsigned schema counters now have unsigned Kotlin types, a model API change in 0.1.0.

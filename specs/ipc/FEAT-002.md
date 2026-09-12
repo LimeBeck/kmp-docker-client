@@ -22,10 +22,17 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 5. Stable API and release guarantees: consistent errors, connection ownership, documented compatibility, PR CI, and reproducible Maven Central publication.
 
 ## Milestones {#milestones}
-- 0.1: define lifecycle/error contracts and implement terminal/stream reliability with regression coverage.
-- 0.2: validate full single-host application workflows, expose operation progress, and establish the supported Docker/platform test matrix.
-- 1.0.0-rc: freeze the intended stable public surface, publish migration guidance, and validate against a real dashboard application.
-- 1.0.0: release only after the acceptance gates below pass. Milestones describe scope, not delivery dates.
+- 0.1.0: released terminal/session ownership, bounded logs/stats/events, unsigned counters, and dashboard terminal sizing.
+- 1.0.0-rc: one release combining the remaining single-host readiness work. Implement it in the ordered steps below; do not publish intermediate feature releases.
+- 1.0.0: release only after the acceptance gates below pass and the release candidate has been validated against a real dashboard application. Milestones describe scope, not delivery dates.
+
+### Ordered release-candidate work {#milestones.rc}
+1. Stabilize timing-sensitive tests, establish PR CI, and synchronize release documentation.
+2. Validate create/start/inspect/recreate/delete with ports, environment, network attachment, and persistent volumes; retained data is an explicit assertion.
+3. Expose pull/push/load progress, final success/error, and cancellation to consumers.
+4. Validate stream termination and application resubscription after restart of an isolated Docker daemon, including repeated session cleanup.
+5. Establish the supported Docker/platform CI matrix, public API compatibility baseline, migration guidance, and a real-dashboard acceptance checklist.
+6. Run the complete acceptance suite before publishing 1.0.0-rc. Preparing the candidate does not itself create a release tag.
 
 ## Acceptance gates {#acceptance}
 - A dashboard can create a container with ports and a persistent volume, start it, open a terminal, observe logs/stats, recreate it with changed configuration, and delete the container while retaining the data unless volume deletion was explicitly requested.
@@ -46,4 +53,5 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 The missing-domain exploration in `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md#phases` is deferred behind this goal. It must not displace the single-host readiness work unless the project owner revises the priority.
 
 ## Changelog {#changelog}
+- 2026-09-12: owner consolidated remaining work into one 1.0.0-rc release, implemented step by step.
 - 2026-09-11: accepted the single-host management-panel goal and corresponding 1.0.0 readiness gates.

@@ -26,6 +26,7 @@ import kotlin.test.*
 class DockerHttpRegressionTest {
     private suspend fun withDaemon(
         vararg replies: DockerReply,
+        timeoutMillis: Long = 5_000,
         block: suspend (DockerClient, MockDockerDaemon) -> Unit,
     ) {
         MockDockerDaemon(replies.toList()).use { daemon ->
@@ -33,7 +34,7 @@ class DockerHttpRegressionTest {
                 connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(daemon.path.toString())
             ))
             try {
-                withTimeout(5000) { block(client, daemon) }
+                withTimeout(timeoutMillis) { block(client, daemon) }
                 daemon.checkHealthy()
             } finally {
                 client.client.close()
@@ -222,12 +223,19 @@ class DockerHttpRegressionTest {
 
     @Test fun repeatedTerminalSessionsReleaseConnectionsIncludingUncollectedOutput() = runBlocking {
         val replies = Array(20) { DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true) }
-        withDaemon(*replies) { client, daemon ->
+        withDaemon(*replies, timeoutMillis = 30_000) { client, daemon ->
             repeat(replies.size) { index ->
-                client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
-                    if (index % 2 == 0) session.incomingChunks.first()
+                withTimeout(5_000) {
+                    client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
+                        if (index % 2 == 0) session.incomingChunks.first()
+                    }
                 }
             }
+            while (!daemon.completed.get()) {
+                daemon.checkHealthy()
+                delay(10)
+            }
+            assertTrue(daemon.peerClosed.get(), "The final uncollected session must close its socket")
             assertEquals(replies.size, daemon.requests.size)
         }
     }

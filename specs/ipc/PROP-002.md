@@ -8,6 +8,7 @@ Define mandatory behavior for GitHub Actions CI/CD pipeline in this repository.
 
 ## Workflow file contract {#workflow.file}
 - Release CI workflow must be declared in `.github/workflows/main.yml`.
+- PR CI workflow must be declared in `.github/workflows/pr.yml` and build/test without publication.
 - Docs CI workflow must be declared in `.github/workflows/docs.yml`.
 - Workflows must remain separated by trigger intent:
   - release workflow: library build/test/publish
@@ -15,8 +16,9 @@ Define mandatory behavior for GitHub Actions CI/CD pipeline in this repository.
 
 ## Trigger contract {#triggers}
 - Release workflow trigger: `push.tags` with pattern `v*`.
+- PR workflow trigger: `pull_request` targeting `master`; never `pull_request_target`. PR checks use read-only repository permissions and no release credentials.
 - Docs workflow trigger: `push.branches` for `master`.
-- Both workflows may include `workflow_dispatch` for manual execution.
+- Workflows may include `workflow_dispatch` for manual execution.
 - Library publish steps must not run for non-tag refs.
 
 ## Build and test contract {#ci.jobs}
@@ -30,6 +32,12 @@ Test artifacts:
 - Both `build` and `test` jobs must upload their reports with distinct artifact names (`unit-test-results-build` and `unit-test-results-test`).
 - Report publication must run after both jobs reach a terminal state, including when `test` is skipped because `build` failed, and download only `unit-test-results-*` artifacts.
 
+### Pull-request validation {#ci.pr}
+- PR CI runs build (including all platform tests) and Dokka with --warning-mode=fail and at most two Gradle workers.
+- It provisions the same Docker API 1.51 baseline as release CI, and always uploads test XML reports.
+- Superseded PR runs may be cancelled. Release jobs are not triggered by PRs.
+- Tests synchronize with observable completion instead of sleeps. Repeated-session tests retain finite per-session and overall deadlines without using one short-session deadline for the entire series.
+
 ## Publish contract {#publish}
 - Publishing is Maven Central-oriented and must depend on successful `test` job.
 - Publish job must use `:lib:publishAndReleaseToMavenCentral`.
@@ -41,7 +49,7 @@ Test artifacts:
   - Maven Central credentials: `OSSRH_USERNAME`, `OSSRH_PASSWORD`
 
 ### Development version {#publish.development}
-- The default `libVersion` in `gradle.properties` is `0.1.0`, the next release target.
+- The default `libVersion` in `gradle.properties` is `1.0.0-rc`, the next release target.
 - Release tags continue to override this default through `-PlibVersion`; changing the default does not publish a release.
 
 ## Test results publication contract {#test-results}
@@ -77,6 +85,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-12: added isolated PR validation and selected 1.0.0-rc as the next development target.
 - 2026-09-12: migrated JavaScript action runtimes to Node.js 24 and made Gradle deprecations fail CI checks.
 - 2026-09-11: pinned a compatible Docker daemon after v0.0.9 CI rejected API 1.51 on a runner supporting only 1.48.
 - 2026-09-11: required JUnit artifacts from both build/test jobs and publication after an upstream failure.

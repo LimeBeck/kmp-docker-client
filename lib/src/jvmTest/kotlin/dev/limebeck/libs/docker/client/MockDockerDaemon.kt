@@ -30,6 +30,7 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
     val requests = CopyOnWriteArrayList<DockerRequest>()
     val responseSent = AtomicBoolean()
     val peerClosed = AtomicBoolean()
+    val completed = AtomicBoolean()
     private val stopped = AtomicBoolean()
     private val failure = AtomicReference<Throwable?>()
     private val activeSocket = AtomicReference<SocketChannel?>()
@@ -102,6 +103,7 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
                 }
                 activeSocket.set(null)
             }
+            completed.set(true)
         } catch (error: Throwable) {
             if (!stopped.get()) failure.set(error)
         }

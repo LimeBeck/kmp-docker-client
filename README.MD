@@ -29,7 +29,7 @@ Add dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:0.0.10")
+    implementation("dev.limebeck.libs:docker-client:0.1.0")
 }
 ```
 
@@ -216,8 +216,8 @@ Generate API documentation locally:
 
 The HTML output is in `lib/build/dokka/html`. The docs workflow deploys it to GitHub Pages on pushes
 to `master`. Release tags (`v<semver>`) trigger build, test, and Maven Central publication; the tag
-supplies the published library version. Local builds target the upcoming `0.1.0` release unless `-PlibVersion=...` is supplied.
-The dependency example above uses the latest published version, `0.0.10`.
+supplies the published library version. Local builds target the upcoming `1.0.0-rc` release unless `-PlibVersion=...` is supplied.
+The dependency example above uses the latest published version, `0.1.0`.
 
 Project contracts and the continuation log are in [`specs/ipc`](specs/ipc/README.md) and [`WAL.md`](WAL.md).
 
