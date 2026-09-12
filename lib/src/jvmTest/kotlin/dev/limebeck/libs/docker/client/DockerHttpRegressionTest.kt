@@ -255,7 +255,7 @@ class DockerHttpRegressionTest {
             }
             assertTrue(daemon.peerClosed.get(), "The final uncollected session must close its socket")
             assertEquals(replies.size, daemon.requests.size)
-            assertEquals(replies.size / 2, daemon.abortedResponses.get())
+            assertEquals(replies.size, daemon.closedResponses.get())
         }
     }
 

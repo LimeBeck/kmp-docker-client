@@ -33,7 +33,7 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
     val responseSent = AtomicBoolean()
     val peerClosed = AtomicBoolean()
     val completed = AtomicBoolean()
-    val abortedResponses = java.util.concurrent.atomic.AtomicInteger()
+    val closedResponses = java.util.concurrent.atomic.AtomicInteger()
     private val stopped = AtomicBoolean()
     private val failure = AtomicReference<Throwable?>()
     private val activeSocket = AtomicReference<SocketChannel?>()
@@ -104,12 +104,16 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
                             output.write("accepted".encodeToByteArray())
                             output.flush()
                         }
-                        if (reply.keepOpen) peerClosed.set(input.read() == -1)
+                        if (reply.keepOpen) {
+                            val closed = input.read() == -1
+                            peerClosed.set(closed)
+                            if (closed) closedResponses.incrementAndGet()
+                        }
                     } catch (error: java.io.IOException) {
                         val peerAbort = error.message in setOf("Broken pipe", "Connection reset", "Connection reset by peer")
                         if (!reply.allowEarlyClose || !peerAbort) throw error
                         peerClosed.set(true)
-                        abortedResponses.incrementAndGet()
+                        closedResponses.incrementAndGet()
                     }
                 }
                 activeSocket.set(null)

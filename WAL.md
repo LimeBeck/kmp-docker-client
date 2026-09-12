@@ -7,6 +7,8 @@
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
+- A subsequent JVM run exposed a fixture assertion requiring exactly 10 Broken pipe/reset errors; one close legitimately arrived as EOF. The fixture now counts closed responses in both cases and requires all 20 connections closed. Latches still ensure early-close ordering. JVM regression tests passed with this correction.
+
 - Owner requested replacing the raw JSON wrapper with explicit serializable models. ImageProgress now has nullable id/status/stream/progress/progressDetail/aux fields; ImageProgressDetail has nullable ULong current/total. Only aux remains JsonObject.
 - Progress decoding uses the typed serializer after checking Docker error records. Unknown fields are ignored with the default JSON config. Missing counts remain null; invalid typed values return a malformed-progress error before invoking the callback. Consumer exceptions and cancellation remain outside decoder catches.
 - Updated examples, model construction/serialization round-trip tests, unknown-field checks, exact unsigned counters, and HTTP regressions for invalid counts. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress.
