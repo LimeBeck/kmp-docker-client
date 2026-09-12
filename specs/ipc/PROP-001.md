@@ -30,6 +30,13 @@ Must provide:
 - follow/timestamps/since/until/tail parameters are passed through
 - implementation must apply connection config before execution
 
+### Container recreation and persistent data {#containers.recreate}
+- `create` accepts a complete typed `ContainerCreateRequest`, including `HostConfig` and `NetworkingConfig`. The existing `ContainerConfig` overload remains available without changing its signature.
+- Creating a container does not start it or replace a conflicting name. Docker failures are returned as typed errors without implicit cleanup or retry.
+- Removing a container defaults to `v=false`. Named-volume deletion requires an explicit volume removal call; recreation must not implicitly prune volumes or delete data.
+- Environment, ports, mounts and network configuration are supplied explicitly for each replacement. Orchestration, rollback, readiness checks and backups belong to the application.
+- Real-Docker tests on all supported targets cover configuration inspection, conflicting/missing-image errors, resource update, recreation with changed environment, and reading retained volume data after both original and replacement removal.
+
 ## Images behavior {#images}
 Must provide pull/list/inspect/remove/prune and related distribution flows already present in code.
 
@@ -91,6 +98,7 @@ Must provide:
 - Event recovery should resume from a saved timestamp with overlap/deduplication and refresh resource state, since event history is finite. Logs need an explicit since/tail policy; stats may simply resubscribe. Cancellation and downstream errors must not trigger retries.
 
 ## Changelog {#changelog}
+- 2026-09-12: added the complete container creation request and persistent-data recreation contract for the release candidate.
 - 2026-09-12: bounded stream records, validated HTTP body completion, and documented explicit resubscription.
 - 2026-09-11: defined binary terminal output, single-collection ownership, and session cleanup.
 - 2026-09-11: defined image progress completion and cold-stream HTTP error/cancellation semantics after review.

@@ -56,6 +56,8 @@ dependencies {
 
 ## 📖 Usage
 
+For the upcoming release candidate, see [container recreation and persistent data](docs/CONTAINER-LIFECYCLE.md).
+
 ### Initializing the Client
 
 By default, the client is configured to connect via the local Unix socket:

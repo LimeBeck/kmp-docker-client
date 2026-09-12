@@ -94,15 +94,29 @@ class Containers(private val dockerClient: DockerClient) {
             }
         }
 
-    /**
-     * Create a container
-     */
+    /** Create a container with portable configuration. Use [ContainerCreateRequest] for ports, mounts and networks. */
     suspend fun create(
         name: String? = null,
         config: ContainerConfig = ContainerConfig()
     ): Result<ContainerCreateResponse, ErrorResponse> =
         with(dockerClient) {
             return client.post(apiPath("/containers/create")) {
+                name?.let { parameter("name", it) }
+                contentType(ContentType.Application.Json)
+                setBody(config)
+            }.parse()
+        }
+
+    /**
+     * Create a container with host and network configuration.
+     * Creation does not start the container or replace an existing container with the same name.
+     */
+    suspend fun create(
+        name: String? = null,
+        config: ContainerCreateRequest,
+    ): Result<ContainerCreateResponse, ErrorResponse> =
+        with(dockerClient) {
+            client.post(apiPath("/containers/create")) {
                 name?.let { parameter("name", it) }
                 contentType(ContentType.Application.Json)
                 setBody(config)

@@ -2,6 +2,7 @@
 
 ## Current Focus
 - Preparing one release `1.0.0-rc` on `codex/prepare-1.0.0-rc`, based on published 0.1.0 (e12c96a). The owner requested sequential implementation without intermediate releases.
+- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Step 1 is commit 7301be2; PR CI 34686425221 is running.
 - Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.rc`.
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
@@ -11,11 +12,13 @@
 - Development version is 1.0.0-rc; README points consumers to published 0.1.0. Roadmap explicitly consolidates the remaining scope into this candidate.
 - Focused JVM regressions passed. Full `build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2` passed in 3m45s (JVM/Node/Linux and samples).
 
+- Step 2: added a ContainerCreateRequest overload retaining the original ContainerConfig signature. Common ContainerRecreateTest checks ports/env/network/mounts, typed conflict/missing-image failures, restart-policy update, and data retention after deleting both original and replacement. JVM focused test and allTests passed on JVM/Node/Linux in 3m31s with warning-mode=fail.
+- Added docs/CONTAINER-LIFECYCLE.md with application replacement/rollback and explicit volume deletion; contract `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#containers.recreate`.
+
 ## Next Steps
-1. Validate lifecycle/recreate with environment, ports, network, and persistent volumes. Discovery found `Containers.create` accepts only ContainerConfig, which cannot carry HostConfig/NetworkingConfig; add typed support and real-Docker coverage.
-2. Expose image progress and terminal outcomes; validate cancellation.
-3. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist.
-4. Run final acceptance before tagging/publishing 1.0.0-rc.
+1. Expose image progress and terminal outcomes; validate cancellation. Current create/push/load consume NDJSON privately through DockerClient.validateImageProgress; preserve old signatures and propagate consumer errors/cancellation without converting them into daemon errors.
+2. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist. Do not restart the user’s real Docker daemon.
+3. Run final acceptance before tagging/publishing 1.0.0-rc.
 
 ## Known Risks / Constraints
 - Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
