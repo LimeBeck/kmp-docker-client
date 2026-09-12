@@ -6,6 +6,7 @@ import dev.limebeck.libs.docker.client.DockerClientConfig.Auth
 import dev.limebeck.libs.docker.client.api.AUTH_HEADER
 import dev.limebeck.libs.docker.client.api.resolveServerForRegistry
 import dev.limebeck.libs.docker.client.dsl.ApiCacheHolder
+import dev.limebeck.libs.docker.client.model.ImageProgress
 import dev.limebeck.libs.docker.client.model.ErrorResponse
 import dev.limebeck.libs.docker.client.model.DockerApiException
 import dev.limebeck.libs.docker.client.model.Result
@@ -135,9 +136,13 @@ open class DockerClient(
     }
 
     /** Docker can report an operation failure inside a successful NDJSON response. */
-    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> {
+    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> = validateImageProgress {}
+
+    suspend fun HttpResponse.validateImageProgress(
+        onProgress: suspend (ImageProgress) -> Unit,
+    ): Result<Unit, ErrorResponse> {
         if (!status.isSuccess()) return errorResponse().asError()
-        val channel = bodyAsChannel()
+        val channel = bodyAsChannel().counted()
         while (true) {
             val line = try {
                 channel.readDockerLine()
@@ -157,6 +162,16 @@ open class DockerClient(
             val error = detail?.contentOrNull?.takeIf { it.isNotBlank() }
                 ?: legacyError?.contentOrNull?.takeIf { it.isNotBlank() }
             if (error != null) return ErrorResponse(error).asError()
+            // Deliberately outside parsing/read catches: consumer failures belong to the caller.
+            onProgress(ImageProgress(message))
+        }
+        channel.closedCause?.let { error ->
+            if (error is CancellationException) throw error
+            return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError()
+        }
+        val expected = headers[HttpHeaders.ContentLength]?.toLongOrNull()
+        if (headers[HttpHeaders.TransferEncoding] == null && expected != null && channel.totalBytesRead != expected) {
+            return ErrorResponse("Truncated Docker image progress response").asError()
         }
         return Unit.asSuccess()
     }

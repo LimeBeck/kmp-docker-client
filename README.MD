@@ -57,6 +57,7 @@ dependencies {
 ## 📖 Usage
 
 For the upcoming release candidate, see [container recreation and persistent data](docs/CONTAINER-LIFECYCLE.md).
+Long operations support [image progress callbacks and cancellation](docs/IMAGE-PROGRESS.md).
 
 ### Initializing the Client
 

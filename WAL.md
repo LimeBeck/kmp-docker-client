@@ -2,21 +2,19 @@
 
 ## Current Focus
 - Preparing one release `1.0.0-rc` on `codex/prepare-1.0.0-rc`, based on published 0.1.0 (e12c96a). The owner requested sequential implementation without intermediate releases.
-- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Step 1 is commit 7301be2; PR CI 34686425221 is running.
+- Draft MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Steps 1–2 are commits 7301be2/a40a266. PR CI 34686728810 failed the repeated terminal test; a mock-server Broken pipe race has now been reproduced with delayed body delivery.
 - Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.rc`.
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Step 1: PR CI with read-only permissions, no release secrets, all-platform build + Dokka, warnings fail, and unconditional XML artifact upload.
-- Stabilized logs snapshot by awaiting container completion. Repeated terminal cleanup now has bounded per-session deadlines, a larger overall budget, and an assertion that the final peer connection closes.
-- Development version is 1.0.0-rc; README points consumers to published 0.1.0. Roadmap explicitly consolidates the remaining scope into this candidate.
-- Focused JVM regressions passed. Full `build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2` passed in 3m45s (JVM/Node/Linux and samples).
-
-- Step 2: added a ContainerCreateRequest overload retaining the original ContainerConfig signature. Common ContainerRecreateTest checks ports/env/network/mounts, typed conflict/missing-image failures, restart-policy update, and data retention after deleting both original and replacement. JVM focused test and allTests passed on JVM/Node/Linux in 3m31s with warning-mode=fail.
-- Added docs/CONTAINER-LIFECYCLE.md with application replacement/rollback and explicit volume deletion; contract `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#containers.recreate`.
+- Steps 1–2 already added PR CI, stabilized log snapshots, complete container creation, persistent-volume recreation tests and documentation.
+- Step 3: added suspending onProgress overloads to image create/push/load, retaining old signatures. ImageProgress preserves raw records and optional typed fields with exact unsigned counts. Callbacks are ordered/backpressured; final Result reports daemon completion/errors, cancellation and consumer failures propagate unchanged.
+- Image operations now detect short Content-Length responses and have caller-owned deadlines. Added docs/IMAGE-PROGRESS.md and contract spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress.
+- All 211 tests passed (JVM 97, Node.js 57, Linux 57), including real pull/load and mock push/progress failures/cancellation. Dokka passed with warning-mode=fail.
+- CI terminal failure reproduced: after receiving upgrade headers an uncollected session closes before the mock writes its prompt; Broken pipe stops the mock worker and the next handshake times out. A temporary 20 ms body delay reproduced this reliably; remove it and replace with deterministic synchronization/expected peer-close handling before committing the fixture fix.
 
 ## Next Steps
-1. Expose image progress and terminal outcomes; validate cancellation. Current create/push/load consume NDJSON privately through DockerClient.validateImageProgress; preserve old signatures and propagate consumer errors/cancellation without converting them into daemon errors.
+1. Fix the reproduced mock-server early-close race as a separate commit, then verify PR CI.
 2. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist. Do not restart the user’s real Docker daemon.
 3. Run final acceptance before tagging/publishing 1.0.0-rc.
 

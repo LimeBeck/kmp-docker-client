@@ -49,6 +49,23 @@ class Images(private val dockerClient: DockerClient) {
         changes: List<String>? = null,
         platform: String? = null
     ): Result<Unit, ErrorResponse> =
+        create(fromImage, fromSrc, repo, tag, message, changes, platform, onProgress = {})
+
+    /**
+     * Reports each progress record in order, awaiting [onProgress] before reading the next.
+     * The returned Result is the final outcome; callback failures and cancellation propagate.
+     * Cancelling closes this request but does not guarantee rollback of daemon-side work.
+     */
+    suspend fun create(
+        fromImage: String,
+        fromSrc: String? = null,
+        repo: String? = null,
+        tag: String? = null,
+        message: String? = null,
+        changes: List<String>? = null,
+        platform: String? = null,
+        onProgress: suspend (ImageProgress) -> Unit,
+    ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
             val registry = try {
                 OciImageRefParser.normalize(fromImage).registry
@@ -66,8 +83,9 @@ class Images(private val dockerClient: DockerClient) {
                 changes?.forEach { parameter("changes", it) }
                 platform?.let { parameter("platform", it) }
 
+                applyStreamConfig()
                 applyAuthForRegistry(registry)
-            }.execute { it.validateImageProgress() }
+            }.execute { it.validateImageProgress(onProgress) }
         }
 
     /**
@@ -110,6 +128,19 @@ class Images(private val dockerClient: DockerClient) {
         tag: String? = null,
         platform: String? = null
     ): Result<Unit, ErrorResponse> =
+        push(name, tag, platform, onProgress = {})
+
+    /**
+     * Reports each progress record in order, awaiting [onProgress] before reading the next.
+     * The returned Result is the final outcome; callback failures and cancellation propagate.
+     * Cancelling closes this request but does not guarantee rollback of daemon-side work.
+     */
+    suspend fun push(
+        name: String,
+        tag: String? = null,
+        platform: String? = null,
+        onProgress: suspend (ImageProgress) -> Unit,
+    ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
             val registry = try {
                 OciImageRefParser.normalize(name).registry
@@ -121,8 +152,9 @@ class Images(private val dockerClient: DockerClient) {
                 tag?.let { parameter("tag", it) }
                 platform?.let { parameter("platform", it) }
 
+                applyStreamConfig()
                 applyAuthForRegistry(registry)
-            }.execute { it.validateImageProgress() }
+            }.execute { it.validateImageProgress(onProgress) }
         }
 
     /**
@@ -242,10 +274,24 @@ class Images(private val dockerClient: DockerClient) {
         quiet: Boolean = false,
         body: ByteReadChannel
     ): Result<Unit, ErrorResponse> =
+        load(quiet, body, onProgress = {})
+
+    /**
+     * Reports each progress record in order, awaiting [onProgress] before reading the next.
+     * The returned Result is the final outcome; callback failures and cancellation propagate.
+     * Cancelling closes this request but does not guarantee rollback of daemon-side work.
+     */
+    suspend fun load(
+        quiet: Boolean = false,
+        body: ByteReadChannel,
+        onProgress: suspend (ImageProgress) -> Unit,
+    ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
             client.preparePost(apiPath("/images/load")) {
+                applyStreamConfig()
                 parameter("quiet", quiet)
+                contentType(ContentType("application", "x-tar"))
                 setBody(body)
-            }.execute { it.validateImageProgress() }
+            }.execute { it.validateImageProgress(onProgress) }
         }
 }

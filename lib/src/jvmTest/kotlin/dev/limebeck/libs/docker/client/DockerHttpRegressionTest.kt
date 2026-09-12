@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase
 import dev.limebeck.libs.docker.client.api.*
+import dev.limebeck.libs.docker.client.model.ImageProgress
 import dev.limebeck.libs.docker.client.model.AuthConfig
 import dev.limebeck.libs.docker.client.model.DockerApiException
 import io.ktor.client.request.*
@@ -260,6 +261,90 @@ class DockerHttpRegressionTest {
             assertEquals(dev.limebeck.libs.docker.client.model.LogLine.Type.STDERR, chunk.type)
             assertEquals("err", chunk.bytes.decodeToString())
             assertTrue(daemon.requests.single().body.contains("\"Tty\":false"))
+        }
+    }
+
+    private suspend fun imageOperation(
+        client: DockerClient,
+        kind: String,
+        onProgress: suspend (ImageProgress) -> Unit,
+    ) = when (kind) {
+        "pull" -> client.images.create("alpine", onProgress = onProgress)
+        "push" -> client.images.push("alpine", onProgress = onProgress)
+        else -> client.images.load(body = ByteReadChannel("archive".encodeToByteArray()), onProgress = onProgress)
+    }
+
+    @Test fun imageCallbacksDeliverOrderedProgressBeforeFinalSuccess() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            withDaemon(DockerReply("""{"id":"layer","status":"Working","progressDetail":{"current":9007199254740993,"total":18446744073709551615}}
+{"stream":"Loaded image","aux":{"ID":"sha256:result"},"extension":true}""")) { client, daemon ->
+                val records = mutableListOf<ImageProgress>()
+                val result = imageOperation(client, kind) { records += it }
+                assertTrue(result.isSuccess)
+                assertEquals(2, records.size)
+                assertEquals("layer", records[0].id)
+                assertEquals("Working", records[0].status)
+                assertEquals(9007199254740993uL, records[0].current)
+                assertEquals(ULong.MAX_VALUE, records[0].total)
+                assertEquals("Loaded image", records[1].stream)
+                assertNotNull(records[1].aux)
+                assertNotNull(records[1].raw["extension"])
+                if (kind == "load") assertEquals("archive", daemon.requests.single().body)
+            }
+        }
+    }
+
+    @Test fun imageCallbacksArePromptAndBackpressuredAndCancellationClosesResponse() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            withDaemon(DockerReply("{\"status\":\"one\"}\n{\"status\":\"two\"}\n", keepOpen = true)) { client, daemon ->
+                val entered = CompletableDeferred<Unit>()
+                var calls = 0
+                val operation = launch {
+                    imageOperation(client, kind) {
+                        calls++
+                        entered.complete(Unit)
+                        awaitCancellation()
+                    }
+                }
+                entered.await() // The peer never finishes: the callback must arrive before EOF.
+                assertEquals(1, calls)
+                assertTrue(operation.isActive)
+                operation.cancelAndJoin()
+                while (!daemon.peerClosed.get()) delay(10)
+                assertEquals(1, calls)
+            }
+        }
+    }
+
+    @Test fun imageConsumerFailurePropagatesUnchangedAndClosesResponse() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            withDaemon(DockerReply("{}\n", keepOpen = true)) { client, daemon ->
+                val expected = IllegalStateException("consumer failure")
+                val actual = assertFailsWith<IllegalStateException> {
+                    imageOperation(client, kind) { throw expected }
+                }
+                assertSame(expected, actual)
+                while (!daemon.peerClosed.get()) delay(10)
+            }
+        }
+    }
+
+    @Test fun imageCallbacksDoNotTurnFailuresIntoSuccess() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            for (tail in listOf("{\"errorDetail\":{\"message\":\"denied\"}}", "{\"error\":\"denied\"}", "broken")) {
+                withDaemon(DockerReply("{\"status\":\"Working\"}\n$tail\n")) { client, _ ->
+                    val records = mutableListOf<ImageProgress>()
+                    assertTrue(imageOperation(client, kind) { records += it }.isError)
+                    assertEquals(listOf("Working"), records.map { it.status })
+                }
+            }
+            withDaemon(DockerReply("{}\n", declaredLength = 100)) { client, _ ->
+                assertTrue(imageOperation(client, kind) {}.isError)
+            }
+            withDaemon(DockerReply("{\"message\":\"denied\"}", "403 Forbidden")) { client, _ ->
+                val result = imageOperation(client, kind) { fail("HTTP errors must not emit progress") }
+                assertEquals("denied", result.errorOrNull()?.message)
+            }
         }
     }
 
