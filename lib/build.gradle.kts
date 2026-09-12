@@ -213,3 +213,22 @@ dokka {
         footerMessage.set("(c) LimeBeck.Dev")
     }
 }
+
+// Explicit opt-in: this task only targets the disposable daemon supplied by the harness.
+val standardJvmTest = tasks.named<Test>("jvmTest") {
+    exclude("**/DaemonRestartAcceptanceTest*")
+}
+tasks.register<Test>("daemonRestartTest") {
+    group = "verification"
+    description = "Verify recovery against the isolated daemon from scripts/with-isolated-docker.sh"
+    dependsOn("jvmTestClasses")
+    testClassesDirs = standardJvmTest.get().testClassesDirs
+    classpath = standardJvmTest.get().classpath
+    include("**/DaemonRestartAcceptanceTest*")
+    outputs.upToDateWhen { false }
+    doFirst {
+        require(!System.getenv("RC_DOCKER_SOCKET").isNullOrBlank()) {
+            "Run through scripts/with-isolated-docker.sh; never restart the host daemon"
+        }
+    }
+}

@@ -10,7 +10,7 @@ This checklist records evidence required for release. An unchecked item is outst
 - [x] Real-Docker tests cover create/configuration inspection, name/image errors, restart-policy update and data retained after original/replacement deletion (`ContainerRecreateTest`).
 - [x] Image tests cover typed progress, final error/success, malformed records, exact counters, cancellation and consumer exceptions; real pull/load run on all three targets.
 - [x] Mock transport tests cover bounded logs/stats/events, HTTP errors, truncation, cancellation and repeated terminal connection cleanup.
-- [ ] Isolated daemon restart and application resubscription. **Deferred by the owner on 2026-09-12; do not execute during the current work or mark passed.** This remains an acceptance gap until explicitly completed or the release scope is revised.
+- [x] Isolated daemon restart and explicit application resubscription on JVM/Docker 29.0.0, including logs/stats/events/terminal termination, state reconciliation and repeated socket cleanup. See [tested scope and recovery policy](STREAM-RECOVERY.md).
 
 ## Real dashboard acceptance
 
@@ -36,10 +36,10 @@ Use disposable resources with unique names and explicit cleanup. Record dashboar
 
 - Local compatibility validation: `./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2` passed, including all 218 library tests and sample builds.
 - Follow-up compatibility fix: actual Temurin 17 `:lib:allTests :lib:updateKotlinAbi` passed with 224 tests (JVM 102, Node.js 61, Linux X64 61), no failures/skips; separate `:lib:checkKotlinAbi` passed. Both used `--warning-mode=fail`. The ABI diff is limited to the documented logger type and storage metadata nullability changes.
-- Matrix run URL/SHA: pending after fixing Java 21 logger bytecode on JDK 17 and nullable Docker 29 containerd metadata discovered by run 34700163603.
+- Matrix baseline: [run 34714529905](https://github.com/LimeBeck/kmp-docker-client/actions/runs/34714529905) passed all four cells for 7d2d9ddac0f881bf42cb887cbe6a91e7c5771301. Recheck the final release commit after remaining acceptance changes.
 - ABI check and negative probe: passed locally. A simulated removed ImagePushResult getter in the reference snapshot failed checkKotlinAbi; restoring the snapshot restored success. JVM and JS/Linux KLib snapshots are committed.
 - Dashboard application run: pending.
-- Daemon restart/resubscription: deferred.
+- Daemon restart/resubscription: local daemonRestartTest passed on 2026-09-12 (1 test, no failures/skips, 7.742s). All four old subscriptions ended with EOF; socket count 2 → 3 after repeated sessions. The harness removed its temporary daemon and data volume.
 - Publication: not performed.
 
 Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance`.

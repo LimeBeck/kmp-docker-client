@@ -30,6 +30,6 @@ The changes below were introduced in 0.1.0 and still apply:
 - Log/stat/event collection can fail after preparation succeeds. Catch `DockerApiException` for HTTP failures during collection; cancellation and consumer exceptions propagate. Oversized/truncated records fail rather than grow memory indefinitely.
 - A successful HTTP status alone does not prove an image operation succeeded: progress records can contain a Docker error.
 
-Daemon restart recovery remains a deferred acceptance gate. The SDK does not automatically retry or reconnect. Existing stream completion/cancellation contracts remain unchanged; deferral is not a claim of recovery support.
+The isolated JVM/Docker 29 restart acceptance test verifies old-stream termination and explicit application resubscription. The SDK does not automatically retry or reconnect. Handle EOF as well as transport failures, reconcile current state, and open new terminal sessions without replaying commands. See [stream recovery](STREAM-RECOVERY.md) for the tested scope and application policy.
 
 For the supported runtime combinations and post-1.0 policy, see [compatibility](COMPATIBILITY.md).

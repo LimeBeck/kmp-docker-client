@@ -7,18 +7,16 @@
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Diagnosed PR CI run 34700163603: JDK 17 could not load common:1.0.3 logger classes compiled for Java 21; Docker 29 containerd returned GraphDriver.Data=null rejected by generated models.
-- Removed the library common logger dependency in lib/build.gradle.kts and switched DockerClient/ExecSession/HijackHandshake to Ktor logging. The native dashboard retains its own explicit dependency. JDK 17/21 matrix is unchanged.
-- Explicitly corrected DriverData.Data nullability in specs/v1.51.yaml and added common regression tests for both null containerd metadata and preserved overlay2 maps in container/image inspection. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#models.storage.
-- Regenerated JVM and JS/Linux ABI snapshots; reviewed diff contains only the logger type and DriverData nullability changes. Documented migration from 0.1.0. No checks were disabled.
-- Actual Temurin 17 local allTests/updateKotlinAbi passed in 6m52s: JVM 102, Node.js 61, Linux X64 61 tests, no failures/skips. Separate checkKotlinAbi passed in 7s, all with --warning-mode=fail. Focused HTTP logging regressions also passed before the full run.
-- Previous RC work includes complete create configuration, typed generic image progress, terminal cleanup checks, the four-cell Docker/JDK matrix, warning-as-error compilation, ABI guards and acceptance/migration documentation.
+- Owner requested the remaining RC preparation on 2026-09-12, resuming the previously deferred isolated restart work. Never restart the user's main daemon.
+- Previous four-cell compatibility CI passed on 7d2d9dd: https://github.com/LimeBeck/kmp-docker-client/actions/runs/34714529905.
+- Added scripts/with-isolated-docker.sh and the explicit :lib:daemonRestartTest task. The harness owns a labelled DinD container, separate socket/data volume, and cleanup. Ordinary JVM tests exclude this opt-in destructive-to-fixture test.
+- Local restart acceptance passed: logs/stats/events/terminal all reached EOF before cleanup; the same client reconnected, reconciled state, resumed streams and opened repeated terminals. Socket count 2 → 3. Added recovery policy and PR/release CI steps. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance.
+- API/migration comparison against published 0.1.0 confirms additive create/progress overloads plus documented logger type and DriverData nullability changes; no new library API changes in this step.
 
 ## Next Steps
-1. Check the new four-cell PR CI matrix after push; record run URL/SHA in release evidence.
-2. Real-dashboard application acceptance and final API/migration review remain manual release gates.
-3. Daemon restart/resubscription is explicitly deferred by the owner. Do not execute it now or mark the gate complete. Do not restart the user’s real Docker daemon.
-4. Resolve outstanding acceptance gates or obtain an explicit scope revision before tagging/publishing 1.0.0-rc. No release was performed.
+1. Complete real dashboard acceptance; sample needs lifecycle/progress integration before full application acceptance can be claimed. An optional question about using the sample was sent; default is the bundled htmx dashboard.
+2. Run the complete final CI matrix including the new isolated recovery step, then record exact head/run evidence in MR #5.
+3. Keep the MR unmerged and the candidate unpublished until preparation/acceptance is complete. Release/tag/publication follows the owner's release instruction.
 
 ## Known Risks / Constraints
 - Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
@@ -31,7 +29,7 @@
 - Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
 
 ## Decisions Pending
-- Timing of deferred daemon-restart verification and real-dashboard acceptance before release.
+- Real-dashboard acceptance and final release readiness.
 
 ## Resume Commands
 - `./gradlew :sample:htmxDashboard:linkDebugExecutableLinuxX64 :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2`

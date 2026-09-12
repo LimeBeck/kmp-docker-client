@@ -63,6 +63,10 @@ jobs:
       - name: Build, test, and generate documentation
         run: ./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2
 
+      - name: Verify isolated daemon restart and resubscription
+        if: matrix.docker == 'v29.0.0' && matrix.java == '21'
+        run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v6

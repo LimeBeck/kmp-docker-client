@@ -114,6 +114,9 @@ jobs:
       - name: Run tests with Gradle
         run: ./gradlew :lib:allTests --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
+      - name: Verify isolated daemon restart and resubscription
+        run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2 -PlibVersion=$LIB_VERSION
+
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v6
