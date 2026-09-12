@@ -1,5 +1,7 @@
 package dev.limebeck.libs.docker.client.api
 
+import dev.limebeck.libs.docker.client.utils.readDockerLine
+
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.dsl.api
 import dev.limebeck.libs.docker.client.model.*
@@ -7,7 +9,8 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.serialization.SerializationException
 
 val DockerClient.system by ::System.api()
@@ -85,25 +88,26 @@ class System(private val dockerClient: DockerClient) {
         until: String? = null,
         filters: Map<String, List<String>>? = null
     ): Flow<EventMessage> = with(dockerClient) {
-        flow {
+        channelFlow {
             client.prepareGet(apiPath("/events")) {
+                applyStreamConfig()
                 since?.let { parameter("since", it) }
                 until?.let { parameter("until", it) }
                 filters?.let { parameter("filters", json.encodeToString(it)) }
             }.execute { response ->
-                response.requireStreamSuccess()
-                val channel = response.bodyAsChannel()
-                while (!channel.isClosedForRead) {
-                    val line = channel.readUTF8Line() ?: break
-                    if (line.isBlank()) continue
-                    val event = try {
-                        json.decodeFromString<EventMessage>(line)
-                    } catch (_: SerializationException) {
-                        continue
+                response.consumeStream { channel ->
+                    while (true) {
+                        val line = channel.readDockerLine() ?: break
+                        if (line.isBlank()) continue
+                        val event = try {
+                            json.decodeFromString<EventMessage>(line)
+                        } catch (_: SerializationException) {
+                            continue
+                        }
+                        send(event)
                     }
-                    emit(event)
                 }
             }
-        }
+        }.buffer(0)
     }
 }

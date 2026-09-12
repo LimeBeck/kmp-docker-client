@@ -18,6 +18,7 @@ internal data class DockerReply(
     val keepOpen: Boolean = false,
     val expectedInput: String? = null,
     val sendResponse: Boolean = true,
+    val declaredLength: Int? = null,
 )
 
 internal data class DockerRequest(val line: String, val headers: Map<String, String>, val body: String)
@@ -38,6 +39,7 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
     private val worker = thread(isDaemon = true, name = "mock-docker") {
         try {
             for (reply in replies) {
+                responseSent.set(false)
                 server.accept().use { socket ->
                     activeSocket.set(socket)
                     val input = Channels.newInputStream(socket)
@@ -83,7 +85,7 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
                     val response = buildString {
                         append("HTTP/1.1 ${reply.status}\r\n")
                         append("Content-Type: application/json\r\nConnection: close\r\n")
-                        if (!reply.keepOpen) append("Content-Length: ${payload.size}\r\n")
+                        if (!reply.keepOpen && reply.headers.keys.none { it.equals("Transfer-Encoding", ignoreCase = true) }) append("Content-Length: ${reply.declaredLength ?: payload.size}\r\n")
                         reply.headers.forEach { (key, value) -> append("$key: $value\r\n") }
                         append("\r\n")
                     }

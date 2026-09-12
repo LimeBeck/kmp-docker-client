@@ -75,7 +75,17 @@ Must provide:
 - A `Result<Flow<...>, ErrorResponse>` only describes preparation; errors when collecting its Flow follow the rule above.
 - Events may skip malformed JSON records, but must propagate downstream exceptions and cancellation unchanged.
 
+### Stream limits and recovery {#errors.streams.recovery}
+- JSON stream records and TTY log lines are limited to 1,048,576 characters; multiplex log payloads are limited to 1,048,576 bytes before allocation. Oversized records and invalid/truncated multiplex framing fail collection and release the response.
+- Stream readers apply backpressure without an internal output queue. Idle streams have no request-duration or socket-idle timeout; callers own cancellation/deadlines.
+- Stats reject malformed JSON. Events continue to skip malformed JSON records. Complete final JSON records without a newline are accepted; transport failures must propagate even at EOF.
+- Docker `uint64` and `uint32` counters must generate Kotlin `ULong` and `UInt`, including nested stats fields, so CPU/memory/network counters do not overflow 32-bit signed integers.
+- CIO reports a disconnect between complete HTTP chunks as EOF, even without a terminal zero chunk. Applications must therefore handle both EOF and exceptions when recovering a live subscription.
+- Clean EOF completes normally. There is no implicit retry on errors or EOF. Each new collection opens a new stream request; after daemon recovery an application can resubscribe explicitly.
+- Event recovery should resume from a saved timestamp with overlap/deduplication and refresh resource state, since event history is finite. Logs need an explicit since/tail policy; stats may simply resubscribe. Cancellation and downstream errors must not trigger retries.
+
 ## Changelog {#changelog}
+- 2026-09-12: bounded stream records, validated HTTP body completion, and documented explicit resubscription.
 - 2026-09-11: defined binary terminal output, single-collection ownership, and session cleanup.
 - 2026-09-11: defined image progress completion and cold-stream HTTP error/cancellation semantics after review.
 - 2026-03-07: initial API-surface spec extracted from implemented modules.

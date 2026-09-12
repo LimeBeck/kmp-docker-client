@@ -1,5 +1,7 @@
 package dev.limebeck.libs.docker.client
 
+import dev.limebeck.libs.docker.client.utils.readDockerLine
+
 import dev.limebeck.libs.docker.client.DockerClientConfig.Auth
 import dev.limebeck.libs.docker.client.api.AUTH_HEADER
 import dev.limebeck.libs.docker.client.api.resolveServerForRegistry
@@ -24,6 +26,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -44,6 +47,7 @@ open class DockerClient(
 
     val client = HttpClient(CIO) {
         install(SSE)
+        install(HttpTimeout)
         install(Logging) {
             logger = object : Logger {
                 override fun log(message: String) {
@@ -117,12 +121,31 @@ open class DockerClient(
         if (!status.isSuccess()) throw DockerApiException(status, errorResponse())
     }
 
+    /** Validate transport completion as well as status; CIO can report a short body as clean EOF. */
+    suspend fun <T> HttpResponse.consumeStream(block: suspend (ByteReadChannel) -> T): T {
+        requireStreamSuccess()
+        val channel = bodyAsChannel().counted()
+        val result = block(channel)
+        channel.closedCause?.let { throw it }
+        val expected = headers[HttpHeaders.ContentLength]?.toLongOrNull()
+        if (headers[HttpHeaders.TransferEncoding] == null && expected != null && channel.totalBytesRead != expected) {
+            throw kotlinx.io.EOFException("Truncated Docker response: expected $expected bytes, received ${channel.totalBytesRead}")
+        }
+        return result
+    }
+
     /** Docker can report an operation failure inside a successful NDJSON response. */
     suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> {
         if (!status.isSuccess()) return errorResponse().asError()
         val channel = bodyAsChannel()
-        while (!channel.isClosedForRead) {
-            val line = channel.readUTF8Line() ?: break
+        while (true) {
+            val line = try {
+                channel.readDockerLine()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError()
+            } ?: break
             if (line.isBlank()) continue
             val message = try {
                 json.parseToJsonElement(line) as? JsonObject
@@ -136,6 +159,15 @@ open class DockerClient(
             if (error != null) return ErrorResponse(error).asError()
         }
         return Unit.asSuccess()
+    }
+
+    /** Live streams may be idle indefinitely; the collector owns their lifetime. */
+    fun HttpRequestBuilder.applyStreamConfig() {
+        applyConnectionConfig()
+        timeout {
+            requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+            socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+        }
     }
 
     @OptIn(InternalAPI::class)

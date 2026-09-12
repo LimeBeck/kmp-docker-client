@@ -1,38 +1,38 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Completed the terminal/session portion of 0.1 on `codex/terminal-session-lifecycle`.
-- Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams`; target remains the single-host panel in FEAT-002.
-- Next release target is 0.1.0 (`gradle.properties`), as requested by the owner. Published baseline remains 0.0.10; no tag or publication was created.
+- Version 0.1.0 in MR #4 (`codex/terminal-session-lifecycle`): terminal/session ownership plus reliable logs/stats/events.
+- Published baseline remains 0.0.10; no new release tag or publication has been created.
+- Contracts: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams` and `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.streams.recovery`.
 
 ## Completed in Last Session
-- Raised the default build version from snapshot to 0.1.0, updated README and `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#publish.development`. The version bump is included in MR #4. `:lib:properties` verified both version and libVersion are 0.1.0; `git diff --check` passed.
-- Added `ExecSession.incomingChunks`: immediate binary TTY output, bounded multiplex parsing, stdout/stderr identity, and preservation of HTTP-upgrade leftover bytes.
-- Sessions allow one output collector and close on EOF, consumer failure, cancellation, or explicit close. Handshake cancellation propagates. Prefix forwarding has collection scope.
-- Preserved the line API and existing constructors/startInteractive calls; added explicit non-TTY exec mode. README explains single-collection ownership and migration from the removed unscoped prependLeftover utility.
-- JVM uses independent SocketChannel read/write operations. Node.js pauses incoming data and awaits write callbacks. Linux uses shutdown, idempotent close, and defers descriptor release until I/O jobs finish.
-- Dashboard WebSockets use the session byte stream and scoped cleanup, including failed container starts.
-- Added common parser/lifecycle tests, a real-Docker no-newline prompt/input test on all platforms, and JVM Unix-socket tests for duplex I/O, handshake cancellation, and repeated disconnects.
-- Final tests passed: 161 executions (71 JVM, 45 Node.js, 45 Linux), including the 20-session disconnect regression. Final `build :lib:dokkaGenerateHtml` passed, including debug/release sample executables.
+- Bounded TTY/JSON records to 1,048,576 characters and multiplex log frames to 1,048,576 bytes before allocation. CR/LF/CRLF and complete final unterminated records are preserved.
+- Removed all maintained readUTF8Line calls. Oversized image progress returns ErrorResponse; cancellation propagates.
+- logs/stats/events use rendezvous channelFlow for backpressure and correct operation across CIO dispatchers. Removed the fixed log duration timeout and applied explicit stream lifetime settings.
+- Validate Content-Length after complete consumption; truncated chunk bodies, malformed stats, cancellation, and consumer failures terminate/release streams. Recollection opens a fresh stream without implicit retries.
+- Fixed OpenAPI generation of uint64/uint32 as ULong/UInt. Real stats previously overflowed Int for system_cpu_usage; regression coverage includes ULong.MAX_VALUE and values beyond JavaScript Number precision.
+- Added common parser/counter tests, real-Docker stats/events coverage, and Unix-socket failure/recovery cases. All 195 tests passed (89 JVM, 53 Node.js, 53 Linux). Final sample linking/Dokka verification is in progress.
+- README documents limits, model API changes, event overlap/deduplication/snapshot recovery, and EOF/error resubscription.
+- Earlier terminal work remains: immediate incomingChunks, scoped prefix forwarding, idempotent session close, native descriptor cleanup, and dashboard WebSocket migration.
 
 ## Next Steps
-1. Review and merge MR #4. Publish 0.1.0 via a new release tag when requested; broader 1.0 readiness work remains.
-2. Address logs/stats/events reconnect and bounded-resource behavior, then expose image-operation progress.
-3. Resolve remaining Kotlin, Gradle/plugin, and CI deprecations at their source, per `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#maintenance.deprecations`.
+1. Complete final verification and update MR #4 with stream and maintenance changes.
+2. Review/merge MR #4; publish 0.1.0 only when requested.
+3. Next single-host readiness work: expose image-operation progress, validate persistent-volume/recreate workflows, and establish PR compatibility checks.
 
 ## Known Risks / Constraints
-- API 1.51 is fixed; no version negotiation. Docker 28.5.2 is provisioned in release CI.
-- incoming.first()/take() now closes the session; reuse requires one long-lived collector. Binary chunks may split UTF-8; use a streaming decoder.
-- Old line-oriented non-TTY logs still allocate a whole frame; the bounded byte parser applies to incomingChunks. Broader log-stream hardening is follow-up work.
-- Three readUTF8Line deprecations remain in DockerClient, Containers stats, and System events. The readLogLines call now uses readLine.
+- API 1.51 is fixed; no version negotiation. Release CI provisions Docker 28.5.2.
+- CIO reports disconnect between complete HTTP chunks as EOF even without a terminal zero chunk. Recovery must handle EOF as well as exceptions; finite event history also requires refreshing resource state.
+- Unsigned schema counters now have unsigned Kotlin types, a model API change in 0.1.0.
+- incoming.first()/take() closes the session; output is collected once. Binary chunks may split UTF-8 and require streaming decoding.
 - Authentication/roles/audit belong to the application; sample still binds to loopback.
 - The review report is local and excluded via .git/info/exclude; never commit it.
-- Do not move v0.0.9/v0.0.10 or re-upload the published Maven version. v0.0.10 publication and Central artifacts were verified in the previous session.
+- Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
 
 ## Decisions Pending
-- Supported Docker/platform matrix and API compatibility gates for 1.0.0.
+- Supported Docker/platform matrix and public API compatibility gates for 1.0.0.
 
 ## Resume Commands
 - `git diff --check`
-- `./gradlew :lib:jvmTest --tests '*TerminalSessionTest' --tests '*DockerHttpRegressionTest' --console=plain --max-workers=2`
-- `./gradlew build :lib:dokkaGenerateHtml --console=plain --max-workers=2`
+- `./gradlew :lib:jvmTest --warning-mode=fail --console=plain --max-workers=2`
+- `./gradlew build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2`

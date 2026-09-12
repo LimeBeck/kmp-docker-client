@@ -239,6 +239,22 @@ Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exe
 
 Migration from 0.0.10: `incoming.first()` now closes the session, and output cannot be collected again. Use one long-lived collector to process multiple messages. The unscoped `prependLeftover` utility has been removed; use the session output API, which owns forwarding and cleanup.
 
+## Logs, stats and events: lifetime and recovery
+
+Stream requests open on collection and close on EOF, failure, or cancellation (`first()`/`take()` included). Stats with `stream = false` remain an ordinary one-shot request. `getLogs` inspects the container during preparation to determine TTY mode; the log request itself opens on collection. Output processing applies backpressure. There is no fixed request-duration or idle timeout for these streams; use coroutine cancellation or `withTimeout` when the application needs a deadline.
+
+TTY lines and JSON stream records are limited to 1,048,576 characters, and multiplex log frames to 1,048,576 bytes. Oversized records and invalid/truncated frames fail instead of allocating unbounded memory. Stats fail on malformed JSON; events skip malformed JSON records. CR, LF, CRLF and complete final records without a newline are supported. HTTP failures throw `DockerApiException`; transport and decoding errors propagate to the collector.
+
+Docker unsigned counters now use `ULong`/`UInt` (a model API change in 0.1.0); CPU nanoseconds and byte counters retain their full unsigned range.
+
+CIO can report a disconnect between complete HTTP chunks as normal EOF, even when the terminal zero chunk is missing. Handle both EOF and exceptions when recovering a live subscription. Truncation within a chunk or a declared Content-Length body is reported as an error.
+
+The SDK never reconnects implicitly. Recollect a flow to open a new stream after clean EOF or failure. After a daemon restart, use a bounded exponential delay with jitter at the application level, and retry only transport failures or selected server errors. Do not retry cancellation, consumer failures, invalid records, or permanent HTTP errors. Keep the transport retry boundary upstream of application processing.
+
+For events, create a new `events(since = savedTimestamp, filters = ...)` subscription with a small overlap and deduplicate replayed events. Refresh the container/image/network/volume snapshot after reconnect: event history is finite, so a timestamp alone cannot guarantee gap-free recovery. For logs, choose `since`/`tail` explicitly to control replay; prepare `getLogs` again if the container may have been recreated. Stats can simply subscribe again and treat the first CPU sample as a fresh baseline.
+
+Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.streams.recovery`.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
