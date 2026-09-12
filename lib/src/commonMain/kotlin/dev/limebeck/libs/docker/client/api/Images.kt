@@ -8,6 +8,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
+import kotlinx.serialization.builtins.serializer
 
 val DockerClient.images by ::Images.api()
 
@@ -64,7 +65,7 @@ class Images(private val dockerClient: DockerClient) {
         message: String? = null,
         changes: List<String>? = null,
         platform: String? = null,
-        onProgress: suspend (ImageProgress) -> Unit,
+        onProgress: suspend (ImageProgress<Unit>) -> Unit,
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
             val registry = try {
@@ -85,7 +86,7 @@ class Images(private val dockerClient: DockerClient) {
 
                 applyStreamConfig()
                 applyAuthForRegistry(registry)
-            }.execute { it.validateImageProgress(onProgress) }
+            }.execute { it.validateImageProgress(Unit.serializer(), onProgress) }
         }
 
     /**
@@ -139,7 +140,7 @@ class Images(private val dockerClient: DockerClient) {
         name: String,
         tag: String? = null,
         platform: String? = null,
-        onProgress: suspend (ImageProgress) -> Unit,
+        onProgress: suspend (ImageProgress<ImagePushResult>) -> Unit,
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
             val registry = try {
@@ -154,7 +155,7 @@ class Images(private val dockerClient: DockerClient) {
 
                 applyStreamConfig()
                 applyAuthForRegistry(registry)
-            }.execute { it.validateImageProgress(onProgress) }
+            }.execute { it.validateImageProgress(ImagePushResult.serializer(), onProgress) }
         }
 
     /**
@@ -284,7 +285,7 @@ class Images(private val dockerClient: DockerClient) {
     suspend fun load(
         quiet: Boolean = false,
         body: ByteReadChannel,
-        onProgress: suspend (ImageProgress) -> Unit,
+        onProgress: suspend (ImageProgress<Unit>) -> Unit,
     ): Result<Unit, ErrorResponse> =
         with(dockerClient) {
             client.preparePost(apiPath("/images/load")) {
@@ -292,6 +293,6 @@ class Images(private val dockerClient: DockerClient) {
                 parameter("quiet", quiet)
                 contentType(ContentType("application", "x-tar"))
                 setBody(body)
-            }.execute { it.validateImageProgress(onProgress) }
+            }.execute { it.validateImageProgress(Unit.serializer(), onProgress) }
         }
 }

@@ -7,15 +7,13 @@
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- A subsequent JVM run exposed a fixture assertion requiring exactly 10 Broken pipe/reset errors; one close legitimately arrived as EOF. The fixture now counts closed responses in both cases and requires all 20 connections closed. Latches still ensure early-close ordering. JVM regression tests passed with this correction.
-
-- Owner requested replacing the raw JSON wrapper with explicit serializable models. ImageProgress now has nullable id/status/stream/progress/progressDetail/aux fields; ImageProgressDetail has nullable ULong current/total. Only aux remains JsonObject.
-- Progress decoding uses the typed serializer after checking Docker error records. Unknown fields are ignored with the default JSON config. Missing counts remain null; invalid typed values return a malformed-progress error before invoking the callback. Consumer exceptions and cancellation remain outside decoder catches.
-- Updated examples, model construction/serialization round-trip tests, unknown-field checks, exact unsigned counters, and HTTP regressions for invalid counts. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress.
-- Previous CI 34687877135 passed, confirming the deterministic terminal mock fix. Typed-model validation passed: all 214 tests (JVM 98, Node.js 58, Linux 58) and Dokka with warning-mode=fail in 4m12s.
+- Owner requested operation-specific generic aux. ImageProgress<out TAux> now uses nullable TAux with a serializer chosen by the endpoint. Push callbacks receive ImageProgress<ImagePushResult> (Tag/Digest/Size wire fields); create/load receive ImageProgress<Unit> because Docker API 1.51 has no documented aux payload for those operations. No public progress field uses JsonObject.
+- Verified push payload against Moby v28.5.2 api/types/types.go. Corrected the earlier load-ID example: load outputs status/stream, not a guaranteed aux ID. Updated docs/IMAGE-PROGRESS.md and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress explicitly.
+- Tests cover endpoint-specific typed access, generic serializer round trips, optional aux, invalid push Size, exact unsigned counts, errors/cancellation and real pull/load. All 218 tests (JVM 100, Node.js 59, Linux 59) and Dokka passed with warning-mode=fail in 3m39s.
+- Separate fixture commit 54140d9 counts both EOF and Broken pipe/reset as closed connections, requiring all 20 closes. The old assertion incorrectly required 10 kernel errors; synchronized early-close ordering remains enforced.
 
 ## Next Steps
-1. Verify PR CI after pushing typed image progress models.
+1. Verify PR CI after pushing generic operation-specific progress and fixture close accounting.
 2. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist. Do not restart the user’s real Docker daemon.
 3. Run final acceptance before tagging/publishing 1.0.0-rc.
 

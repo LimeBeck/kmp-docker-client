@@ -12,7 +12,25 @@ result.fold(
 )
 ```
 
-`images.push(name, onProgress = { ... })` and `images.load(body = archive, onProgress = { ... })` use the same callback and final result. The callback receives `ImageProgress` with optional `id`, `status`, `stream`, `progress`, `progressDetail` and `aux`. Both `ImageProgress` and `ImageProgressDetail` are serializable data classes with explicit fields; only the extensible `aux` payload uses `JsonObject`. Counts in `progressDetail.current` and `progressDetail.total` are exact unsigned integers, including on Node.js. Missing counts remain null; invalid counts fail the operation as malformed progress. Unknown JSON fields are ignored. Layer counts are not an overall percentage. Render unknown totals as indeterminate progress, and avoid dividing by zero.
+The callback type is determined by the operation:
+
+| Operation | Callback record | Auxiliary data |
+| --- | --- | --- |
+| `create` (pull/import) | `ImageProgress<Unit>` | No documented auxiliary payload |
+| `push` | `ImageProgress<ImagePushResult>` | Optional `tag`, `digest`, `size` |
+| `load` | `ImageProgress<Unit>` | No documented auxiliary payload |
+
+```kotlin
+client.images.push("registry.example.com/app", tag = "latest") { update ->
+    update.aux?.let { result -> println("${result.digest}: ${result.size} bytes") }
+}.getOrThrow()
+```
+
+`ImageProgress<TAux>`, `ImageProgressDetail` and `ImagePushResult` are serializable data classes; no public progress field uses JSON objects. Push result fields map to Docker's `Tag`, `Digest`, `Size` wire names. `aux` is optional and its absence does not imply failure. Pull/load results arrive through `status`/`stream`; do not infer image IDs from an undocumented aux payload. The generic model also supports serialization with other explicitly chosen auxiliary types.
+
+Counts in `progressDetail.current`, `progressDetail.total` and push `aux.size` are exact unsigned integers, including on Node.js. Missing counts remain null; invalid counts fail the operation as malformed progress. Unknown JSON fields are ignored by default. Layer counts are not an overall percentage. Render unknown totals as indeterminate progress, and avoid dividing by zero.
+
+The push wire format follows [Docker 28.5.2 PushResult](https://github.com/moby/moby/blob/v28.5.2/api/types/types.go#L99).
 
 Callbacks run sequentially as records arrive. A suspending callback applies backpressure; it does not create an unbounded queue. The library does not choose a UI dispatcher, so switch to the appropriate dispatcher before updating UI state. Bound any application-owned progress history.
 

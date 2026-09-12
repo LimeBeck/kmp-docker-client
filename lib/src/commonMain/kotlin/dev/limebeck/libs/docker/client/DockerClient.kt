@@ -28,6 +28,8 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -137,10 +139,11 @@ open class DockerClient(
     }
 
     /** Docker can report an operation failure inside a successful NDJSON response. */
-    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> = validateImageProgress {}
+    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> = validateImageProgress(Unit.serializer()) {}
 
-    suspend fun HttpResponse.validateImageProgress(
-        onProgress: suspend (ImageProgress) -> Unit,
+    suspend fun <TAux> HttpResponse.validateImageProgress(
+        auxSerializer: KSerializer<TAux>,
+        onProgress: suspend (ImageProgress<TAux>) -> Unit,
     ): Result<Unit, ErrorResponse> {
         if (!status.isSuccess()) return errorResponse().asError()
         val channel = bodyAsChannel().counted()
@@ -164,7 +167,7 @@ open class DockerClient(
                 ?: legacyError?.contentOrNull?.takeIf { it.isNotBlank() }
             if (error != null) return ErrorResponse(error).asError()
             val progress = try {
-                json.decodeFromJsonElement<ImageProgress>(message)
+                json.decodeFromJsonElement(ImageProgress.serializer(auxSerializer), message)
             } catch (_: SerializationException) {
                 return ErrorResponse("Invalid Docker image progress response").asError()
             }

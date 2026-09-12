@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase
 import dev.limebeck.libs.docker.client.api.*
+import dev.limebeck.libs.docker.client.model.ImagePushResult
 import dev.limebeck.libs.docker.client.model.ImageProgress
 import dev.limebeck.libs.docker.client.model.AuthConfig
 import dev.limebeck.libs.docker.client.model.DockerApiException
@@ -285,7 +286,7 @@ class DockerHttpRegressionTest {
     private suspend fun imageOperation(
         client: DockerClient,
         kind: String,
-        onProgress: suspend (ImageProgress) -> Unit,
+        onProgress: suspend (ImageProgress<*>) -> Unit,
     ) = when (kind) {
         "pull" -> client.images.create("alpine", onProgress = onProgress)
         "push" -> client.images.push("alpine", onProgress = onProgress)
@@ -294,9 +295,10 @@ class DockerHttpRegressionTest {
 
     @Test fun imageCallbacksDeliverOrderedProgressBeforeFinalSuccess() = runBlocking {
         for (kind in listOf("pull", "push", "load")) {
+            val aux = if (kind == "push") ""","aux":{"Tag":"latest","Digest":"sha256:result","Size":123}""" else ""
             withDaemon(DockerReply("""{"id":"layer","status":"Working","progressDetail":{"current":9007199254740993,"total":18446744073709551615}}
-{"stream":"Loaded image","aux":{"ID":"sha256:result"},"extension":true}""")) { client, daemon ->
-                val records = mutableListOf<ImageProgress>()
+{"stream":"Complete"$aux,"extension":true}""")) { client, daemon ->
+                val records = mutableListOf<ImageProgress<*>>()
                 val result = imageOperation(client, kind) { records += it }
                 assertTrue(result.isSuccess)
                 assertEquals(2, records.size)
@@ -304,11 +306,23 @@ class DockerHttpRegressionTest {
                 assertEquals("Working", records[0].status)
                 assertEquals(9007199254740993uL, records[0].progressDetail?.current)
                 assertEquals(ULong.MAX_VALUE, records[0].progressDetail?.total)
-                assertEquals("Loaded image", records[1].stream)
-                assertNotNull(records[1].aux)
+                assertEquals("Complete", records[1].stream)
+                if (kind == "push") assertEquals(ImagePushResult("latest", "sha256:result", 123uL), records[1].aux)
+                else assertNull(records[1].aux)
                 assertNull(records[1].progressDetail)
                 if (kind == "load") assertEquals("archive", daemon.requests.single().body)
             }
+        }
+    }
+
+    @Test fun pushAuxIsTypedAndMalformedAuxIsAnOperationError() = runBlocking {
+        withDaemon(DockerReply("""{"aux":{"Tag":"latest","Digest":"sha256:result","Size":123}}""")) { client, _ ->
+            var digest: String? = null
+            client.images.push("alpine") { update -> digest = update.aux?.digest }.getOrThrow()
+            assertEquals("sha256:result", digest)
+        }
+        withDaemon(DockerReply("""{"aux":{"Size":-1}}""")) { client, _ ->
+            assertTrue(client.images.push("alpine") { fail("Malformed aux must not reach the callback") }.isError)
         }
     }
 
@@ -351,7 +365,7 @@ class DockerHttpRegressionTest {
         for (kind in listOf("pull", "push", "load")) {
             for (tail in listOf("{\"errorDetail\":{\"message\":\"denied\"}}", "{\"error\":\"denied\"}", "broken", "{\"progressDetail\":{\"current\":-1}}", "{\"progressDetail\":{\"total\":18446744073709551616}}")) {
                 withDaemon(DockerReply("{\"status\":\"Working\"}\n$tail\n")) { client, _ ->
-                    val records = mutableListOf<ImageProgress>()
+                    val records = mutableListOf<ImageProgress<*>>()
                     assertTrue(imageOperation(client, kind) { records += it }.isError)
                     assertEquals(listOf("Working"), records.map { it.status })
                 }
