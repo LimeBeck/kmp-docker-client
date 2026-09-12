@@ -54,6 +54,8 @@ dependencies {
 - **Config**
 - **Plugin**
 
+For RC preparation, see [compatibility and API policy](docs/COMPATIBILITY.md), [migration notes](docs/MIGRATION-1.0.0-rc.md), and the [acceptance checklist](docs/RC-ACCEPTANCE.md).
+
 ## 📖 Usage
 
 For the upcoming release candidate, see [container recreation and persistent data](docs/CONTAINER-LIFECYCLE.md).

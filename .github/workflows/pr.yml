@@ -14,7 +14,13 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    name: Docker ${{ matrix.docker }} / JDK ${{ matrix.java }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        docker: [v28.5.2, v29.0.0]
+        java: ["17", "21"]
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
@@ -23,7 +29,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: "temurin"
-          java-version: "21"
+          java-version: ${{ matrix.java }}
 
       - uses: actions/cache@v5
         with:
@@ -36,11 +42,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle
 
-      - name: Set up Docker API 1.51 baseline
+      - name: Set up Docker compatibility target
         id: docker
         uses: docker/setup-docker-action@v5
         with:
-          version: v28.5.2
+          version: ${{ matrix.docker }}
 
       - name: Expose and verify the SDK Unix socket
         env:
@@ -55,11 +61,11 @@ jobs:
 
 
       - name: Build, test, and generate documentation
-        run: ./gradlew build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2
+        run: ./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2
 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: pr-unit-test-results
+          name: pr-unit-test-results-${{ matrix.docker }}-jdk${{ matrix.java }}
           path: lib/build/test-results/**/*.xml

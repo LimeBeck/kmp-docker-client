@@ -22,7 +22,7 @@ Define mandatory behavior for GitHub Actions CI/CD pipeline in this repository.
 - Library publish steps must not run for non-tag refs.
 
 ## Build and test contract {#ci.jobs}
-Gradle build, test, and Dokka checks must use `--warning-mode=fail` to reject deprecated Gradle behavior.
+Gradle build, test, and Dokka checks must use `--warning-mode=fail` to reject deprecated Gradle behavior. Kotlin compilation in all modules treats warnings as errors; generator diagnostics are tracked separately, not blanket-suppressed.
 Pipeline must include these sequential jobs:
 1. `build` running `./gradlew build`.
 2. `test` running `./gradlew :lib:allTests` and depending on `build`.
@@ -34,9 +34,16 @@ Test artifacts:
 
 ### Pull-request validation {#ci.pr}
 - PR CI runs build (including all platform tests) and Dokka with --warning-mode=fail and at most two Gradle workers.
-- It provisions the same Docker API 1.51 baseline as release CI, and always uploads test XML reports.
+- PR CI uses ubuntu-24.04 with the Cartesian matrix Docker 28.5.2/29.0.0 × Temurin JDK 17/21. Every cell builds/tests JVM, Node.js and Linux X64 against the same explicit API 1.51 URL prefix. Test report artifact names include Docker and JDK versions; fail-fast is disabled.
+- Kotlin/JS uses pinned Node.js 24.16.0 from gradle.properties via NodeJsEnvSpec; no deprecated runtime configuration API. Release CI retains Docker 28.5.2 and JDK 21.
 - Superseded PR runs may be cancelled. Release jobs are not triggered by PRs.
 - Tests synchronize with observable completion instead of sleeps. Repeated-session tests retain finite per-session and overall deadlines without using one short-session deadline for the entire series.
+
+### Public API compatibility {#ci.abi}
+- The library enables Kotlin Gradle Plugin ABI validation, including JVM and KLib outputs for JS/Linux X64. Generated models are included without exclusions.
+- Commit the initial reference dumps for the candidate; `checkKotlinAbi` must run with build/check and explicitly in PR CI. Unsupported targets must fail rather than infer ABI from another target.
+- CI never runs `updateKotlinAbi`. Intentional API changes require reviewing the dump diff and updating migration documentation before refreshing the baseline locally.
+- ABI snapshots detect declaration changes, not behavioral, wire-format or all source-compatibility changes. Integration tests and release review remain required.
 
 ## Publish contract {#publish}
 - Publishing is Maven Central-oriented and must depend on successful `test` job.
@@ -75,7 +82,7 @@ Test artifacts:
 - JavaScript actions (including nested composite dependencies) must use Node.js 24 rather than deprecated Node.js 20.
 - Runner baseline: `ubuntu-latest`.
 - Java baseline: Temurin JDK 21.
-- Build/test jobs must provision Docker 28.5.2 (API 1.51), expose its socket at `/var/run/docker.sock`, and verify `/v1.51/_ping` before Gradle. The runner-provided daemon version is not a supported implicit dependency.
+- Release build/test jobs must provision Docker 28.5.2 (API 1.51), expose its socket at `/var/run/docker.sock`, and verify `/v1.51/_ping` before Gradle. The runner-provided daemon version is not a supported implicit dependency.
 - Cache should include Gradle and Kotlin/Native directories used by project builds.
 - Cache keys must include `gradle/libs.versions.toml` so dependency updates invalidate the cache.
 
@@ -85,6 +92,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-12: established explicit Docker/JDK PR matrix, pinned Kotlin/JS runtime and mandatory all-target ABI snapshots for candidate readiness.
 - 2026-09-12: added isolated PR validation and selected 1.0.0-rc as the next development target.
 - 2026-09-12: migrated JavaScript action runtimes to Node.js 24 and made Gradle deprecations fail CI checks.
 - 2026-09-11: pinned a compatible Docker daemon after v0.0.9 CI rejected API 1.51 on a runner supporting only 1.48.

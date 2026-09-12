@@ -13,6 +13,11 @@ val schemaFilePath = "$rootDir/specs/v1.51.yaml"
 val generatedOpenApiDir = layout.buildDirectory.dir("generated/openapi")
 
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {
+        keepLocallyUnsupportedTargets.set(false)
+    }
+
     linuxX64()
 
     js {

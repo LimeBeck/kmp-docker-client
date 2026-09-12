@@ -7,15 +7,18 @@
 - 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Owner requested operation-specific generic aux. ImageProgress<out TAux> now uses nullable TAux with a serializer chosen by the endpoint. Push callbacks receive ImageProgress<ImagePushResult> (Tag/Digest/Size wire fields); create/load receive ImageProgress<Unit> because Docker API 1.51 has no documented aux payload for those operations. No public progress field uses JsonObject.
-- Verified push payload against Moby v28.5.2 api/types/types.go. Corrected the earlier load-ID example: load outputs status/stream, not a guaranteed aux ID. Updated docs/IMAGE-PROGRESS.md and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#images.progress explicitly.
-- Tests cover endpoint-specific typed access, generic serializer round trips, optional aux, invalid push Size, exact unsigned counts, errors/cancellation and real pull/load. All 218 tests (JVM 100, Node.js 59, Linux 59) and Dokka passed with warning-mode=fail in 3m39s.
-- Separate fixture commit 54140d9 counts both EOF and Broken pipe/reset as closed connections, requiring all 20 closes. The old assertion incorrectly required 10 kernel errors; synchronized early-close ordering remains enforced.
+- Owner deferred daemon restart/resubscription and requested compatibility/readiness work first. FEAT-002 records the order change without marking recovery passed.
+- PR CI now has Docker 28.5.2/29.0.0 × JDK 17/21 on Ubuntu 24.04; every cell tests JVM/Node/Linux X64 with distinct report artifacts and fail-fast disabled. Node.js is pinned to 24.16.0 using NodeJsEnvSpec.
+- Built-in Kotlin ABI validation enabled for JVM and JS/Linux KLib, including all generated models. References: lib/api/lib.api and lib/api/lib.klib.api. Unsupported targets fail rather than being inferred. CI checks, never updates, snapshots.
+- Kotlin warnings now fail compilation across all modules; Gradle warning-mode=fail and Dokka failOnWarning remain enabled. Generator allOf diagnostics are tracked separately.
+- Added docs/COMPATIBILITY.md, docs/MIGRATION-1.0.0-rc.md and docs/RC-ACCEPTANCE.md, linked from README. Contracts: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.abi and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.pr.
+- Full local build/checkKotlinAbi/Dokka passed in 8m58s, including 218 tests and sample executables. Negative ABI probe failed as expected for a simulated removed getter; restored baseline passed in 2s. Workflow matrix/permissions/artifact checks passed.
 
 ## Next Steps
-1. Verify PR CI after pushing generic operation-specific progress and fixture close accounting.
-2. Test isolated daemon restart/resubscription; establish Docker/platform and API compatibility gates, migration guide, dashboard acceptance checklist. Do not restart the user’s real Docker daemon.
-3. Run final acceptance before tagging/publishing 1.0.0-rc.
+1. Check the new four-cell PR CI matrix after push; record run URL/SHA in release evidence.
+2. Real-dashboard application acceptance and final API/migration review remain manual release gates.
+3. Daemon restart/resubscription is explicitly deferred by the owner. Do not execute it now or mark the gate complete. Do not restart the user’s real Docker daemon.
+4. Resolve outstanding acceptance gates or obtain an explicit scope revision before tagging/publishing 1.0.0-rc. No release was performed.
 
 ## Known Risks / Constraints
 - Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
@@ -28,7 +31,7 @@
 - Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
 
 ## Decisions Pending
-- Supported Docker/platform matrix and public API compatibility gates for 1.0.0.
+- Timing of deferred daemon-restart verification and real-dashboard acceptance before release.
 
 ## Resume Commands
 - `./gradlew :sample:htmxDashboard:linkDebugExecutableLinuxX64 :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2`
