@@ -1,19 +1,20 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Preparing the owner-requested MR on codex/remove-dashboard-acceptance, based on master 3906958a. Scope: remove dashboard acceptance infrastructure and keep SDK integration/recovery gates.
-- Owner authorized publication of 1.0.0-rc on 2026-09-13. MR #5 merged as 3906958a42a76624c28ab398b223b1c3cbf730ad; its tree matches the four-cell CI-tested c278d8f.
-- Tag v1.0.0-rc is pushed and immutable. Release CI: https://github.com/LimeBeck/kmp-docker-client/actions/runs/34747664859. GitHub prerelease is public: https://github.com/LimeBeck/kmp-docker-client/releases/tag/v1.0.0-rc. Release CI fully passed; Maven deployment 65781810-2e71-4fb1-ba85-855d77ca0499 is published; independent common/JVM/JS/Linux X64 dependency resolution passed on 2026-09-13.
-- Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#publish.
+- Preparing stable 1.0.0 and a Dokka-integrated usage guide on codex/prepare-1.0.0-docs, based on merged master 48b3dc2 (MR #6).
+- Scope: version/docs/build verification only. No new SDK API, dashboard acceptance or platform implementation. Stable release publication is not authorized by preparation.
+- Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.stable and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#docs.
 
 ## Completed in Last Session
-- Owner removed dashboard acceptance from SDK release requirements. Deleted scripts/dashboard-acceptance.py and scripts/run-dashboard-acceptance.sh, their PR/release CI steps and dashboard log artifact paths. SDK tests, isolated daemonRestartTest, its harness and JUnit uploads remain.
-- Renamed docs/DASHBOARD-ACCEPTANCE.md to docs/DASHBOARD.md and kept sample usage guidance with optional manual smoke checks. Updated README, RC checklist and normative specs per explicit owner correction: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.acceptance.
-- Verified both workflow YAMLs parse, retain the SDK recovery task and always-uploaded test reports, and have no references to removed dashboard scripts. git diff --check passes. SDK/sample source code is unchanged.
+- Set libVersion=1.0.0; published installation baseline remains 1.0.0-rc until stable artifacts exist.
+- Added docs/USAGE.md with connection, ownership, errors, lifecycle, data retention, streaming, terminals, authentication, image progress and recovery. Marked Kotlin blocks are extracted into commonTest and compiled; Dokka depends on JVM compilation, not test execution.
+- Updated README, compatibility and migration guidance, retained the old RC migration URL as a redirecting document, and added docs/RELEASE-1.0.0.md for final evidence.
+- Full local build passed: 224 SDK tests (102 JVM, 61 JS, 61 Linux X64), no failures/skips, unchanged ABI and compiled guide examples on every target. Final Dokka generation passed; verified guide sections/code and 14 local links. Isolated SDK restart test passed (11s Gradle run); fixture cleaned up.
 
 ## Next Steps
-1. Create the requested MR from codex/remove-dashboard-acceptance and check its CI. Workflow YAML parsing, retained SDK recovery/JUnit gates, documentation references and diff whitespace checks pass. Library and sample source code were not changed.
-2. Release 1.0.0-rc is published and all four Maven artifacts resolve successfully. Do not move its tag or republish it. Continue the SDK roadmap separately.
+1. Local preparation checks are complete. Create the preparation MR and verify final remote CI. Logs: /tmp/kmp-stable-build.log, /tmp/kmp-stable-dokka-final.log, /tmp/kmp-stable-recovery.log.
+2. Create preparation MR and verify the full Docker/JDK matrix. Record final commit/run evidence in its body. Stable tag and Maven/GitHub publication remain separate owner-authorized actions.
+3. Published v1.0.0-rc is immutable; all four Maven artifacts and dependencies already resolved successfully. Do not republish it.
 
 ## Known Risks / Constraints
 - Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.

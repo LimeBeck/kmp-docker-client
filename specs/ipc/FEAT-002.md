@@ -34,6 +34,11 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 5. Establish the supported Docker/platform CI matrix, public API compatibility baseline, migration guidance, and an SDK acceptance checklist.
 6. Run the complete acceptance suite before publishing 1.0.0-rc. Preparing the candidate does not itself create a release tag.
 
+### Stable release preparation {#milestones.stable}
+- Prepare 1.0.0 with the published RC API, migration/compatibility guidance, and a Dokka-integrated user guide whose marked Kotlin examples compile.
+- Validate the final preparation commit using the existing SDK matrix, ABI and warning checks. Tagging/publication remain a separate owner-authorized action.
+- Track preparation and publication evidence in docs/RELEASE-1.0.0.md.
+
 ## Acceptance gates {#acceptance}
 - SDK behavior is verified directly with Kotlin tests and real Docker. Dashboard UI, HTTP/WebSocket routes, forms, HTMX and fullscreen behavior are outside library release gates; the sample may be smoke-tested independently.
 - Kotlin SDK integration tests validate creating a container with ports and a persistent volume, starting it, opening a terminal, observing logs/stats, recreating it with changed configuration, and deleting the container while retaining the data unless volume deletion was explicitly requested.
@@ -48,7 +53,7 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 - Before 1.0.0, audit and resolve deprecation warnings from maintained Kotlin code, Gradle/build plugins, and CI actions.
 - Start with deprecated `ByteReadChannel.readUTF8Line` calls; preserve framing, EOF, malformed-input, and cancellation behavior when migrating.
 - Track warnings from generated code or external dependencies separately and fix their generator/dependency source where possible. Do not hide warnings with blanket suppression.
-- This is follow-up maintenance and does not expand the current 0.0.10 release.
+- The RC cleanup is complete; retain warning-as-error checks for stable preparation and future maintenance.
 
 ## Deferred expansion {#deferred}
 The missing-domain exploration in `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md#phases` is deferred behind this goal. It must not displace the single-host readiness work unless the project owner revises the priority.
@@ -65,6 +70,7 @@ The owner selected macOS and Windows support for one future release on 2026-09-1
 - Distinguish running the client on Windows from managing Windows containers. Decide and document Windows-container coverage separately; do not infer it from Docker Desktop Linux-container tests.
 
 ## Changelog {#changelog}
+- 2026-09-13: owner requested stable preparation and a user guide integrated with Dokka.
 - 2026-09-13: owner clarified that SDK releases require library integration tests, not dashboard application acceptance.
 - 2026-09-13: owner selected a future release combining macOS and Windows support on both JVM and Kotlin/Native.
 - 2026-09-12: owner requested all remaining RC preparation; resumed and validated isolated daemon restart, without restarting the host daemon.

@@ -1,6 +1,6 @@
 # Image operation progress
 
-Available in the upcoming `1.0.0-rc`. Existing calls without a callback keep their signatures and still wait for completion.
+Available since the published `1.0.0-rc` and included in the upcoming stable `1.0.0`. Existing convenience overloads remain available.
 
 ```kotlin
 val result = client.images.create("alpine:latest") { update ->

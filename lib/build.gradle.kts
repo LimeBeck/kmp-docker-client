@@ -12,6 +12,21 @@ plugins {
 val schemaFilePath = "$rootDir/specs/v1.51.yaml"
 val generatedOpenApiDir = layout.buildDirectory.dir("generated/openapi")
 
+val usageGuide = rootProject.layout.projectDirectory.file("docs/USAGE.md")
+val guideSamplesDir = layout.buildDirectory.dir("generated/guideSamples")
+val generateGuideSamples = tasks.register("generateGuideSamples") {
+    inputs.file(usageGuide)
+    outputs.dir(guideSamplesDir)
+    doLast {
+        val snippets = Regex("<!-- compile-sample -->\\s*```kotlin\\s*\\n(.*?)```", RegexOption.DOT_MATCHES_ALL)
+            .findAll(usageGuide.asFile.readText()).map { it.groupValues[1] }.toList()
+        check(snippets.isNotEmpty()) { "No compilable samples found in docs/USAGE.md" }
+        val output = guideSamplesDir.get().file("UsageGuideSamples.kt").asFile
+        output.parentFile.mkdirs()
+        output.writeText("package dev.limebeck.libs.docker.guide\n\n" + snippets.joinToString("\n"))
+    }
+}
+
 kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
     abiValidation {
@@ -53,6 +68,9 @@ kotlin {
             }
 
         }
+        commonTest {
+            kotlin.srcDir(generateGuideSamples.map { guideSamplesDir.get() })
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
@@ -81,7 +99,7 @@ tasks.named("jsSourcesJar") {
 }
 
 tasks.named("dokkaGeneratePublicationHtml") {
-    dependsOn("openApiGenerate")
+    dependsOn("openApiGenerate", "compileTestKotlinJvm")
 }
 
 tasks.named("jvmSourcesJar") {
@@ -205,9 +223,9 @@ dokka {
         failOnWarning.set(true)
     }
 
-//    dokkaSourceSets.configureEach {
-//        includes.from("../README.MD")
-//    }
+    dokkaSourceSets.named("commonMain") {
+        includes.from(usageGuide)
+    }
 
     pluginsConfiguration.html {
         footerMessage.set("(c) LimeBeck.Dev")
