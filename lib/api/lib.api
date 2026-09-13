@@ -1,4 +1,4 @@
-public class dev/limebeck/libs/docker/client/DockerClient : dev/limebeck/libs/docker/client/dsl/ApiCacheHolder {
+public class dev/limebeck/libs/docker/client/DockerClient : dev/limebeck/libs/docker/client/dsl/ApiCacheHolder, java/lang/AutoCloseable {
 	public static final field API_VERSION Ljava/lang/String;
 	public static final field Companion Ldev/limebeck/libs/docker/client/DockerClient$Companion;
 	public fun <init> ()V
@@ -8,6 +8,7 @@ public class dev/limebeck/libs/docker/client/DockerClient : dev/limebeck/libs/do
 	public final fun applyAuthForRegistry (Lio/ktor/client/request/HttpRequestBuilder;Ljava/lang/String;)V
 	public final fun applyConnectionConfig (Lio/ktor/client/request/HttpRequestBuilder;)V
 	public final fun applyStreamConfig (Lio/ktor/client/request/HttpRequestBuilder;)V
+	public fun close ()V
 	public final fun consumeStream (Lio/ktor/client/statement/HttpResponse;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun errorResponse (Lio/ktor/client/statement/HttpResponse;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getApiCache ()Ljava/util/Map;

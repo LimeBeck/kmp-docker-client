@@ -19,6 +19,10 @@ Anything outside this set is out of active support scope in current baseline.
 `DockerClient` exposes cached DSL APIs grouped by Docker domains.  
 Each group must return typed `Result<*, ErrorResponse>` for request/response operations, except streaming functions that may return `Flow<...>`.
 
+## Client ownership {#client.ownership}
+- DockerClient implements Kotlin AutoCloseable; close() delegates to its owned HttpClient and is idempotent. It initiates shutdown without waiting for active HTTP calls.
+- Short-lived examples use .use {}; application-scoped clients close at shutdown after collectors stop. Raw exec/attach sessions retain independent ownership and must be closed separately.
+
 ## Containers behavior {#containers}
 Must provide:
 - list/inspect/create/start/stop/restart/kill/remove/rename/pause/unpause/wait

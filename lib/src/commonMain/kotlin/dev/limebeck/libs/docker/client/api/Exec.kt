@@ -9,14 +9,24 @@ import io.ktor.http.*
 import kotlinx.coroutines.coroutineScope
 import kotlin.uuid.ExperimentalUuidApi
 
+/** Cached exec API bound to this client and its connection configuration. */
 val DockerClient.exec by ::Exec.api()
 
+/**
+ * Docker exec operations using the owning [DockerClient].
+ *
+ * Result-returning methods report daemon HTTP errors as [ErrorResponse]. Transport/decoding failures
+ * and cancellation can throw. Live flows report request failures during collection.
+ */
 class Exec(private val dockerClient: DockerClient) {
     /**
-     * Start an exec instance
+     * Starts an existing exec instance using the supplied configuration and discards response output.
+     * Set config.detach=true for detached execution; use [startInteractive] when output is needed.
+     * Successful start does not establish the command exit status; inspect it with [getInfo].
      *
-     * Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting
-     * the command.
+     * @param id Exec instance ID returned by Containers.execCreate.
+     * @param config Configuration sent to Docker as JSON.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun startAndForget(
         id: String,
@@ -29,17 +39,31 @@ class Exec(private val dockerClient: DockerClient) {
     }
 
     /**
-     * Start an exec instance
+     * Starts a previously created exec instance and returns an independently owned [ExecSession].
+     * Match the TTY mode used at creation; the overload without tty uses true.
+     * Collect one output flow once. Use incomingChunks for terminal bytes and incremental UTF-8 decoding.
+     * Close the session when finished, including when output is never collected.
      *
-     * Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting
-     * the command.
+     * @param id Exec instance ID returned by Containers.execCreate.
+     * @param consoleSize Initial TTY dimensions as rows to columns; null leaves Docker defaults.
+     * @return Owned interactive session, or the Docker error response.
      */
     suspend fun startInteractive(
         id: String,
         consoleSize: Pair<Int, Int>? = null
     ): Result<ExecSession, ErrorResponse> = startInteractive(id, consoleSize, tty = true)
 
-    /** Start interactive output with the same TTY mode used when creating the exec instance. */
+    /**
+     * Starts a previously created exec instance and returns an independently owned [ExecSession].
+     * Match the TTY mode used at creation; the overload without tty uses true.
+     * Collect one output flow once. Use incomingChunks for terminal bytes and incremental UTF-8 decoding.
+     * Close the session when finished, including when output is never collected.
+     *
+     * @param id Exec instance ID returned by Containers.execCreate.
+     * @param consoleSize Initial TTY dimensions as rows to columns; null leaves Docker defaults.
+     * @param tty TTY mode matching the original exec configuration.
+     * @return Owned interactive session, or the Docker error response.
+     */
     @OptIn(ExperimentalUuidApi::class)
     suspend fun startInteractive(
         id: String,
@@ -74,6 +98,9 @@ class Exec(private val dockerClient: DockerClient) {
      * Inspect an exec instance
      *
      * Return low-level information about an exec instance.
+     *
+     * @param id Exec instance ID returned by Containers.execCreate.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun getInfo(id: String): Result<ExecInspectResponse, ErrorResponse> =
         with(dockerClient) {
@@ -85,6 +112,11 @@ class Exec(private val dockerClient: DockerClient) {
      *
      * Resize the TTY session used by an exec instance. This endpoint only works if `tty` was specified as `true`
      * when creating the exec instance.
+     *
+     * @param id Exec instance ID returned by Containers.execCreate.
+     * @param h Terminal height in rows.
+     * @param w Terminal width in columns.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun resize(
         id: String,

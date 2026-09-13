@@ -13,11 +13,20 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.serialization.SerializationException
 
+/** Cached system API bound to this client and its connection configuration. */
 val DockerClient.system by ::System.api()
 
+/**
+ * Docker system operations using the owning [DockerClient].
+ *
+ * Result-returning methods report daemon HTTP errors as [ErrorResponse]. Transport/decoding failures
+ * and cancellation can throw. Live flows report request failures during collection.
+ */
 class System(private val dockerClient: DockerClient) {
     /**
      * Get system information
+     *
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun getInfo(): Result<SystemInfo, ErrorResponse> =
         with(dockerClient) {
@@ -28,6 +37,8 @@ class System(private val dockerClient: DockerClient) {
      * Get version
      *
      * Returns the version of Docker that is running and various information about the system that Docker is running on.
+     *
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun getVersion(): Result<SystemVersion, ErrorResponse> =
         with(dockerClient) {
@@ -38,6 +49,8 @@ class System(private val dockerClient: DockerClient) {
      * Ping
      *
      * This is a dummy endpoint you can use to test if the server is accessible.
+     *
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun ping(): Result<Unit, ErrorResponse> =
         with(dockerClient) {
@@ -46,6 +59,8 @@ class System(private val dockerClient: DockerClient) {
 
     /**
      * Get data usage information
+     *
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun dataUsage(): Result<SystemDataUsageResponse, ErrorResponse> =
         with(dockerClient) {
@@ -53,35 +68,16 @@ class System(private val dockerClient: DockerClient) {
         }
 
     /**
-     * Monitor events
+     * Returns a cold event flow: each collection opens a separate request. HTTP errors throw
+     * [dev.limebeck.libs.docker.client.model.DockerApiException]. Malformed JSON events are skipped;
+     * transport and collector failures propagate. Cancellation or completion releases the request.
+     * There is no automatic reconnect. Docker history is finite: save a cursor, deduplicate replay and
+     * refresh resource state after reconnect. An interrupted connection may also finish as normal EOF.
      *
-     * Stream real-time events from the server.
-     *
-     * Various objects within Docker report events when something happens to them.
-     *
-     * Containers report these events: `attach`, `commit`, `copy`, `create`, `destroy`, `detach`, `die`, `exec_create`, `exec_detach`, `exec_start`, `exec_die`, `export`, `health_status`, `kill`, `oom`, `pause`, `rename`, `resize`, `restart`, `start`, `stop`, `top`, `unpause`, `update`, and `prune`
-     *
-     * Images report these events: `create`, `delete`, `import`, `load`, `pull`, `push`, `save`, `tag`, `untag`, and `prune`
-     *
-     * Volumes report these events: `create`, `mount`, `unmount`, `destroy`, and `prune`
-     *
-     * Networks report these events: `create`, `connect`, `disconnect`, `destroy`, `update`, `remove`, and `prune`
-     *
-     * The Docker daemon reports these events: `reload`
-     *
-     * Services report these events: `create`, `update`, and `remove`
-     *
-     * Nodes report these events: `create`, `update`, and `remove`
-     *
-     * Secrets report these events: `create`, `update`, and `remove`
-     *
-     * Configs report these events: `create`, `update`, and `remove`
-     *
-     * The Builder reports `prune` events
-     *
-     * @param since Show events created since this timestamp then stream new events.
-     * @param until Show events created until this timestamp then stop streaming.
-     * @param filters A JSON encoded value of filters (a `map[string][]string`) to process on the event list.
+     * @param since Start timestamp accepted by Docker; null requests new events only.
+     * @param until End timestamp accepted by Docker; null leaves the subscription live.
+     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @return Cold flow of daemon events; failures are reported during collection.
      */
     fun events(
         since: String? = null,

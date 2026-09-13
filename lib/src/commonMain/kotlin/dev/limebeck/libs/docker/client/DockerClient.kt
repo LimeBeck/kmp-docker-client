@@ -37,9 +37,18 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.io.encoding.Base64
 
+/**
+ * Client for one Docker host, using fixed API version 1.51 and a Unix socket.
+ *
+ * Reuse an instance for application-scoped work, or use Kotlin `use` for a short-lived client.
+ * [close] shuts down the owned HTTP client; raw exec/attach sessions must be closed separately.
+ * No API negotiation, Docker context discovery or automatic retry/reconnect is performed.
+ *
+ * @param config Serialization, endpoint and in-memory registry authentication settings.
+ */
 open class DockerClient(
     val config: DockerClientConfig = DockerClientConfig()
-) : ApiCacheHolder {
+) : ApiCacheHolder, AutoCloseable {
     companion object {
         const val API_VERSION = "1.51"
         val logger = KtorSimpleLogger("dev.limebeck.libs.docker.client.DockerClient")
@@ -49,6 +58,10 @@ open class DockerClient(
 
     override val apiCache: MutableMap<Any, Any> = mutableMapOf()
 
+    /**
+     * Owned Ktor HTTP client. Prefer [close] or `use` for lifecycle management.
+     * Changing its configuration can affect all API groups sharing this client.
+     */
     val client = HttpClient(CIO) {
         install(SSE)
         install(HttpTimeout)
@@ -78,6 +91,15 @@ open class DockerClient(
         install(ContentNegotiation) {
             json(json)
         }
+    }
+
+    /**
+     * Closes the owned HTTP client. Repeated calls are safe.
+     * Stop collectors and close independently owned exec/attach sessions before shutdown.
+     * This method initiates shutdown without waiting for active HTTP calls to finish.
+     */
+    override fun close() {
+        client.close()
     }
 
     /** Builds the path shared by HTTP and raw hijack requests. */

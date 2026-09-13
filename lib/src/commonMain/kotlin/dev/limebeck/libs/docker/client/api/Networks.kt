@@ -6,13 +6,23 @@ import dev.limebeck.libs.docker.client.model.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 
+/** Cached networks API bound to this client and its connection configuration. */
 val DockerClient.networks by ::Networks.api()
 
+/**
+ * Docker networks operations using the owning [DockerClient].
+ *
+ * Result-returning methods report daemon HTTP errors as [ErrorResponse]. Transport/decoding failures
+ * and cancellation can throw. Live flows report request failures during collection.
+ */
 class Networks(private val dockerClient: DockerClient) {
     /**
      * List networks
      *
      * Returns a list of networks.
+     *
+     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun list(
         filters: Map<String, List<String>>? = null
@@ -27,6 +37,11 @@ class Networks(private val dockerClient: DockerClient) {
      * Inspect a network
      *
      * Return low-level information about a network.
+     *
+     * @param id Network ID or name.
+     * @param verbose Include detailed network diagnostics.
+     * @param scope Optional Docker network scope filter.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun inspect(
         id: String,
@@ -42,6 +57,9 @@ class Networks(private val dockerClient: DockerClient) {
 
     /**
      * Create a network
+     *
+     * @param networkConfig Network name, driver, IPAM and other creation options.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun create(
         networkConfig: NetworkCreateRequest
@@ -54,7 +72,10 @@ class Networks(private val dockerClient: DockerClient) {
         }
 
     /**
-     * Remove a network
+     * Deletes a network; disconnect attached containers first when required by Docker.
+     *
+     * @param id Network ID or name.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun remove(id: String): Result<Unit, ErrorResponse> =
         with(dockerClient) {
@@ -63,6 +84,10 @@ class Networks(private val dockerClient: DockerClient) {
 
     /**
      * Connect a container to a network
+     *
+     * @param id Network ID or name.
+     * @param connectionConfig Container and endpoint options sent to Docker.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun connect(
         id: String,
@@ -77,6 +102,10 @@ class Networks(private val dockerClient: DockerClient) {
 
     /**
      * Disconnect a container from a network
+     *
+     * @param id Network ID or name.
+     * @param connectionConfig Container and endpoint options sent to Docker.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun disconnect(
         id: String,
@@ -91,6 +120,9 @@ class Networks(private val dockerClient: DockerClient) {
 
     /**
      * Delete unused networks
+     *
+     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun prune(
         filters: Map<String, List<String>>? = null

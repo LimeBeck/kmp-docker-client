@@ -12,6 +12,16 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+/**
+ * Owned duplex exec/attach connection, independent of the client's HTTP connection pool.
+ *
+ * Collect exactly one of [incomingChunks] or [incoming], once. Completion, cancellation or failure of
+ * that collection closes the connection. Close explicitly if output is never collected; `use` is supported.
+ * Closing a connection does not guarantee that Docker terminates the remote process.
+ *
+ * @property isTty Whether output uses raw TTY bytes instead of Docker stdout/stderr multiplex framing.
+ * @property connection Raw transport. Reading it directly bypasses buffered handshake data and output framing.
+ */
 @OptIn(ExperimentalAtomicApi::class)
 class ExecSession internal constructor(
     incomingFlow: Flow<LogLine>,
@@ -51,6 +61,11 @@ class ExecSession internal constructor(
         }
     }
 
+    /**
+     * Writes and flushes terminal input bytes without adding a newline.
+     * @param bytes Input owned by the caller; coordinate concurrent writers.
+     * @throws IllegalStateException If the session has already closed.
+     */
     suspend fun send(bytes: ByteArray) {
         check(!closed.load()) { "Session is closed" }
         DockerClient.logger.trace("ExecSession $sessionId try to send ${bytes.size} bytes")
@@ -59,8 +74,15 @@ class ExecSession internal constructor(
         DockerClient.logger.trace("ExecSession $sessionId sent ${bytes.size} bytes")
     }
 
+    /**
+     * Encodes [text] as UTF-8 and sends it without adding a newline.
+     * @throws IllegalStateException If the session has already closed.
+     */
     suspend fun send(text: String) = send(text.encodeToByteArray())
 
+    /**
+     * Closes the owned raw connection. Repeated calls are safe; subsequent sends or output collection fail.
+     */
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
         connection.close()

@@ -13,9 +13,13 @@ const val DEFAULT_SERVER_ADDRESS = "https://index.docker.io/v1/"
 const val AUTH_HEADER = "X-Registry-Auth"
 
 /**
- * Check auth configuration
+ * Validates registry credentials through Docker and stores successful authentication in [DockerClientConfig.auth].
  *
- * Validate credentials for a registry and, if available, get an identity token for accessing the registry without password.
+ * Stores the identity token when supplied, otherwise the supplied username/password. A failed response
+ * leaves existing authentication unchanged. Credentials are neither read from Docker CLI helpers nor persisted.
+ *
+ * @param authConfig Registry credentials and optional server address; absent address selects Docker Hub.
+ * @return Docker authentication response or daemon error. Transport/decoding failures and cancellation can throw.
  */
 suspend fun DockerClient.auth(authConfig: AuthConfig): Result<SystemAuthResponse, ErrorResponse> {
     return client.post(apiPath("/auth")) {

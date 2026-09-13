@@ -10446,7 +10446,7 @@ final value class <#A: out kotlin/Any?, #B: out kotlin/Any?> dev.limebeck.libs.d
     }
 }
 
-open class dev.limebeck.libs.docker.client/DockerClient : dev.limebeck.libs.docker.client.dsl/ApiCacheHolder { // dev.limebeck.libs.docker.client/DockerClient|null[0]
+open class dev.limebeck.libs.docker.client/DockerClient : dev.limebeck.libs.docker.client.dsl/ApiCacheHolder, kotlin/AutoCloseable { // dev.limebeck.libs.docker.client/DockerClient|null[0]
     constructor <init>(dev.limebeck.libs.docker.client/DockerClientConfig = ...) // dev.limebeck.libs.docker.client/DockerClient.<init>|<init>(dev.limebeck.libs.docker.client.DockerClientConfig){}[0]
 
     final val client // dev.limebeck.libs.docker.client/DockerClient.client|{}client[0]
@@ -10470,6 +10470,7 @@ open class dev.limebeck.libs.docker.client/DockerClient : dev.limebeck.libs.dock
     final suspend fun openRawConnection(): dev.limebeck.libs.docker.client.socket/DockerRawConnection // dev.limebeck.libs.docker.client/DockerClient.openRawConnection|openRawConnection(){}[0]
     final suspend inline fun (io.ktor.client.statement/HttpResponse).validateOnly(): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client/DockerClient.validateOnly|validateOnly@io.ktor.client.statement.HttpResponse(){}[0]
     final suspend inline fun <#A1: reified kotlin/Any?> (io.ktor.client.statement/HttpResponse).parse(): dev.limebeck.libs.docker.client.model/Result<#A1, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client/DockerClient.parse|parse@io.ktor.client.statement.HttpResponse(){0§<kotlin.Any?>}[0]
+    open fun close() // dev.limebeck.libs.docker.client/DockerClient.close|close(){}[0]
 
     final object Companion { // dev.limebeck.libs.docker.client/DockerClient.Companion|null[0]
         final const val API_VERSION // dev.limebeck.libs.docker.client/DockerClient.Companion.API_VERSION|{}API_VERSION[0]
