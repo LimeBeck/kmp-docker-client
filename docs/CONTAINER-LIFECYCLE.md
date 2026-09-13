@@ -1,6 +1,6 @@
 # Container lifecycle and persistent data
 
-Available in the upcoming `1.0.0-rc`; the complete creation overload is not part of published `0.1.0`.
+Available since the published `1.0.0-rc` and included in the upcoming stable `1.0.0`. Existing convenience overloads remain available.
 
 The complete `ContainerCreateRequest` overload supports host configuration and network attachment. The portable `ContainerConfig` overload remains available.
 

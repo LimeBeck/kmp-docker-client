@@ -63,7 +63,7 @@ Test artifacts:
   - Maven Central credentials: `OSSRH_USERNAME`, `OSSRH_PASSWORD`
 
 ### Development version {#publish.development}
-- The default `libVersion` in `gradle.properties` is `1.0.0-rc`, the next release target.
+- The default `libVersion` in `gradle.properties` is `1.0.0`, the next release target.
 - Release tags continue to override this default through `-PlibVersion`; changing the default does not publish a release.
 
 ## Test results publication contract {#test-results}
@@ -74,6 +74,7 @@ Test artifacts:
 ## Dokka docs publication contract {#docs}
 - Pipeline must include a GitHub Pages deployment job for Dokka HTML docs.
 - Docs job must run `:lib:dokkaGenerateHtml`.
+- Include docs/USAGE.md as the Dokka module guide, linking workflows to generated API documentation. Marked Kotlin examples are extracted into commonTest sources and compiled; Dokka generation depends on JVM test-source compilation without running Docker tests.
 - Published artifact path must match Dokka output directory (`lib/build/dokka/html`).
 - Docs deployment must be isolated in docs workflow (not combined with release workflow).
 - Deployment must use GitHub Pages actions:
@@ -99,6 +100,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-13: owner requested stable 1.0.0 preparation and a Dokka-integrated usage guide with compiled examples.
 - 2026-09-13: owner removed dashboard acceptance from SDK release scope; retained Kotlin SDK integration and isolated recovery checks.
 - 2026-09-12: required isolated daemon recovery and real dashboard application acceptance before publication, with failure logs retained.
 - 2026-09-12: established explicit Docker/JDK PR matrix, pinned Kotlin/JS runtime and mandatory all-target ABI snapshots for candidate readiness.
