@@ -6,6 +6,7 @@ import dev.limebeck.libs.docker.client.DockerClientConfig.Auth
 import dev.limebeck.libs.docker.client.api.AUTH_HEADER
 import dev.limebeck.libs.docker.client.api.resolveServerForRegistry
 import dev.limebeck.libs.docker.client.dsl.ApiCacheHolder
+import dev.limebeck.libs.docker.client.model.ImageProgress
 import dev.limebeck.libs.docker.client.model.ErrorResponse
 import dev.limebeck.libs.docker.client.model.DockerApiException
 import dev.limebeck.libs.docker.client.model.Result
@@ -13,7 +14,7 @@ import dev.limebeck.libs.docker.client.model.asError
 import dev.limebeck.libs.docker.client.model.asSuccess
 import dev.limebeck.libs.docker.client.socket.DockerRawConnection
 import dev.limebeck.libs.docker.client.socket.openRawConnectionUnix
-import dev.limebeck.libs.logger.logger
+import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
@@ -27,10 +28,13 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.io.encoding.Base64
 
 open class DockerClient(
@@ -38,7 +42,7 @@ open class DockerClient(
 ) : ApiCacheHolder {
     companion object {
         const val API_VERSION = "1.51"
-        val logger = DockerClient::class.logger()
+        val logger = KtorSimpleLogger("dev.limebeck.libs.docker.client.DockerClient")
     }
 
     val json = config.json
@@ -51,7 +55,7 @@ open class DockerClient(
         install(Logging) {
             logger = object : Logger {
                 override fun log(message: String) {
-                    DockerClient.logger.debug { message }
+                    DockerClient.logger.debug(message)
                 }
             }
             level = LogLevel.HEADERS
@@ -135,9 +139,14 @@ open class DockerClient(
     }
 
     /** Docker can report an operation failure inside a successful NDJSON response. */
-    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> {
+    suspend fun HttpResponse.validateImageProgress(): Result<Unit, ErrorResponse> = validateImageProgress(Unit.serializer()) {}
+
+    suspend fun <TAux> HttpResponse.validateImageProgress(
+        auxSerializer: KSerializer<TAux>,
+        onProgress: suspend (ImageProgress<TAux>) -> Unit,
+    ): Result<Unit, ErrorResponse> {
         if (!status.isSuccess()) return errorResponse().asError()
-        val channel = bodyAsChannel()
+        val channel = bodyAsChannel().counted()
         while (true) {
             val line = try {
                 channel.readDockerLine()
@@ -157,6 +166,21 @@ open class DockerClient(
             val error = detail?.contentOrNull?.takeIf { it.isNotBlank() }
                 ?: legacyError?.contentOrNull?.takeIf { it.isNotBlank() }
             if (error != null) return ErrorResponse(error).asError()
+            val progress = try {
+                json.decodeFromJsonElement(ImageProgress.serializer(auxSerializer), message)
+            } catch (_: SerializationException) {
+                return ErrorResponse("Invalid Docker image progress response").asError()
+            }
+            // Deliberately outside parsing/read catches: consumer failures belong to the caller.
+            onProgress(progress)
+        }
+        channel.closedCause?.let { error ->
+            if (error is CancellationException) throw error
+            return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError()
+        }
+        val expected = headers[HttpHeaders.ContentLength]?.toLongOrNull()
+        if (headers[HttpHeaders.TransferEncoding] == null && expected != null && channel.totalBytesRead != expected) {
+            return ErrorResponse("Truncated Docker image progress response").asError()
         }
         return Unit.asSuccess()
     }
@@ -206,7 +230,7 @@ open class DockerClient(
 
     suspend fun openRawConnection(): DockerRawConnection = when (config.connectionConfig) {
         is DockerClientConfig.ConnectionConfig.SocketConnection -> {
-            logger.debug { "Open raw socket connection" }
+            logger.debug("Open raw socket connection")
             openRawConnectionUnix(config.connectionConfig.socketPath)
         }
     }

@@ -87,7 +87,7 @@ suspend fun readHttp11Headers(channel: ByteReadChannel): HijackHandshake {
             val status = statusLine.split(' ').getOrNull(1)?.toIntOrNull()
                 ?: error("Bad HTTP status line: $statusLine")
 
-            DockerClient.logger.debug { "Hijack response: HTTP $status" }
+            DockerClient.logger.debug("Hijack response: HTTP $status")
             return HijackHandshake(status, leftover)
         }
     }
@@ -141,7 +141,7 @@ suspend fun DockerClient.createInteractiveSession(
         body?.let { conn.write.writeFully(it) }
         conn.write.flush()
 
-        DockerClient.logger.debug { "Send hijack request: ${method.value} ${apiPath(path)}" }
+        DockerClient.logger.debug("Send hijack request: ${method.value} ${apiPath(path)}")
 
         val hs = readHttp11Headers(conn.read)
 
@@ -150,7 +150,7 @@ suspend fun DockerClient.createInteractiveSession(
             return@coroutineScope ErrorResponse("Docker hijack failed: HTTP ${hs.status}").asError()
         }
 
-        DockerClient.logger.debug { "Connection hjacked" }
+        DockerClient.logger.debug("Connection hjacked")
 
         val incomingFlow: Flow<LogLine> = flow {
             withPrefixedChannel(hs.leftover, conn.read) { channel ->

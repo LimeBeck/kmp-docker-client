@@ -8,6 +8,8 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.*
 import logger
 import routes.respondSmart
+import routes.withHeartbeat
+import ui.escapeHtml
 
 fun Routing.systemRoute(dockerClient: DockerClient) {
     route("/system") {
@@ -22,13 +24,15 @@ fun Routing.systemRoute(dockerClient: DockerClient) {
             logger.info { "Subscribing to system events" }
             call.response.cacheControl(CacheControl.NoCache(null))
             call.respondBytesWriter(contentType = ContentType.Text.EventStream) {
-                dockerClient.system.events().collect { event ->
-                    val html =
-                        "<div class='py-1 border-b border-gray-800'><span class='text-blue-400'>${event.action}</span> <span class='text-gray-500'>${event.type}</span> ${
-                            event.actor?.attributes?.get("name") ?: ""
-                        }</div>"
-                    writeStringUtf8("data: $html\n\n")
-                    flush()
+                withHeartbeat { send ->
+                    dockerClient.system.events().collect { event ->
+                        val html =
+                            "<div class='py-1 border-b border-gray-800'><span class='text-blue-400'>${event.action.orEmpty().escapeHtml()}</span> <span class='text-gray-500'>${event.type}</span> ${
+                                event.actor?.attributes?.get("name").orEmpty().escapeHtml()
+                            }</div>"
+                        send("data: $html\n\n")
+                    }
+                    send("event: done\ndata: end\n\n")
                 }
             }
         }

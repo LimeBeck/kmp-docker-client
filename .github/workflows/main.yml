@@ -53,14 +53,20 @@ jobs:
           test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Build with Gradle
-        run: ./gradlew build --warning-mode=fail -PlibVersion=$LIB_VERSION
+        run: ./gradlew build --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
+
+      - name: Verify dashboard application workflows
+        timeout-minutes: 8
+        run: scripts/with-isolated-docker.sh scripts/run-dashboard-acceptance.sh
 
       - name: Upload Build Test Results
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: unit-test-results-build
-          path: lib/build/test-results/**/*.xml
+          path: |
+            lib/build/test-results/**/*.xml
+            sample/htmxDashboard/build/acceptance/*
 
       - name: Publish libs as artifacts
         uses: actions/upload-artifact@v6
@@ -112,14 +118,20 @@ jobs:
           test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Run tests with Gradle
-        run: ./gradlew :lib:allTests --warning-mode=fail -PlibVersion=$LIB_VERSION
+        run: ./gradlew :lib:allTests --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
+
+      - name: Verify isolated daemon restart and resubscription
+        timeout-minutes: 8
+        run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: unit-test-results-test
-          path: lib/build/test-results/**/*.xml
+          path: |
+            lib/build/test-results/**/*.xml
+            sample/htmxDashboard/build/acceptance/*
 
   publish-maven-central:
     runs-on: ubuntu-latest

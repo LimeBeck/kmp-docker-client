@@ -72,6 +72,8 @@ class ContainersTest {
         try {
             client.containers.start(containerId).getOrThrow()
             
+            val exit = client.containers.wait(containerId, condition = "not-running").getOrThrow()
+            assertEquals(0, exit.statusCode)
             val logs = client.containers.getLogs(containerId).getOrThrow().toList()
             assertTrue(logs.any { it.line.contains("hello world") })
         } finally {

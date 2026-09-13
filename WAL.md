@@ -1,25 +1,27 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Version 0.1.0 in MR #4 (`codex/terminal-session-lifecycle`): terminal/session ownership plus reliable logs/stats/events.
-- Published baseline remains 0.0.10; no new release tag or publication has been created.
-- Contracts: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.streams` and `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.streams.recovery`.
+- Preparing one release `1.0.0-rc` on `codex/prepare-1.0.0-rc`, based on published 0.1.0 (e12c96a). The owner requested sequential implementation without intermediate releases.
+- MR #5: https://github.com/LimeBeck/kmp-docker-client/pull/5. Steps 1–2 are commits 7301be2/a40a266. PR CI 34686728810 exposed a mock-server Broken pipe race; it is now reproduced and fixed. Step 3 image progress is commit fdbe29d; fixture fix 8ca92af passed PR CI 34687877135.
+- Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.rc`.
+- 0.1.0 is available on GitHub and Maven Central for all four publications. Never move its tag or re-upload artifacts.
 
 ## Completed in Last Session
-- Added a shared Terminal/Exec panel with ResizeObserver fitting, initial size synchronization, deduplicated Docker TTY resize messages, fullscreen and viewport fallback. Escape and the exit button restore the panel. Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.dashboard-sizing`.
-- WebSocket text frames now carry bounded resize dimensions; binary UTF-8 frames carry shell input. Both attach and exec forward sizes to their own Docker endpoint; non-TTY attach skips resizing.
-- Navigation cleans up xterm, socket, observer, animation frame and event listeners. Binary output uses ArrayBuffer to preserve ordering without asynchronous FileReader callbacks.
-- Fixed attach to already-running containers: avoid a redundant start and tolerate a concurrent successful start, instead of closing the session on Docker HTTP 304.
-- Updated shared UI/routes, README and PROP-001. Real Docker WebSocket checks passed for attach and exec at 24x80, 43x137 and 18x62; controls do not leak into stdin.
-- Debug/release dashboard builds passed with --warning-mode=fail. Browser checks confirmed fullscreen viewport fallback, Escape with xterm focused, TTY restoration (30x115), and session closure on HTMX navigation with no console errors. Native browser fullscreen was denied during automation; the fallback was exercised. Test container/server were removed/stopped; port 8080 is free.
-- Previous validation remains: 195 library tests and full build/Dokka passed for stream reliability, unsigned counters and deprecation cleanup.
+- Owner requested the remaining RC preparation on 2026-09-12. Isolated daemon restart acceptance is commit 3754f77; never restart the user's main daemon. The prior four-cell matrix passed on 7d2d9dd (run 34714529905).
+- Extended the htmx example with explicit create configuration, staged replacement/rollback/confirmation for sample-managed containers, memory stats, bounded log/event views and typed pull progress/cancellation. Replacement retains named volumes and requires explicit readiness confirmation; shared-volume writes are not automatically rolled back.
+- Browser/application acceptance exposed and fixed empty exec commands, DELETE redirects and native fullscreen Escape. Added per-view connection ownership and serialized write heartbeats to release idle subscriptions when HTTP clients disconnect.
+- Added scripts/dashboard-acceptance.py and scripts/run-dashboard-acceptance.sh, invoked by PR/release CI through the disposable-daemon harness. Full local HTTP/WebSocket acceptance passed, including independent HTTP reachability/data checks, rollback/failure paths and socket cleanup (1 → 1 after repeated active/idle sessions and cancelled pulls).
+- Browser checks passed form creation, default shell, pull success/error/cancel, fullscreen/Escape and resizing (28×115 → 45×136 → 21×76). The 375px viewport had no document-level horizontal overflow.
+- docs/DASHBOARD-ACCEPTANCE.md and docs/RC-ACCEPTANCE.md record evidence and boundaries. Final API/migration review against 0.1.0 found only the already documented logger/nullable metadata changes plus additive create/progress overloads. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance.
 
 ## Next Steps
-1. Review/merge MR #4 including dashboard sizing; publish 0.1.0 only when requested.
-2. Next single-host readiness work: expose image-operation progress, validate persistent-volume/recreate workflows, and establish PR compatibility checks.
+1. Owner explicitly approved the exact push on 2026-09-13. Commits 3754f77 and 59aa2bb were pushed to LimeBeck/kmp-docker-client branch codex/prepare-1.0.0-rc; MR #5 description now reflects completed acceptance work.
+2. CI run 34745337397 passed three matrix cells and isolated restart (16s), but dashboard acceptance stayed in progress for over 10 minutes. Added an 8-minute step limit to each acceptance suite in PR/release workflows so always() uploads can run before the job budget is exhausted. The cancelled run logs confirmed every dashboard assertion passed by 07:34:25 UTC; the remaining orphan native process showed teardown was stuck waiting after SIGTERM. Bounded runner teardown now waits 10s then kills only its own child. Full local acceptance passed with bounded teardown and no remaining fixture containers; the SIGTERM-ignoring process probe passed in 10.2s. Re-run CI; do not mark ready until green.
+3. After all checks pass, make MR #5 ready for review. Candidate tag/publication and fresh Maven resolution are release actions, not implied by preparing the candidate.
+4. Do not move existing tags or republish 0.1.0. No RC was published in this preparation step.
 
 ## Known Risks / Constraints
-- CI workflow changes were statically validated; no remote publish/docs workflow was dispatched during this task.
+- Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
 - API 1.51 is fixed; no version negotiation. Release CI provisions Docker 28.5.2.
 - CIO reports disconnect between complete HTTP chunks as EOF even without a terminal zero chunk. Recovery must handle EOF as well as exceptions; finite event history also requires refreshing resource state.
 - Unsigned schema counters now have unsigned Kotlin types, a model API change in 0.1.0.
@@ -29,7 +31,8 @@
 - Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
 
 ## Decisions Pending
-- Supported Docker/platform matrix and public API compatibility gates for 1.0.0.
+- Owner selected one future release with BOTH macOS and Windows on BOTH JVM and Native. Recorded in spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.desktop-platforms (separate roadmap commit). Version/date and exact architecture matrix remain to be selected; current RC scope is unchanged.
+- Merge/release timing after final CI; fresh Maven resolution occurs after candidate publication.
 
 ## Resume Commands
 - `./gradlew :sample:htmxDashboard:linkDebugExecutableLinuxX64 :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2`

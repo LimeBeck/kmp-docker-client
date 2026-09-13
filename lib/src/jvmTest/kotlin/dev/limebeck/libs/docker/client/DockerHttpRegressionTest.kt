@@ -5,6 +5,8 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase
 import dev.limebeck.libs.docker.client.api.*
+import dev.limebeck.libs.docker.client.model.ImagePushResult
+import dev.limebeck.libs.docker.client.model.ImageProgress
 import dev.limebeck.libs.docker.client.model.AuthConfig
 import dev.limebeck.libs.docker.client.model.DockerApiException
 import io.ktor.client.request.*
@@ -26,6 +28,7 @@ import kotlin.test.*
 class DockerHttpRegressionTest {
     private suspend fun withDaemon(
         vararg replies: DockerReply,
+        timeoutMillis: Long = 5_000,
         block: suspend (DockerClient, MockDockerDaemon) -> Unit,
     ) {
         MockDockerDaemon(replies.toList()).use { daemon ->
@@ -33,7 +36,12 @@ class DockerHttpRegressionTest {
                 connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(daemon.path.toString())
             ))
             try {
-                withTimeout(5000) { block(client, daemon) }
+                try {
+                    withTimeout(timeoutMillis) { block(client, daemon) }
+                } catch (error: Throwable) {
+                    daemon.checkHealthy()
+                    throw error
+                }
                 daemon.checkHealthy()
             } finally {
                 client.client.close()
@@ -221,14 +229,34 @@ class DockerHttpRegressionTest {
     }
 
     @Test fun repeatedTerminalSessionsReleaseConnectionsIncludingUncollectedOutput() = runBlocking {
-        val replies = Array(20) { DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true) }
-        withDaemon(*replies) { client, daemon ->
+        val gates = Array(20) { java.util.concurrent.CountDownLatch(1) }
+        val replies = Array(20) { index ->
+            DockerReply("prompt> ", "101 Switching Protocols", keepOpen = true,
+                allowEarlyClose = index % 2 != 0,
+                beforeBody = if (index % 2 == 0) null else ({
+                    check(gates[index].await(5, java.util.concurrent.TimeUnit.SECONDS)) { "Client did not close session $index" }
+                }),
+            )
+        }
+        withDaemon(*replies, timeoutMillis = 30_000) { client, daemon ->
             repeat(replies.size) { index ->
-                client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
-                    if (index % 2 == 0) session.incomingChunks.first()
+                withTimeout(5_000) {
+                    try {
+                        client.exec.startInteractive("probe-$index").getOrThrow().use { session ->
+                            if (index % 2 == 0) session.incomingChunks.first()
+                        }
+                    } finally {
+                        gates[index].countDown()
+                    }
                 }
             }
+            while (!daemon.completed.get()) {
+                daemon.checkHealthy()
+                delay(10)
+            }
+            assertTrue(daemon.peerClosed.get(), "The final uncollected session must close its socket")
             assertEquals(replies.size, daemon.requests.size)
+            assertEquals(replies.size, daemon.closedResponses.get())
         }
     }
 
@@ -252,6 +280,103 @@ class DockerHttpRegressionTest {
             assertEquals(dev.limebeck.libs.docker.client.model.LogLine.Type.STDERR, chunk.type)
             assertEquals("err", chunk.bytes.decodeToString())
             assertTrue(daemon.requests.single().body.contains("\"Tty\":false"))
+        }
+    }
+
+    private suspend fun imageOperation(
+        client: DockerClient,
+        kind: String,
+        onProgress: suspend (ImageProgress<*>) -> Unit,
+    ) = when (kind) {
+        "pull" -> client.images.create("alpine", onProgress = onProgress)
+        "push" -> client.images.push("alpine", onProgress = onProgress)
+        else -> client.images.load(body = ByteReadChannel("archive".encodeToByteArray()), onProgress = onProgress)
+    }
+
+    @Test fun imageCallbacksDeliverOrderedProgressBeforeFinalSuccess() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            val aux = if (kind == "push") ""","aux":{"Tag":"latest","Digest":"sha256:result","Size":123}""" else ""
+            withDaemon(DockerReply("""{"id":"layer","status":"Working","progressDetail":{"current":9007199254740993,"total":18446744073709551615}}
+{"stream":"Complete"$aux,"extension":true}""")) { client, daemon ->
+                val records = mutableListOf<ImageProgress<*>>()
+                val result = imageOperation(client, kind) { records += it }
+                assertTrue(result.isSuccess)
+                assertEquals(2, records.size)
+                assertEquals("layer", records[0].id)
+                assertEquals("Working", records[0].status)
+                assertEquals(9007199254740993uL, records[0].progressDetail?.current)
+                assertEquals(ULong.MAX_VALUE, records[0].progressDetail?.total)
+                assertEquals("Complete", records[1].stream)
+                if (kind == "push") assertEquals(ImagePushResult("latest", "sha256:result", 123uL), records[1].aux)
+                else assertNull(records[1].aux)
+                assertNull(records[1].progressDetail)
+                if (kind == "load") assertEquals("archive", daemon.requests.single().body)
+            }
+        }
+    }
+
+    @Test fun pushAuxIsTypedAndMalformedAuxIsAnOperationError() = runBlocking {
+        withDaemon(DockerReply("""{"aux":{"Tag":"latest","Digest":"sha256:result","Size":123}}""")) { client, _ ->
+            var digest: String? = null
+            client.images.push("alpine") { update -> digest = update.aux?.digest }.getOrThrow()
+            assertEquals("sha256:result", digest)
+        }
+        withDaemon(DockerReply("""{"aux":{"Size":-1}}""")) { client, _ ->
+            assertTrue(client.images.push("alpine") { fail("Malformed aux must not reach the callback") }.isError)
+        }
+    }
+
+    @Test fun imageCallbacksArePromptAndBackpressuredAndCancellationClosesResponse() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            withDaemon(DockerReply("{\"status\":\"one\"}\n{\"status\":\"two\"}\n", keepOpen = true)) { client, daemon ->
+                val entered = CompletableDeferred<Unit>()
+                var calls = 0
+                val operation = launch {
+                    imageOperation(client, kind) {
+                        calls++
+                        entered.complete(Unit)
+                        awaitCancellation()
+                    }
+                }
+                entered.await() // The peer never finishes: the callback must arrive before EOF.
+                assertEquals(1, calls)
+                assertTrue(operation.isActive)
+                operation.cancelAndJoin()
+                while (!daemon.peerClosed.get()) delay(10)
+                assertEquals(1, calls)
+            }
+        }
+    }
+
+    @Test fun imageConsumerFailurePropagatesUnchangedAndClosesResponse() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            withDaemon(DockerReply("{}\n", keepOpen = true)) { client, daemon ->
+                val expected = IllegalStateException("consumer failure")
+                val actual = assertFailsWith<IllegalStateException> {
+                    imageOperation(client, kind) { throw expected }
+                }
+                assertSame(expected, actual)
+                while (!daemon.peerClosed.get()) delay(10)
+            }
+        }
+    }
+
+    @Test fun imageCallbacksDoNotTurnFailuresIntoSuccess() = runBlocking {
+        for (kind in listOf("pull", "push", "load")) {
+            for (tail in listOf("{\"errorDetail\":{\"message\":\"denied\"}}", "{\"error\":\"denied\"}", "broken", "{\"progressDetail\":{\"current\":-1}}", "{\"progressDetail\":{\"total\":18446744073709551616}}")) {
+                withDaemon(DockerReply("{\"status\":\"Working\"}\n$tail\n")) { client, _ ->
+                    val records = mutableListOf<ImageProgress<*>>()
+                    assertTrue(imageOperation(client, kind) { records += it }.isError)
+                    assertEquals(listOf("Working"), records.map { it.status })
+                }
+            }
+            withDaemon(DockerReply("{}\n", declaredLength = 100)) { client, _ ->
+                assertTrue(imageOperation(client, kind) {}.isError)
+            }
+            withDaemon(DockerReply("{\"message\":\"denied\"}", "403 Forbidden")) { client, _ ->
+                val result = imageOperation(client, kind) { fail("HTTP errors must not emit progress") }
+                assertEquals("denied", result.errorOrNull()?.message)
+            }
         }
     }
 

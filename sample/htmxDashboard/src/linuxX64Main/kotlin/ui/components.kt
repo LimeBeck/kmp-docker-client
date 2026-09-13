@@ -84,4 +84,4 @@ fun FlowContent.renderError(message: String) {
     }
 }
 
-fun String.escapeHtml() = replace("<", "&lt;").replace(">", "&gt;")
+fun String.escapeHtml() = replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")

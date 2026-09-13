@@ -19,6 +19,8 @@ internal data class DockerReply(
     val expectedInput: String? = null,
     val sendResponse: Boolean = true,
     val declaredLength: Int? = null,
+    val beforeBody: (() -> Unit)? = null,
+    val allowEarlyClose: Boolean = false,
 )
 
 internal data class DockerRequest(val line: String, val headers: Map<String, String>, val body: String)
@@ -30,6 +32,8 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
     val requests = CopyOnWriteArrayList<DockerRequest>()
     val responseSent = AtomicBoolean()
     val peerClosed = AtomicBoolean()
+    val completed = AtomicBoolean()
+    val closedResponses = java.util.concurrent.atomic.AtomicInteger()
     private val stopped = AtomicBoolean()
     private val failure = AtomicReference<Throwable?>()
     private val activeSocket = AtomicReference<SocketChannel?>()
@@ -89,19 +93,32 @@ internal class MockDockerDaemon(replies: List<DockerReply>) : AutoCloseable {
                         reply.headers.forEach { (key, value) -> append("$key: $value\r\n") }
                         append("\r\n")
                     }
-                    output.write(response.encodeToByteArray())
-                    output.write(payload)
-                    output.flush()
-                    responseSent.set(true)
-                    reply.expectedInput?.let { expected ->
-                        check(input.readNBytes(expected.encodeToByteArray().size).decodeToString() == expected)
-                        output.write("accepted".encodeToByteArray())
+                    try {
+                        output.write(response.encodeToByteArray())
+                        reply.beforeBody?.invoke()
+                        output.write(payload)
                         output.flush()
+                        responseSent.set(true)
+                        reply.expectedInput?.let { expected ->
+                            check(input.readNBytes(expected.encodeToByteArray().size).decodeToString() == expected)
+                            output.write("accepted".encodeToByteArray())
+                            output.flush()
+                        }
+                        if (reply.keepOpen) {
+                            val closed = input.read() == -1
+                            peerClosed.set(closed)
+                            if (closed) closedResponses.incrementAndGet()
+                        }
+                    } catch (error: java.io.IOException) {
+                        val peerAbort = error.message in setOf("Broken pipe", "Connection reset", "Connection reset by peer")
+                        if (!reply.allowEarlyClose || !peerAbort) throw error
+                        peerClosed.set(true)
+                        closedResponses.incrementAndGet()
                     }
-                    if (reply.keepOpen) peerClosed.set(input.read() == -1)
                 }
                 activeSocket.set(null)
             }
+            completed.set(true)
         } catch (error: Throwable) {
             if (!stopped.get()) failure.set(error)
         }

@@ -2,6 +2,10 @@ package routes.images
 
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.api.images
+import io.ktor.http.ContentType
+import io.ktor.utils.io.writeStringUtf8
+import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.encodeToString
 import io.ktor.server.html.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -10,6 +14,8 @@ import kotlinx.html.body
 import kotlinx.html.div
 import logger
 import routes.respondSmart
+import routes.withHeartbeat
+import routes.redirectSmart
 import ui.renderError
 
 
@@ -31,43 +37,39 @@ fun Routing.imagesRoute(dockerClient: DockerClient) {
         }
 
         post("/pull") {
-            val name = call.receiveParameters()["image-pull-name"] ?: ""
-            logger.info { "Pulling image: $name" }
-            val result = dockerClient.images.create(fromImage = name)
-
-            result.fold(
-                onSuccess = {
-                    logger.info { "Image $name pulled successfully" }
-                    call.respondRedirect("/images")
-                },
-                onError = { error ->
-                    logger.error(Exception(error.message)) { "Failed to pull image $name" }
-                    val images = dockerClient.images.list().getOrNull() ?: emptyList()
-                    call.respondHtml {
-                        body {
-                            renderImagesPage(images)
-
-                            div {
-                                attributes["hx-swap-oob"] = "afterbegin:#alerts"
-                                renderError("Failed to pull image '$name': ${error.message}")
-                            }
-                        }
+            val name = call.receiveParameters()["image-pull-name"].orEmpty().trim()
+            call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
+                withHeartbeat("{\"state\":\"heartbeat\",\"message\":\"\"}\n") { send ->
+                    suspend fun report(state: String, message: String) {
+                        send(dockerClient.json.encodeToString(mapOf("state" to state, "message" to message)) + "\n")
                     }
+                    try {
+                        require(name.isNotEmpty()) { "Image is required" }
+                        val result = dockerClient.images.create(fromImage = name) { progress ->
+                            val count = progress.progressDetail?.let { "${it.current ?: 0uL}/${it.total ?: 0uL}" }.orEmpty()
+                            report("progress", listOfNotNull(progress.id, progress.status, progress.stream, count.takeIf { it.isNotEmpty() }).joinToString(" "))
+                        }
+                        result.fold(
+                            onSuccess = { report("success", "Complete: $name") },
+                            onError = { report("error", "Failed: ${it.message}") },
+                        )
+                    } catch (e: CancellationException) { throw e }
+                    catch (e: Exception) { report("error", "Failed: ${e.message}") }
                 }
-            )
+            }
         }
 
         post("/prune") {
             logger.info { "Pruning images" }
             dockerClient.images.prune()
-            call.respondRedirect("/images")
+            redirectSmart("/images")
         }
 
         delete("/{id}") {
             val id = call.parameters["id"]!!
             logger.info { "Removing image: $id" }
             dockerClient.images.remove(id)
-            call.respondRedirect("/images")
+            redirectSmart("/images")
         }
     }
 }

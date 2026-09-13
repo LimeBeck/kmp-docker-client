@@ -30,6 +30,16 @@ Must provide:
 - follow/timestamps/since/until/tail parameters are passed through
 - implementation must apply connection config before execution
 
+### Container recreation and persistent data {#containers.recreate}
+- `create` accepts a complete typed `ContainerCreateRequest`, including `HostConfig` and `NetworkingConfig`. The existing `ContainerConfig` overload remains available without changing its signature.
+- Creating a container does not start it or replace a conflicting name. Docker failures are returned as typed errors without implicit cleanup or retry.
+- Removing a container defaults to `v=false`. Named-volume deletion requires an explicit volume removal call; recreation must not implicitly prune volumes or delete data.
+- Environment, ports, mounts and network configuration are supplied explicitly for each replacement. Orchestration, rollback, readiness checks and backups belong to the application.
+- Real-Docker tests on all supported targets cover configuration inspection, conflicting/missing-image errors, resource update, recreation with changed environment, and reading retained volume data after both original and replacement removal.
+
+## Storage metadata compatibility {#models.storage}
+- DriverData.Data is nullable: Docker 29 with containerd image storage returns null for container/image inspection. The local schema explicitly corrects this wire compatibility mismatch; preserve non-null driver maps without replacing null with invented metadata.
+
 ## Images behavior {#images}
 Must provide pull/list/inspect/remove/prune and related distribution flows already present in code.
 
@@ -41,6 +51,10 @@ Must provide pull/list/inspect/remove/prune and related distribution flows alrea
 - Pull, push, and load must consume the NDJSON progress response through completion.
 - HTTP success alone is insufficient: `errorDetail.message` or `error` in progress must return `Result.error(ErrorResponse)`.
 - Malformed progress messages must report an error; cancellation must propagate.
+- Each operation has an overload with a required suspending `onProgress(ImageProgress)` callback; existing signatures remain available. Non-error records are delivered in wire order, without an internal queue, awaiting the callback before reading further records. ImageProgress<TAux>, ImageProgressDetail and ImagePushResult are serializable data classes with explicit nullable fields. Counts are ULong values nested in progressDetail. Push callbacks use ImageProgress<ImagePushResult>, with Tag/Digest/Size mapped to tag/digest/size (ULong). Create and load callbacks use ImageProgress<Unit>, since their supported wire format has no documented aux payload. Aux remains optional; public progress models contain no JsonObject. Unknown JSON fields are ignored; invalid typed fields return an error before the callback.
+- The returned `Result<Unit, ErrorResponse>` is the final daemon outcome; intermediate status strings and counts do not imply success. Error records are returned as errors rather than delivered as progress. Detectable transport truncation must not return success.
+- Progress records use the same 1 MiB character limit as other JSON streams. Long operations have no request-duration or socket-idle timeout; the caller owns cancellation/deadlines. Cancellation and callback exceptions propagate unchanged and release the response; they never trigger automatic retry.
+- Callback cancellation releases the client request but does not guarantee rollback of work already performed by Docker. Load consumes its supplied body once; retry requires a fresh body and reconciliation with daemon state.
 
 ## Networks behavior {#networks}
 Must provide create/list/inspect/remove/connect/disconnect/prune operations.
@@ -91,6 +105,11 @@ Must provide:
 - Event recovery should resume from a saved timestamp with overlap/deduplication and refresh resource state, since event history is finite. Logs need an explicit since/tail policy; stats may simply resubscribe. Cancellation and downstream errors must not trigger retries.
 
 ## Changelog {#changelog}
+- 2026-09-12: corrected nullable storage metadata for Docker 29 and removed the library logger dependency requiring Java 21.
+- 2026-09-12: owner requested generic operation-specific aux; push now uses ImagePushResult, create/load use Unit, with no JSON fields in public progress models.
+- 2026-09-12: owner requested explicit serializable image progress models instead of a raw JSON wrapper; invalid counts are rejected rather than treated as absent.
+- 2026-09-12: exposed ordered image progress callbacks while retaining final Result outcomes and existing signatures.
+- 2026-09-12: added the complete container creation request and persistent-data recreation contract for the release candidate.
 - 2026-09-12: bounded stream records, validated HTTP body completion, and documented explicit resubscription.
 - 2026-09-11: defined binary terminal output, single-collection ownership, and session cleanup.
 - 2026-09-11: defined image progress completion and cold-stream HTTP error/cancellation semantics after review.

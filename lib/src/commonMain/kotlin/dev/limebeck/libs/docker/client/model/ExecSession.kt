@@ -29,7 +29,7 @@ class ExecSession internal constructor(
     private val sessionId = Uuid.generateV7().toString()
 
     init {
-        DockerClient.logger.debug { "ExecSession $sessionId started (tty = $isTty)" }
+        DockerClient.logger.debug("ExecSession $sessionId started (tty = $isTty)")
     }
 
     private val closed = AtomicBoolean(false)
@@ -53,10 +53,10 @@ class ExecSession internal constructor(
 
     suspend fun send(bytes: ByteArray) {
         check(!closed.load()) { "Session is closed" }
-        DockerClient.logger.trace { "ExecSession $sessionId try to send ${bytes.size} bytes" }
+        DockerClient.logger.trace("ExecSession $sessionId try to send ${bytes.size} bytes")
         connection.write.writeFully(bytes)
         connection.write.flush()
-        DockerClient.logger.trace { "ExecSession $sessionId sent ${bytes.size} bytes" }
+        DockerClient.logger.trace("ExecSession $sessionId sent ${bytes.size} bytes")
     }
 
     suspend fun send(text: String) = send(text.encodeToByteArray())
@@ -64,7 +64,7 @@ class ExecSession internal constructor(
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
         connection.close()
-        DockerClient.logger.debug { "ExecSession $sessionId closed" }
+        DockerClient.logger.debug("ExecSession $sessionId closed")
     }
 
     override fun toString(): String {
