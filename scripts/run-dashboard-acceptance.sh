@@ -19,7 +19,16 @@ export RC_DASHBOARD_URL="http://127.0.0.1:$port"
 ./sample/htmxDashboard/build/bin/linuxX64/debugExecutable/htmxDashboard.kexe "$RC_DOCKER_SOCKET" "$port" > "$report_dir/dashboard.log" 2>&1 &
 export RC_DASHBOARD_PID=$!
 cleanup() {
+    echo "Stopping acceptance dashboard (pid=$RC_DASHBOARD_PID)"
     kill "$RC_DASHBOARD_PID" 2>/dev/null || true
+    for attempt in {1..50}; do
+        if ! kill -0 "$RC_DASHBOARD_PID" 2>/dev/null; then break; fi
+        sleep 0.2
+    done
+    if kill -0 "$RC_DASHBOARD_PID" 2>/dev/null; then
+        echo "Dashboard did not exit within 10s; terminating the owned test process"
+        kill -KILL "$RC_DASHBOARD_PID" 2>/dev/null || true
+    fi
     wait "$RC_DASHBOARD_PID" 2>/dev/null || true
 }
 trap cleanup EXIT

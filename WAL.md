@@ -16,7 +16,7 @@
 
 ## Next Steps
 1. Owner explicitly approved the exact push on 2026-09-13. Commits 3754f77 and 59aa2bb were pushed to LimeBeck/kmp-docker-client branch codex/prepare-1.0.0-rc; MR #5 description now reflects completed acceptance work.
-2. CI run 34745337397 passed three matrix cells and isolated restart (16s), but dashboard acceptance stayed in progress for over 10 minutes. Added an 8-minute step limit to each acceptance suite in PR/release workflows so always() uploads can run before the job budget is exhausted. Re-run CI and inspect logs; do not claim final acceptance or mark ready yet.
+2. CI run 34745337397 passed three matrix cells and isolated restart (16s), but dashboard acceptance stayed in progress for over 10 minutes. Added an 8-minute step limit to each acceptance suite in PR/release workflows so always() uploads can run before the job budget is exhausted. The cancelled run logs confirmed every dashboard assertion passed by 07:34:25 UTC; the remaining orphan native process showed teardown was stuck waiting after SIGTERM. Bounded runner teardown now waits 10s then kills only its own child. Full local acceptance passed with bounded teardown and no remaining fixture containers; the SIGTERM-ignoring process probe passed in 10.2s. Re-run CI; do not mark ready until green.
 3. After all checks pass, make MR #5 ready for review. Candidate tag/publication and fresh Maven resolution are release actions, not implied by preparing the candidate.
 4. Do not move existing tags or republish 0.1.0. No RC was published in this preparation step.
 
