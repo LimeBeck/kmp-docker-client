@@ -31,7 +31,7 @@
 - Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
 
 ## Decisions Pending
-- Owner selected one future release with BOTH macOS and Windows on BOTH JVM and Native. Recorded in spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.desktop-platforms (local roadmap edit, not part of the two approved pushed commits). Version/date and exact architecture matrix remain to be selected; current RC scope is unchanged.
+- Owner selected one future release with BOTH macOS and Windows on BOTH JVM and Native. Recorded in spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.desktop-platforms (separate roadmap commit). Version/date and exact architecture matrix remain to be selected; current RC scope is unchanged.
 - Merge/release timing after final CI; fresh Maven resolution occurs after candidate publication.
 
 ## Resume Commands

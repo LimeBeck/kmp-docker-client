@@ -52,7 +52,19 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 ## Deferred expansion {#deferred}
 The missing-domain exploration in `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-001.md#phases` is deferred behind this goal. It must not displace the single-host readiness work unless the project owner revises the priority.
 
+### macOS and Windows release {#deferred.desktop-platforms}
+The owner selected macOS and Windows support for one future release on 2026-09-13. Deliver JVM and Kotlin/Native support for both operating systems together; a JVM-only release does not complete this milestone. The release number and date remain unassigned, and this work does not expand the current 1.0.0-rc acceptance scope.
+
+- Establish the supported CPU/OS matrix, including macOS Apple Silicon/Intel and Windows native target availability, before implementation. Any target limitation must be explicit in the release scope.
+- Support local Docker Desktop connections: Unix domain sockets on macOS and Windows named pipes for native Windows processes. WSL2 support alone does not satisfy Windows support.
+- Share connection configuration and lifecycle semantics across ordinary HTTP requests and duplex exec/attach transport; preserve cancellation and bounded resource cleanup.
+- Port the dashboard and its launch/configuration handling, and document Docker endpoint selection on each OS.
+- Require real-Docker integration and dashboard acceptance on each OS/runtime combination: container lifecycle and retained volumes, image progress/errors, logs/stats/events, terminal UTF-8/resize, disconnect/cancellation and repeated session cleanup.
+- Add platform CI, ABI validation and publication/consumer checks for all new native artifacts. Compilation alone is not platform acceptance.
+- Distinguish running the client on Windows from managing Windows containers. Decide and document Windows-container coverage separately; do not infer it from Docker Desktop Linux-container tests.
+
 ## Changelog {#changelog}
+- 2026-09-13: owner selected a future release combining macOS and Windows support on both JVM and Kotlin/Native.
 - 2026-09-12: owner requested all remaining RC preparation; resumed and validated isolated daemon restart, without restarting the host daemon.
 - 2026-09-12: owner deferred daemon-restart work and requested the remaining compatibility and release-readiness work first.
 - 2026-09-12: owner consolidated remaining work into one 1.0.0-rc release, implemented step by step.
