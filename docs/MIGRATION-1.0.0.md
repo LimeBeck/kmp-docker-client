@@ -1,6 +1,6 @@
 # Migration to 1.0.0
 
-1.0.0-rc is published on Maven Central. Stable 1.0.0 is being prepared with the same public API; no source migration from the published RC is required.
+Stable 1.0.0 is published on Maven Central with the same public API as 1.0.0-rc; no source migration from the published RC is required.
 
 ## From 0.1.0
 
@@ -33,3 +33,7 @@ The changes below were introduced in 0.1.0 and still apply:
 The isolated JVM/Docker 29 restart acceptance test verifies old-stream termination and explicit application resubscription. The SDK does not automatically retry or reconnect. Handle EOF as well as transport failures, reconcile current state, and open new terminal sessions without replaying commands. See [stream recovery](STREAM-RECOVERY.md) for the tested scope and application policy.
 
 For the supported runtime combinations and post-1.0 policy, see [compatibility](COMPATIBILITY.md).
+
+## 1.0.1 (unreleased)
+
+`DockerClient` now implements Kotlin `AutoCloseable`. Replace manual `try/finally { docker.client.close() }` with `DockerClient(...).use { docker -> ... }`, or call `docker.close()` for an application-owned client. Existing `docker.client.close()` calls remain valid. Close raw exec/attach sessions separately and stop collectors before closing the client. The new method initiates HTTP client shutdown; it does not wait for in-flight requests. This addition is not available in the published 1.0.0 artifacts.

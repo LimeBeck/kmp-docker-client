@@ -4,7 +4,7 @@
 
 KMP Docker Client provides coroutine-based access to a single Docker host. Start here for complete workflows, then use the package and class navigation below for individual API methods.
 
-This guide describes the **1.0.0 API**, currently being prepared for stable release. Until 1.0.0 is published, use **1.0.0-rc** from Maven Central; the examples work with that candidate too. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
+This guide covers the upcoming **1.0.1**, including `DockerClient.use`. The published Maven Central baseline is **1.0.0**; the lifecycle additions require a 1.0.1 development build until release. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
 
 ### Install
 
@@ -13,7 +13,7 @@ Use Maven Central. In a Kotlin Multiplatform project, add the dependencies to `c
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.0.0-rc")
+    implementation("dev.limebeck.libs:docker-client:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
     implementation("io.ktor:ktor-io:3.5.2")
@@ -39,19 +39,18 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 suspend fun listContainers(socketPath: String = "/var/run/docker.sock") {
-    val docker = DockerClient(DockerClientConfig(
+    DockerClient(DockerClientConfig(
         connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(socketPath),
-    ))
-    try {
+    )).use { docker ->
         docker.system.ping().getOrThrow()
         docker.containers.getList().getOrThrow().forEach { println(it.names) }
-    } finally {
-        docker.client.close()
     }
 }
 ```
 
-Reuse a client for an application lifecycle. Stop and join your collectors and close interactive sessions before calling `docker.client.close()` at shutdown. `DockerClient` itself is not `AutoCloseable`; raw terminal sessions have their own lifetime and must be closed separately. Examples below receive an application-owned `docker` client.
+`DockerClient.use` requires the upcoming 1.0.1 build. On published 1.0.0/1.0.0-rc, retain `try/finally` with `docker.client.close()`.
+
+Reuse a client for an application lifecycle. Stop and join your collectors and close interactive sessions before calling `docker.close()` at shutdown. `DockerClient` implements `AutoCloseable`; raw terminal sessions have their own lifetime and must be closed separately. Examples below receive an application-owned `docker` client.
 
 API entry points: [DockerClient][dev.limebeck.libs.docker.client.DockerClient], [Containers][dev.limebeck.libs.docker.client.api.Containers], [Images][dev.limebeck.libs.docker.client.api.Images], [Volumes][dev.limebeck.libs.docker.client.api.Volumes], [Networks][dev.limebeck.libs.docker.client.api.Networks], [Exec][dev.limebeck.libs.docker.client.api.Exec] and [System][dev.limebeck.libs.docker.client.api.System]. Import `api.*` to bring the `containers`, `images`, `volumes`, `networks`, `exec` and `system` extension properties into scope.
 
@@ -256,6 +255,6 @@ Refresh a snapshot after reconnect. Recreate event subscriptions using a saved t
 | Terminal prompt delayed or text corrupted | Use incomingChunks and an incremental UTF-8 decoder; match TTY mode. |
 | Container replacement fails | Reconcile IDs and preserve volumes; do not blindly repeat destructive steps. |
 
-The 1.0.0 preparation preserves the published 1.0.0-rc API. From 0.1.0, `DriverData.data` is nullable and `DockerClient.logger` uses Ktor's logger type. From 0.0.x, also account for unsigned counters and session ownership changes. See [migration](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/MIGRATION-1.0.0.md) and [compatibility policy](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/COMPATIBILITY.md). Generated public models are covered by the same compatibility policy as handwritten APIs.
+The 1.0.0 release preserves the published 1.0.0-rc API. From 0.1.0, `DriverData.data` is nullable and `DockerClient.logger` uses Ktor's logger type. From 0.0.x, also account for unsigned counters and session ownership changes. See [migration](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/MIGRATION-1.0.0.md) and [compatibility policy](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/COMPATIBILITY.md). Generated public models are covered by the same compatibility policy as handwritten APIs.
 
 Full Docker API coverage, Compose orchestration and application authentication/roles are not supplied by the SDK. The bundled dashboard is an independent example; its UI behavior is not a library release gate.
