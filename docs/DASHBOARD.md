@@ -1,6 +1,6 @@
-# Dashboard acceptance example
+# Dashboard example
 
-The bundled htmx dashboard demonstrates the single-host SDK workflows used for RC acceptance. It remains a development example bound to loopback; user authentication, roles, credential storage and audit are application concerns. It does not implement Compose.
+The bundled htmx dashboard demonstrates single-host SDK workflows. Its UI behavior is not an SDK release gate. It remains a development example bound to loopback; user authentication, roles, credential storage and audit are application concerns. It does not implement Compose.
 
 ## Run
 
@@ -34,28 +34,8 @@ Container deletion, replacement confirmation and rollback never delete named vol
 - Terminal exec and attach carry binary UTF-8 bytes, resize messages and explicit cleanup. An empty Exec field opens `/bin/sh`. Fullscreen/Escape and ResizeObserver-driven fitting update the Docker TTY size.
 - Pull displays typed progress and the operation's final result. Cancelling the request or navigating away aborts the HTTP reader. Heartbeats release idle upstream requests too. Cancellation cannot guarantee Docker-side rollback: refresh Images before retrying.
 
-## Reproducible application test
+## Optional manual smoke check
 
-After building the debug executable:
-
-```sh
-scripts/with-isolated-docker.sh scripts/run-dashboard-acceptance.sh
-```
-
-The harness creates a labelled temporary Docker 29 daemon and removes its data volume at exit. The application runner selects a free loopback port, starts the real native dashboard, preloads an Alpine shell and BusyBox HTTP fixture, and runs `scripts/dashboard-acceptance.py` using Python's standard library. No browser automation dependency is required for the HTTP/WebSocket suite.
-
-The suite operates through the dashboard's HTTP/WebSocket routes. Docker CLI reads independently verify configuration, actual HTTP reachability and retained data; CLI writes are limited to fixture setup, a stimulus event and cleanup. Coverage includes:
-
-- create, published port, environment, named volume and network attachment;
-- exec/attach prompts, UTF-8 and `stty size` through the actual WebSocket bridge;
-- logs, stats and events;
-- missing-image prepare failure, startup failure and restoration of the original;
-- candidate rollback, confirmation, and reading retained data after deleting both predecessors;
-- successful pull progress, registry failure, missing resource and cancelling an idle registry request;
-- repeated active and idle stream/session cleanup, with bounded native process socket counts after warm-up.
-
-The slow registry fixtures are loopback listeners inside the disposable daemon's network namespace. They accept repeated connections without replying, so cancellation does not depend on public network timeouts. Test deadlines fail the run; the surrounding harness still removes the whole temporary daemon on error.
-
-Logs are retained under `sample/htmxDashboard/build/acceptance/`. PR CI runs this application suite in the Docker 29/JDK 21 cell; release CI runs it before publication. Browser-only presentation checks remain separately recorded in [RC acceptance](RC-ACCEPTANCE.md).
+After starting the example, optionally create a disposable container, open its terminal and live views, and inspect image progress. Use only disposable resources and explicitly clean them up. These checks are for sample development; PR and release CI validate SDK behavior through Kotlin tests against Docker, without dashboard HTTP/WebSocket or browser acceptance.
 
 Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance`.

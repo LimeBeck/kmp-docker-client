@@ -55,10 +55,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
-      - name: Verify dashboard application workflows
-        timeout-minutes: 8
-        run: scripts/with-isolated-docker.sh scripts/run-dashboard-acceptance.sh
-
       - name: Upload Build Test Results
         if: always()
         uses: actions/upload-artifact@v6
@@ -66,7 +62,6 @@ jobs:
           name: unit-test-results-build
           path: |
             lib/build/test-results/**/*.xml
-            sample/htmxDashboard/build/acceptance/*
 
       - name: Publish libs as artifacts
         uses: actions/upload-artifact@v6
@@ -131,7 +126,6 @@ jobs:
           name: unit-test-results-test
           path: |
             lib/build/test-results/**/*.xml
-            sample/htmxDashboard/build/acceptance/*
 
   publish-maven-central:
     runs-on: ubuntu-latest
