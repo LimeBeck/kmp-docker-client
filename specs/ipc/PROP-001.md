@@ -75,6 +75,7 @@ Must support command execution lifecycle including interactive session/hijack fl
 - A cancelled handshake closes the acquired connection and propagates cancellation. Prefix forwarding is scoped to collection, with no detached forwarding job.
 
 ### Dashboard terminal sizing {#exec.dashboard-sizing}
+- Hide the terminal viewport scrollbar only while the alternate screen buffer is active (for applications such as mc/vim); restore it in the normal shell buffer. Preserve scrolling and refit after buffer changes in both normal and fullscreen modes.
 - Attach and exec terminal panels fit their available space on initial connection, container layout changes, browser resize, and fullscreen transitions. Changed row/column counts are forwarded to the matching Docker TTY resize endpoint; non-TTY attach skips Docker resize.
 - The shared panel offers browser fullscreen with a visible exit button and supports the browser's normal Escape behavior. If the browser rejects fullscreen, the panel fills the viewport with an explicit exit button and Escape support.
 - Dashboard WebSocket input uses binary UTF-8 frames; text frames carry JSON resize controls with integer rows/cols in 1..1000. Control frames never reach shell stdin.
