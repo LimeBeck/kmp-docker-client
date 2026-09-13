@@ -15,9 +15,10 @@
 - docs/DASHBOARD-ACCEPTANCE.md and docs/RC-ACCEPTANCE.md record evidence and boundaries. Final API/migration review against 0.1.0 found only the already documented logger/nullable metadata changes plus additive create/progress overloads. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance.
 
 ## Next Steps
-1. Final local application harness exited successfully with complete cleanup; native debug build and checkKotlinAbi passed. Push and verify the remote four-cell CI with both acceptance harnesses; exact head/run evidence belongs in MR #5.
-2. After all checks pass, make MR #5 ready for review. Candidate tag/publication and fresh Maven resolution are release actions, not implied by preparing the candidate.
-3. Do not move existing tags or republish 0.1.0. No RC was published in this preparation step.
+1. Owner explicitly approved the exact push on 2026-09-13. Commits 3754f77 and 59aa2bb were pushed to LimeBeck/kmp-docker-client branch codex/prepare-1.0.0-rc; MR #5 description now reflects completed acceptance work.
+2. CI run 34745337397 passed three matrix cells and isolated restart (16s), but dashboard acceptance stayed in progress for over 10 minutes. Added an 8-minute step limit to each acceptance suite in PR/release workflows so always() uploads can run before the job budget is exhausted. Re-run CI and inspect logs; do not claim final acceptance or mark ready yet.
+3. After all checks pass, make MR #5 ready for review. Candidate tag/publication and fresh Maven resolution are release actions, not implied by preparing the candidate.
+4. Do not move existing tags or republish 0.1.0. No RC was published in this preparation step.
 
 ## Known Risks / Constraints
 - Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
@@ -30,6 +31,7 @@
 - Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
 
 ## Decisions Pending
+- Owner selected one future release with BOTH macOS and Windows on BOTH JVM and Native. Recorded in spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.desktop-platforms (local roadmap edit, not part of the two approved pushed commits). Version/date and exact architecture matrix remain to be selected; current RC scope is unchanged.
 - Merge/release timing after final CI; fresh Maven resolution occurs after candidate publication.
 
 ## Resume Commands

@@ -56,6 +56,7 @@ jobs:
         run: ./gradlew build --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Verify dashboard application workflows
+        timeout-minutes: 8
         run: scripts/with-isolated-docker.sh scripts/run-dashboard-acceptance.sh
 
       - name: Upload Build Test Results
@@ -120,6 +121,7 @@ jobs:
         run: ./gradlew :lib:allTests --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Verify isolated daemon restart and resubscription
+        timeout-minutes: 8
         run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Upload Unit Test Results
