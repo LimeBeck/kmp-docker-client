@@ -39,11 +39,12 @@ Test artifacts:
 - Superseded PR runs may be cancelled. Release jobs are not triggered by PRs.
 - Tests synchronize with observable completion instead of sleeps. Repeated-session tests retain finite per-session and overall deadlines without using one short-session deadline for the entire series.
 
-### Application acceptance {#ci.acceptance}
-- PR CI's Docker 29/JDK 21 cell runs isolated daemon restart/resubscription and the real native dashboard HTTP/WebSocket acceptance suite after build. Release CI runs dashboard acceptance in build and restart acceptance in test, before publication.
-- Both acceptance runners use scripts/with-isolated-docker.sh. They own a labelled disposable daemon, socket and data volume; the user's/main runner daemon must not be restarted by acceptance tests.
+### SDK integration acceptance {#ci.acceptance}
+- PR CI's Docker 29/JDK 21 cell runs the Kotlin/JVM isolated daemon restart/resubscription test after build. Release CI runs it in the test job before publication.
+- The SDK restart test uses scripts/with-isolated-docker.sh, which owns a labelled disposable daemon, socket and data volume; the user's/main runner daemon must not be restarted by acceptance tests.
 - The normal JVM test task excludes the opt-in restart test. Only daemonRestartTest with harness-provided fixture identity may restart the temporary daemon.
-- Upload dashboard acceptance logs alongside JUnit reports with always(), including on failure. Browser-only fullscreen/layout checks are recorded separately in the RC checklist.
+- Upload SDK JUnit reports with always(), including on failure.
+- Dashboard HTTP/WebSocket, browser and UI acceptance are not SDK PR or release gates. Optional sample smoke checks are independent of library publication.
 
 ### Public API compatibility {#ci.abi}
 - The library enables Kotlin Gradle Plugin ABI validation, including JVM and KLib outputs for JS/Linux X64. Generated models are included without exclusions.
@@ -98,6 +99,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-13: owner removed dashboard acceptance from SDK release scope; retained Kotlin SDK integration and isolated recovery checks.
 - 2026-09-12: required isolated daemon recovery and real dashboard application acceptance before publication, with failure logs retained.
 - 2026-09-12: established explicit Docker/JDK PR matrix, pinned Kotlin/JS runtime and mandatory all-target ABI snapshots for candidate readiness.
 - 2026-09-12: added isolated PR validation and selected 1.0.0-rc as the next development target.

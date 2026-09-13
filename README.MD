@@ -54,7 +54,7 @@ dependencies {
 - **Config**
 - **Plugin**
 
-For RC preparation, see [compatibility and API policy](docs/COMPATIBILITY.md), [migration notes](docs/MIGRATION-1.0.0-rc.md), the [acceptance checklist](docs/RC-ACCEPTANCE.md), [dashboard acceptance example](docs/DASHBOARD-ACCEPTANCE.md), and [stream recovery policy](docs/STREAM-RECOVERY.md).
+For RC preparation, see [compatibility and API policy](docs/COMPATIBILITY.md), [migration notes](docs/MIGRATION-1.0.0-rc.md), the [acceptance checklist](docs/RC-ACCEPTANCE.md), [dashboard example](docs/DASHBOARD.md), and [stream recovery policy](docs/STREAM-RECOVERY.md).
 
 ## 📖 Usage
 

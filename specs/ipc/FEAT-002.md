@@ -24,18 +24,19 @@ This target was accepted by the project owner. Complete Docker API coverage is n
 ## Milestones {#milestones}
 - 0.1.0: released terminal/session ownership, bounded logs/stats/events, unsigned counters, and dashboard terminal sizing.
 - 1.0.0-rc: one release combining the remaining single-host readiness work. Implement it in the ordered steps below; do not publish intermediate feature releases.
-- 1.0.0: release only after the acceptance gates below pass and the release candidate has been validated against a real dashboard application. Milestones describe scope, not delivery dates.
+- 1.0.0: release only after the acceptance gates below pass and the release candidate has passed SDK integration tests against real Docker. Milestones describe scope, not delivery dates.
 
 ### Ordered release-candidate work {#milestones.rc}
 1. Stabilize timing-sensitive tests, establish PR CI, and synchronize release documentation.
 2. Validate create/start/inspect/recreate/delete with ports, environment, network attachment, and persistent volumes; retained data is an explicit assertion.
 3. Expose pull/push/load progress, final success/error, and cancellation to consumers.
 4. Validate stream termination and application resubscription after restart of an isolated Docker daemon, including repeated session cleanup. The owner resumed the remaining RC work on 2026-09-12. The isolated JVM/Docker 29 acceptance test now covers old-stream termination, explicit application resubscription, state reconciliation and repeated terminal socket cleanup; see docs/STREAM-RECOVERY.md.
-5. Establish the supported Docker/platform CI matrix, public API compatibility baseline, migration guidance, and a real-dashboard acceptance checklist.
+5. Establish the supported Docker/platform CI matrix, public API compatibility baseline, migration guidance, and an SDK acceptance checklist.
 6. Run the complete acceptance suite before publishing 1.0.0-rc. Preparing the candidate does not itself create a release tag.
 
 ## Acceptance gates {#acceptance}
-- A dashboard can create a container with ports and a persistent volume, start it, open a terminal, observe logs/stats, recreate it with changed configuration, and delete the container while retaining the data unless volume deletion was explicitly requested.
+- SDK behavior is verified directly with Kotlin tests and real Docker. Dashboard UI, HTTP/WebSocket routes, forms, HTMX and fullscreen behavior are outside library release gates; the sample may be smoke-tested independently.
+- Kotlin SDK integration tests validate creating a container with ports and a persistent volume, starting it, opening a terminal, observing logs/stats, recreating it with changed configuration, and deleting the container while retaining the data unless volume deletion was explicitly requested.
 - An application-level Compose integration can use the supported SDK operations to inspect and manage its single-host resources; any external Compose dependency or unsupported operation is documented.
 - Negative scenarios cover missing resources, registry failures, malformed/partial responses, connection loss, daemon restart, consumer failure, and cancellation.
 - Streaming consumers receive data promptly; stopping a consumer or closing a session releases the associated connection. Repeated connect/disconnect tests must not show accumulating connections or jobs.
@@ -59,11 +60,12 @@ The owner selected macOS and Windows support for one future release on 2026-09-1
 - Support local Docker Desktop connections: Unix domain sockets on macOS and Windows named pipes for native Windows processes. WSL2 support alone does not satisfy Windows support.
 - Share connection configuration and lifecycle semantics across ordinary HTTP requests and duplex exec/attach transport; preserve cancellation and bounded resource cleanup.
 - Port the dashboard and its launch/configuration handling, and document Docker endpoint selection on each OS.
-- Require real-Docker integration and dashboard acceptance on each OS/runtime combination: container lifecycle and retained volumes, image progress/errors, logs/stats/events, terminal UTF-8/resize, disconnect/cancellation and repeated session cleanup.
+- Require Kotlin SDK integration tests against real Docker on each OS/runtime combination: container lifecycle and retained volumes, image progress/errors, logs/stats/events, terminal UTF-8/resize, disconnect/cancellation and repeated session cleanup.
 - Add platform CI, ABI validation and publication/consumer checks for all new native artifacts. Compilation alone is not platform acceptance.
 - Distinguish running the client on Windows from managing Windows containers. Decide and document Windows-container coverage separately; do not infer it from Docker Desktop Linux-container tests.
 
 ## Changelog {#changelog}
+- 2026-09-13: owner clarified that SDK releases require library integration tests, not dashboard application acceptance.
 - 2026-09-13: owner selected a future release combining macOS and Windows support on both JVM and Kotlin/Native.
 - 2026-09-12: owner requested all remaining RC preparation; resumed and validated isolated daemon restart, without restarting the host daemon.
 - 2026-09-12: owner deferred daemon-restart work and requested the remaining compatibility and release-readiness work first.
