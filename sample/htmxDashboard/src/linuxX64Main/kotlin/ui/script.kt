@@ -32,6 +32,12 @@ val dashboardScript = """
         const close = document.createElement('button'); close.type = 'button'; close.className = 'btn btn-small'; close.dataset.dismiss = ''; close.textContent = '×'; close.setAttribute('aria-label','Dismiss notification');
         notice.append(text, close); alerts.append(notice);
     }
+    document.addEventListener('click', function(event) {
+        const copy = event.target.closest('[data-copy]');
+        if (!copy) return;
+        if (!navigator.clipboard) { notify('Clipboard unavailable. Select and copy the value manually.', true); return; }
+        navigator.clipboard.writeText(copy.dataset.copy).then(() => notify('Copied.', false), () => notify('Could not copy. Select the value manually.', true));
+    });
     const notices = {started:'Container started.',stopped:'Container stopped.',removed:'Resource removed.',pruned:'Cleanup completed.',created:'Volume created.'};
     const initialUrl = new URL(location.href);
     if (notices[initialUrl.searchParams.get('notice')]) {
