@@ -1,4 +1,4 @@
-# Compose discovery and logs
+# Compose integration
 
 Stage 1 adds the `dev.limebeck.libs.docker.compose` package inside `lib` for JVM, NodeJS and Linux X64.
 It uses the existing Engine client and adds no runtime dependencies.
@@ -6,11 +6,11 @@ Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#def
 
 ## Availability
 
-Available in **1.1.0** inside the existing artifact; no separate Compose module is needed.
-Release publication is in progress.
+Discovery and logs were introduced in **1.1.0**. Existing-container controls are available in **1.2.0**
+inside the same artifact; no separate Compose module is needed.
 
 ```kotlin
-implementation("dev.limebeck.libs:docker-client:1.1.0")
+implementation("dev.limebeck.libs:docker-client:1.2.0")
 ```
 
 Use `implementation(project(":lib"))` when working in this repository.
@@ -98,6 +98,46 @@ Consumer failure, cancellation and completion release requests. There is no auto
 resubscription or rollback. Discovery and log preparation errors surface during collection via the
 SDK `getOrThrow` behavior; errors during streaming preserve the original SDK exceptions.
 
+## Existing-container controls
+
+Version **1.2.0** provides `start`, `stop` and `restart` in the same package.
+
+```kotlin
+val report = docker.compose.restart(
+    project = "my-project",
+    services = setOf("api", "worker"),
+    timeoutSeconds = 10,
+).getOrThrow()
+
+for (item in report.results) {
+    println("${item.container.name}: ${item.result}")
+}
+val workerStart = docker.compose.start("my-project", service = "worker").getOrThrow()
+```
+
+- Null `services` selects all project containers; an empty set performs no Docker requests.
+  A String overload selects one service. Names match labels exactly.
+- Only confirmed regular replicas (`oneOff == false`) are selected by default.
+  `includeOneOff = true` includes one-offs and unknown one-off metadata too.
+- Discovery completes before the first mutation. Requests run sequentially in snapshot order.
+  This is not dependency order; no readiness checks, reconciliation or resource creation occur.
+- A successful outer Result contains a completed report, which may include failed requests.
+  Check `report.isSuccess` or each `item.result`. HTTP failures retain the original SDK
+  error and diagnostic context; later containers are still attempted, without retries.
+- Missing projects/services return an empty report, whose `isSuccess` is true.
+  Check `results.isEmpty()` to distinguish this from successful changes.
+- Discovery HTTP errors return an outer error with no mutations. Transport/decoding exceptions
+  and cancellation propagate and stop later requests. Earlier changes remain; the in-flight
+  request may have reached Docker. No complete report is returned in this case. Refresh state
+  before retrying; restart is not safe to retry automatically.
+- Stop/restart `timeoutSeconds` is per container: null uses the daemon default, -1 waits
+  indefinitely, 0 kills immediately, and positive values set the grace period in seconds.
+- Containers, networks and volumes are retained. These operations are not Compose up/down.
+  Start/stop accept Docker HTTP 304 (already in the requested state) as success. Other HTTP
+  failures are preserved; error messages are never parsed to infer success.
+
+Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.compose.controls`.
+
 ## Verification
 
 The Compose unit tests require no daemon:
@@ -108,8 +148,9 @@ The Compose unit tests require no daemon:
 
 Real-Compose tests use a unique disposable project against `/var/run/docker.sock`, regardless of
 the current Docker context. The harness creates two healthy worker replicas, a stopped service,
-a one-off container, an unrelated container and a container with incomplete labels. It removes
-its containers and network on exit without restarting the daemon or touching existing projects.
+a one-off container, an unrelated container and a container with incomplete labels. A separate
+control service has a disposable named volume for data-retention checks. The harness removes
+its containers, network and volume on exit without restarting the daemon or touching existing projects.
 
 ```shell
 scripts/with-compose-fixture.sh ./gradlew :lib:jvmTest --tests '*Compose*' :lib:jsNodeTest --tests '*Compose*' :lib:linuxX64Test --tests '*Compose*' --warning-mode=fail --console=plain --max-workers=2
@@ -125,9 +166,12 @@ and Compose 5.5.1: 42 tests (12 unit and 2 integration tests per runtime), no fa
 Dokka generation passed. The updated lib ABI baseline adds Compose APIs without removing
 existing declarations. Remote Docker compatibility matrix results are pending.
 
+Controls verification on 2026-09-15 passed 60 Compose tests (17 unit and 3 real-Compose tests per
+runtime) on JVM, NodeJS and Linux X64, including already-satisfied states, partial failures,
+cancellation, service/project isolation and retained named-volume data. ABI and Dokka passed.
+
 ## Later stages
 
-The dashboard already exposes read-only project/service views and logs. Container start/stop/restart
-remain a later stage. File-based up/down/pull/build,
+The dashboard exposes project/service views, logs and existing-container controls. File-based up/down/pull/build,
 profiles and reconciliation belong to a later optional Compose CLI backend. They are not exposed
 by this package yet.

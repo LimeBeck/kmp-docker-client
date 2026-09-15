@@ -13,6 +13,94 @@ import kotlin.test.*
 
 class ComposeTest {
     @Test
+    fun startAndStopAcceptAlreadySatisfiedStateWithoutParsingMessages() = runTest {
+        val source = FakeSource()
+        source.add("a", labels())
+        val error = Result.error(ErrorResponse("opaque response")).withOperationContext(
+            dev.limebeck.libs.docker.client.diagnostics.DockerOperationContext(
+                "POST", "/containers/{resource}/start", "1.51",
+                dev.limebeck.libs.docker.client.diagnostics.DockerFailureStage.RESPONSE, 304,
+            )
+        )
+        source.operationResult = { error }
+        val api = Compose(source)
+        assertTrue(api.start("demo").getOrThrow().isSuccess)
+        assertTrue(api.stop("demo").getOrThrow().isSuccess)
+        val restarted = api.restart("demo").getOrThrow()
+        assertFalse(restarted.isSuccess)
+        assertSame(error.errorOrNull(), restarted.results.single().result.errorOrNull())
+        source.operationResult = { Result.error(ErrorResponse("Docker API returned HTTP 304 Not Modified")) }
+        assertFalse(api.start("demo").getOrThrow().isSuccess)
+    }
+
+    @Test
+    fun controlsSelectExactProjectServicesAndRegularReplicas() = runTest {
+        val source = FakeSource()
+        source.add("a", labels())
+        source.add("b", labels(number = "2"))
+        source.add("db", labels().plus(SERVICE to "db"))
+        source.add("job", labels(oneOff = "True"))
+        source.add("unknown", labels(oneOff = "invalid"))
+        source.add("other", labels().plus(PROJECT to "other"))
+        source.add("unassigned", mapOf(PROJECT to "demo", ONE_OFF to "False"))
+        val api = Compose(source)
+        val report = api.start("demo", "worker").getOrThrow()
+        assertTrue(report.isSuccess)
+        assertEquals(listOf("a", "b"), report.results.map { it.container.id })
+        assertTrue(source.operations.all { it.second == ComposeOperation.START && it.third == null })
+        source.operations.clear()
+        api.stop("demo", setOf("worker", "db"), timeoutSeconds = 3).getOrThrow()
+        assertEquals(setOf("a", "b", "db"), source.operations.map { it.first }.toSet())
+        assertTrue(source.operations.all { it.second == ComposeOperation.STOP && it.third == 3 })
+        source.operations.clear()
+        api.restart("demo", includeOneOff = true, timeoutSeconds = 0).getOrThrow()
+        assertEquals(setOf("a", "b", "db", "job", "unknown", "unassigned"), source.operations.map { it.first }.toSet())
+        assertTrue(source.operations.all { it.second == ComposeOperation.RESTART && it.third == 0 })
+    }
+
+    @Test
+    fun controlsKeepPartialErrorsAndContinueWithoutRetry() = runTest {
+        val source = FakeSource()
+        listOf("a", "b", "c").forEach { source.add(it, labels()) }
+        val failure = ErrorResponse("disappeared")
+        source.operationResult = { if (it == "b") Result.error(failure) else Result.success(Unit) }
+        val report = Compose(source).restart("demo", "worker", timeoutSeconds = -1).getOrThrow()
+        assertFalse(report.isSuccess)
+        assertEquals(listOf("a", "b", "c"), source.operations.map { it.first })
+        assertSame(failure, report.results[1].result.errorOrNull())
+        assertTrue(report.results[2].result.isSuccess)
+    }
+
+    @Test
+    fun controlsValidateAndDiscoverBeforeMutating() = runTest {
+        val source = FakeSource()
+        val api = Compose(source)
+        assertTrue(api.start("demo", emptySet()).getOrThrow().results.isEmpty())
+        assertEquals(0, source.lists)
+        assertFailsWith<IllegalArgumentException> { api.start(" ", "worker") }
+        assertFailsWith<IllegalArgumentException> { api.stop("demo", setOf("")) }
+        assertFailsWith<IllegalArgumentException> { api.restart("demo", timeoutSeconds = -2) }
+        assertTrue(api.start("missing").getOrThrow().results.isEmpty())
+        source.add("a", labels())
+        assertTrue(api.stop("demo", "missing").getOrThrow().results.isEmpty())
+        source.inspectFailure = Result.error(ErrorResponse("inspect failed"))
+        assertTrue(api.start("demo").isError)
+        assertTrue(source.operations.isEmpty())
+    }
+
+    @Test
+    fun cancellationAndTransportFailureStopFurtherMutations() = runTest {
+        for (failure in listOf(kotlinx.coroutines.CancellationException("cancel"), IllegalStateException("transport"))) {
+            val source = FakeSource()
+            listOf("a", "b", "c").forEach { source.add(it, labels()) }
+            source.operationResult = { if (it == "b") throw failure else Result.success(Unit) }
+            val caught = assertFails { Compose(source).stop("demo") }
+            assertSame(failure, caught)
+            assertEquals(listOf("a", "b"), source.operations.map { it.first })
+        }
+    }
+
+    @Test
     fun discoveryPreservesHealthReplicasAndIncompleteLabels() = runTest {
         val source = FakeSource()
         source.add("replica2", labels(number = "2"), ContainerState(status = ContainerState.Status.RUNNING,
@@ -227,6 +315,12 @@ private fun labels(number: String = "1", oneOff: String = "False") =
     mapOf(PROJECT to "demo", SERVICE to "worker", NUMBER to number, ONE_OFF to oneOff)
 
 private class FakeSource : ComposeSource {
+    val operations = mutableListOf<Triple<String, ComposeOperation, Int?>>()
+    var operationResult: suspend (String) -> Result<Unit, ErrorResponse> = { Result.success(Unit) }
+    override suspend fun operate(id: String, operation: ComposeOperation, timeoutSeconds: Int?): Result<Unit, ErrorResponse> {
+        operations += Triple(id, operation, timeoutSeconds)
+        return operationResult(id)
+    }
     val summaries = mutableListOf<ContainerSummary>()
     val inspections = mutableMapOf<String, ContainerInspectResponse>()
     val inspected = mutableListOf<String>()

@@ -167,6 +167,18 @@ final enum class dev.limebeck.libs.docker.client.model/TaskState : kotlin/Enum<d
     }
 }
 
+final enum class dev.limebeck.libs.docker.compose/ComposeOperation : kotlin/Enum<dev.limebeck.libs.docker.compose/ComposeOperation> { // dev.limebeck.libs.docker.compose/ComposeOperation|null[0]
+    enum entry RESTART // dev.limebeck.libs.docker.compose/ComposeOperation.RESTART|null[0]
+    enum entry START // dev.limebeck.libs.docker.compose/ComposeOperation.START|null[0]
+    enum entry STOP // dev.limebeck.libs.docker.compose/ComposeOperation.STOP|null[0]
+
+    final val entries // dev.limebeck.libs.docker.compose/ComposeOperation.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.limebeck.libs.docker.compose/ComposeOperation> // dev.limebeck.libs.docker.compose/ComposeOperation.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.limebeck.libs.docker.compose/ComposeOperation // dev.limebeck.libs.docker.compose/ComposeOperation.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.limebeck.libs.docker.compose/ComposeOperation> // dev.limebeck.libs.docker.compose/ComposeOperation.values|values#static(){}[0]
+}
+
 abstract interface dev.limebeck.libs.docker.client.dsl/ApiCacheHolder { // dev.limebeck.libs.docker.client.dsl/ApiCacheHolder|null[0]
     abstract val apiCache // dev.limebeck.libs.docker.client.dsl/ApiCacheHolder.apiCache|{}apiCache[0]
         abstract fun <get-apiCache>(): kotlin.collections/MutableMap<kotlin/Any, kotlin/Any> // dev.limebeck.libs.docker.client.dsl/ApiCacheHolder.apiCache.<get-apiCache>|<get-apiCache>(){}[0]
@@ -10509,6 +10521,12 @@ final class dev.limebeck.libs.docker.compose/Compose { // dev.limebeck.libs.dock
     final suspend fun discover(): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeDiscovery, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.discover|discover(){}[0]
     final suspend fun getProject(kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeProject?, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.getProject|getProject(kotlin.String){}[0]
     final suspend fun getService(kotlin/String, kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeService?, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.getService|getService(kotlin.String;kotlin.String){}[0]
+    final suspend fun restart(kotlin/String, kotlin.collections/Set<kotlin/String>? = ..., kotlin/Boolean = ..., kotlin/Int? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeOperationReport, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.restart|restart(kotlin.String;kotlin.collections.Set<kotlin.String>?;kotlin.Boolean;kotlin.Int?){}[0]
+    final suspend fun restart(kotlin/String, kotlin/String, kotlin/Boolean = ..., kotlin/Int? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeOperationReport, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.restart|restart(kotlin.String;kotlin.String;kotlin.Boolean;kotlin.Int?){}[0]
+    final suspend fun start(kotlin/String, kotlin.collections/Set<kotlin/String>? = ..., kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeOperationReport, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.start|start(kotlin.String;kotlin.collections.Set<kotlin.String>?;kotlin.Boolean){}[0]
+    final suspend fun start(kotlin/String, kotlin/String, kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeOperationReport, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.start|start(kotlin.String;kotlin.String;kotlin.Boolean){}[0]
+    final suspend fun stop(kotlin/String, kotlin.collections/Set<kotlin/String>? = ..., kotlin/Boolean = ..., kotlin/Int? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeOperationReport, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.stop|stop(kotlin.String;kotlin.collections.Set<kotlin.String>?;kotlin.Boolean;kotlin.Int?){}[0]
+    final suspend fun stop(kotlin/String, kotlin/String, kotlin/Boolean = ..., kotlin/Int? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeOperationReport, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.stop|stop(kotlin.String;kotlin.String;kotlin.Boolean;kotlin.Int?){}[0]
 }
 
 final class dev.limebeck.libs.docker.compose/ComposeContainer { // dev.limebeck.libs.docker.compose/ComposeContainer|null[0]
@@ -10543,6 +10561,22 @@ final class dev.limebeck.libs.docker.compose/ComposeContainer { // dev.limebeck.
     final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeContainer.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeContainer.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeContainer.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeContainerOperationResult { // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult|null[0]
+    constructor <init>(dev.limebeck.libs.docker.compose/ComposeContainer, dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse>) // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.<init>|<init>(dev.limebeck.libs.docker.compose.ComposeContainer;dev.limebeck.libs.docker.client.model.Result<kotlin.Unit,dev.limebeck.libs.docker.client.model.ErrorResponse>){}[0]
+
+    final val container // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.container|{}container[0]
+        final fun <get-container>(): dev.limebeck.libs.docker.compose/ComposeContainer // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.container.<get-container>|<get-container>(){}[0]
+    final val result // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.result|{}result[0]
+        final fun <get-result>(): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.result.<get-result>|<get-result>(){}[0]
+
+    final fun component1(): dev.limebeck.libs.docker.compose/ComposeContainer // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.component1|component1(){}[0]
+    final fun component2(): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.component2|component2(){}[0]
+    final fun copy(dev.limebeck.libs.docker.compose/ComposeContainer = ..., dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> = ...): dev.limebeck.libs.docker.compose/ComposeContainerOperationResult // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.copy|copy(dev.limebeck.libs.docker.compose.ComposeContainer;dev.limebeck.libs.docker.client.model.Result<kotlin.Unit,dev.limebeck.libs.docker.client.model.ErrorResponse>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeContainerOperationResult.toString|toString(){}[0]
 }
 
 final class dev.limebeck.libs.docker.compose/ComposeDiscovery { // dev.limebeck.libs.docker.compose/ComposeDiscovery|null[0]
@@ -10590,6 +10624,27 @@ final class dev.limebeck.libs.docker.compose/ComposeLogLine { // dev.limebeck.li
     final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeLogLine.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeLogLine.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeLogLine.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeOperationReport { // dev.limebeck.libs.docker.compose/ComposeOperationReport|null[0]
+    constructor <init>(kotlin/String, dev.limebeck.libs.docker.compose/ComposeOperation, kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainerOperationResult>) // dev.limebeck.libs.docker.compose/ComposeOperationReport.<init>|<init>(kotlin.String;dev.limebeck.libs.docker.compose.ComposeOperation;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainerOperationResult>){}[0]
+
+    final val isSuccess // dev.limebeck.libs.docker.compose/ComposeOperationReport.isSuccess|{}isSuccess[0]
+        final fun <get-isSuccess>(): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeOperationReport.isSuccess.<get-isSuccess>|<get-isSuccess>(){}[0]
+    final val operation // dev.limebeck.libs.docker.compose/ComposeOperationReport.operation|{}operation[0]
+        final fun <get-operation>(): dev.limebeck.libs.docker.compose/ComposeOperation // dev.limebeck.libs.docker.compose/ComposeOperationReport.operation.<get-operation>|<get-operation>(){}[0]
+    final val project // dev.limebeck.libs.docker.compose/ComposeOperationReport.project|{}project[0]
+        final fun <get-project>(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeOperationReport.project.<get-project>|<get-project>(){}[0]
+    final val results // dev.limebeck.libs.docker.compose/ComposeOperationReport.results|{}results[0]
+        final fun <get-results>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainerOperationResult> // dev.limebeck.libs.docker.compose/ComposeOperationReport.results.<get-results>|<get-results>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeOperationReport.component1|component1(){}[0]
+    final fun component2(): dev.limebeck.libs.docker.compose/ComposeOperation // dev.limebeck.libs.docker.compose/ComposeOperationReport.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainerOperationResult> // dev.limebeck.libs.docker.compose/ComposeOperationReport.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., dev.limebeck.libs.docker.compose/ComposeOperation = ..., kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainerOperationResult> = ...): dev.limebeck.libs.docker.compose/ComposeOperationReport // dev.limebeck.libs.docker.compose/ComposeOperationReport.copy|copy(kotlin.String;dev.limebeck.libs.docker.compose.ComposeOperation;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainerOperationResult>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeOperationReport.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeOperationReport.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeOperationReport.toString|toString(){}[0]
 }
 
 final class dev.limebeck.libs.docker.compose/ComposeProject { // dev.limebeck.libs.docker.compose/ComposeProject|null[0]

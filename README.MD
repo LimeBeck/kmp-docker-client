@@ -12,14 +12,14 @@ A Kotlin Multiplatform Docker API client for managing a single Docker host, with
 
 ## Installation
 
-`1.1.0` adds Compose discovery and multi-service logs to the existing Maven artifact. Release publication is in progress; see the [Compose guide](docs/COMPOSE.md).
+`1.2.0` adds start/stop/restart controls for existing Compose containers alongside discovery and multi-service logs. See the [Compose guide](docs/COMPOSE.md).
 
 For a JVM project, add:
 
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.1.0")
+    implementation("dev.limebeck.libs:docker-client:1.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
 }
@@ -60,7 +60,7 @@ The [user guide](docs/USAGE.md) covers:
 
 Detailed guides: [container lifecycle](docs/CONTAINER-LIFECYCLE.md), [image progress](docs/IMAGE-PROGRESS.md), [stream recovery](docs/STREAM-RECOVERY.md).
 
-The [Compose API in 1.1.0](docs/COMPOSE.md), included in `lib`, adds discovery and logs for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
+The [Compose API in 1.2.0](docs/COMPOSE.md), included in `lib`, provides discovery, logs and start/stop/restart controls for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
 
 ## API scope
 
@@ -80,7 +80,7 @@ Image callbacks report progress; only the final Result establishes the operation
 
 ## Development and documentation
 
-Use JDK 21 for development. The repository's default version is `1.1.0`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
+Use JDK 21 for development. The repository's default version is `1.2.0`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
 
 ```sh
 # Requires a development Docker daemon at /var/run/docker.sock.

@@ -9846,6 +9846,18 @@ public final class dev/limebeck/libs/docker/compose/Compose {
 	public final fun logs (Ljava/lang/String;Ljava/util/Set;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZI)Lkotlinx/coroutines/flow/Flow;
 	public static synthetic fun logs$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZIILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static synthetic fun logs$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/util/Set;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZIILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+	public final fun restart-oYDs990 (Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun restart-oYDs990 (Ljava/lang/String;Ljava/util/Set;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun restart-oYDs990$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun restart-oYDs990$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/util/Set;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun start-J1tD0aI (Ljava/lang/String;Ljava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun start-J1tD0aI (Ljava/lang/String;Ljava/util/Set;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun start-J1tD0aI$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun start-J1tD0aI$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/util/Set;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun stop-oYDs990 (Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun stop-oYDs990 (Ljava/lang/String;Ljava/util/Set;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun stop-oYDs990$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun stop-oYDs990$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/util/Set;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class dev/limebeck/libs/docker/compose/ComposeContainer {
@@ -9869,6 +9881,19 @@ public final class dev/limebeck/libs/docker/compose/ComposeContainer {
 	public final fun getReplicaNumber ()Ljava/lang/Integer;
 	public final fun getService ()Ljava/lang/String;
 	public final fun getState ()Ldev/limebeck/libs/docker/client/model/ContainerState;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeContainerOperationResult {
+	public synthetic fun <init> (Ldev/limebeck/libs/docker/compose/ComposeContainer;Ljava/lang/Object;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/limebeck/libs/docker/compose/ComposeContainer;
+	public final fun component2-EnVk3k4 ()Ljava/lang/Object;
+	public final fun copy-nJA-OWc (Ldev/limebeck/libs/docker/compose/ComposeContainer;Ljava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeContainerOperationResult;
+	public static synthetic fun copy-nJA-OWc$default (Ldev/limebeck/libs/docker/compose/ComposeContainerOperationResult;Ldev/limebeck/libs/docker/compose/ComposeContainer;Ldev/limebeck/libs/docker/client/model/Result;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeContainerOperationResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContainer ()Ldev/limebeck/libs/docker/compose/ComposeContainer;
+	public final fun getResult-EnVk3k4 ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -9910,6 +9935,31 @@ public final class dev/limebeck/libs/docker/compose/ComposeLogLine {
 	public final fun getReplicaNumber ()Ljava/lang/Integer;
 	public final fun getService ()Ljava/lang/String;
 	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeOperation : java/lang/Enum {
+	public static final field RESTART Ldev/limebeck/libs/docker/compose/ComposeOperation;
+	public static final field START Ldev/limebeck/libs/docker/compose/ComposeOperation;
+	public static final field STOP Ldev/limebeck/libs/docker/compose/ComposeOperation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/limebeck/libs/docker/compose/ComposeOperation;
+	public static fun values ()[Ldev/limebeck/libs/docker/compose/ComposeOperation;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeOperationReport {
+	public fun <init> (Ljava/lang/String;Ldev/limebeck/libs/docker/compose/ComposeOperation;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ldev/limebeck/libs/docker/compose/ComposeOperation;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ldev/limebeck/libs/docker/compose/ComposeOperation;Ljava/util/List;)Ldev/limebeck/libs/docker/compose/ComposeOperationReport;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/compose/ComposeOperationReport;Ljava/lang/String;Ldev/limebeck/libs/docker/compose/ComposeOperation;Ljava/util/List;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeOperationReport;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOperation ()Ldev/limebeck/libs/docker/compose/ComposeOperation;
+	public final fun getProject ()Ljava/lang/String;
+	public final fun getResults ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isSuccess ()Z
 	public fun toString ()Ljava/lang/String;
 }
 

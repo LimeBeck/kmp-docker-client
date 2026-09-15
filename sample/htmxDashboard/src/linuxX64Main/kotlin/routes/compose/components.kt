@@ -24,6 +24,7 @@ internal fun FlowContent.composeProjectHeader(
             }
         }
         div("actions") {
+            composeControlButtons(name, service)
             pageLink("↻ Refresh", base, "btn")
         }
     }
@@ -108,7 +109,7 @@ internal fun FlowContent.composeServiceTable(project: String, services: List<Com
                 td { attributes["data-label"] = "Ports"; attributes["title"] = "Configured or exposed container ports"; +ports.joinToString(", ").ifBlank { "—" } }
                 td { attributes["data-label"] = "Actions"; div("actions") {
                     pageLink("Logs", servicePath(project, service.name) + "&tab=logs", "btn btn-small")
-                    actionMenu("⋮", "Actions for ${service.name}") { pageLink("Service details", servicePath(project, service.name)); pageLink("Live logs", servicePath(project, service.name) + "&tab=logs&mode=live") }
+                    actionMenu("⋮", "Actions for ${service.name}") { composeControlButtons(project, service.name) }
                 } }
             }
         } }
@@ -118,6 +119,18 @@ internal fun FlowContent.composeServiceTable(project: String, services: List<Com
 
 private fun avatarTone(image: String) = when {
     "postgres" in image -> "blue"; "redis" in image -> "red"; "python" in image -> "yellow"; "qdrant" in image -> "purple"; else -> "cyan"
+}
+
+internal fun FlowContent.composeControlButtons(project: String, service: String? = null) {
+    val selection = "?project=${project.queryValue()}" + (service?.let { "&services=${it.queryValue()}" } ?: "")
+    val target = service?.let { "$project / $it" } ?: project
+    listOf("start", "stop", "restart").forEach { operation ->
+        actionButton(
+            operation.replaceFirstChar(Char::uppercase) + if (service == null) " all" else "",
+            "/compose/actions/$operation$selection",
+            confirm = "${operation.replaceFirstChar(Char::uppercase)} existing regular replicas of $target? Dependencies and readiness are not managed.",
+        )
+    }
 }
 private fun FlowContent.copyButton(value: String, label: String) {
     button(type = ButtonType.button, classes = "compose-copy") { attributes["data-copy"] = value; attributes["aria-label"] = label; attributes["title"] = label; +"⧉" }
