@@ -1,0 +1,12 @@
+services:
+  worker:
+    image: alpine:3.21
+    command: [sh, -c, 'while true; do echo worker-out; echo worker-err >&2; sleep 1; done']
+    healthcheck:
+      test: [CMD, 'true']
+      interval: 1s
+      timeout: 1s
+      retries: 10
+  stopped:
+    image: alpine:3.21
+    command: [sh, -c, 'echo stopped-out; echo stopped-err >&2']

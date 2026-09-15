@@ -9837,3 +9837,108 @@ public final class dev/limebeck/libs/docker/client/utils/ReadLogLinesKt {
 	public static final fun readLogLines (Lio/ktor/utils/io/ByteReadChannel;ZLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class dev/limebeck/libs/docker/compose/Compose {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun discover-2cwJxqY (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getProject-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getService-W-yKd0Q (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun logs (Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZI)Lkotlinx/coroutines/flow/Flow;
+	public final fun logs (Ljava/lang/String;Ljava/util/Set;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZI)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun logs$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZIILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun logs$default (Ldev/limebeck/libs/docker/compose/Compose;Ljava/lang/String;Ljava/util/Set;Ldev/limebeck/libs/docker/client/model/ContainerLogsParameters;ZIILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeContainer {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/ContainerState;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ldev/limebeck/libs/docker/client/model/ContainerState;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/ContainerState;)Ldev/limebeck/libs/docker/compose/ComposeContainer;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/compose/ComposeContainer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/ContainerState;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeContainer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getImage ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOneOff ()Ljava/lang/Boolean;
+	public final fun getProject ()Ljava/lang/String;
+	public final fun getReplicaNumber ()Ljava/lang/Integer;
+	public final fun getService ()Ljava/lang/String;
+	public final fun getState ()Ldev/limebeck/libs/docker/client/model/ContainerState;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeDiscovery {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;)Ldev/limebeck/libs/docker/compose/ComposeDiscovery;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/compose/ComposeDiscovery;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeDiscovery;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProjects ()Ljava/util/List;
+	public final fun getUnassignedContainers ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeKt {
+	public static final fun getCompose (Ldev/limebeck/libs/docker/client/DockerClient;)Ldev/limebeck/libs/docker/compose/Compose;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeLogLine {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Boolean;Ldev/limebeck/libs/docker/client/model/LogLine;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ldev/limebeck/libs/docker/client/model/LogLine;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Boolean;Ldev/limebeck/libs/docker/client/model/LogLine;)Ldev/limebeck/libs/docker/compose/ComposeLogLine;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/compose/ComposeLogLine;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Boolean;Ldev/limebeck/libs/docker/client/model/LogLine;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeLogLine;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContainerId ()Ljava/lang/String;
+	public final fun getContainerName ()Ljava/lang/String;
+	public final fun getLog ()Ldev/limebeck/libs/docker/client/model/LogLine;
+	public final fun getOneOff ()Ljava/lang/Boolean;
+	public final fun getProject ()Ljava/lang/String;
+	public final fun getReplicaNumber ()Ljava/lang/Integer;
+	public final fun getService ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeProject {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Ldev/limebeck/libs/docker/compose/ComposeProject;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/compose/ComposeProject;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeProject;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getServices ()Ljava/util/List;
+	public final fun getUnassignedContainers ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/compose/ComposeService {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Ldev/limebeck/libs/docker/compose/ComposeService;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/compose/ComposeService;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Ldev/limebeck/libs/docker/compose/ComposeService;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContainers ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getReplicas ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

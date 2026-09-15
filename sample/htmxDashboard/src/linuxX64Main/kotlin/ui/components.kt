@@ -22,14 +22,18 @@ fun HTML.renderLayout(pageTitle: String, content: FlowContent.() -> Unit) {
         div("request-status") { id = "request-status"; attributes["role"] = "status" }
         div("app-shell") {
             aside("sidebar") {
-                a(href = "/containers", classes = "brand") { icon("containers"); +"Docker dashboard" }
+                a(href = "/host", classes = "brand") { icon("containers"); +"Docker dashboard" }
                 nav("side-nav") {
                     attributes["aria-label"] = "Main navigation"
-                    listOf("Containers", "Images", "Volumes", "Networks", "System").forEach {
+                    listOf("Host", "Containers", "Compose", "Images", "Volumes", "Networks", "System").forEach {
                         navLink(it, "/${it.lowercase()}", "#main-content")
                     }
                 }
-                div("sidebar-footer") { small { +"SINGLE HOST" }; span { +"Local Docker" }; small { +"Development dashboard" } }
+                div("sidebar-footer host-summary") {
+                    attributes["hx-get"] = "/host/summary"; attributes["hx-trigger"] = "load"
+                    attributes["hx-swap"] = "innerHTML"; attributes["hx-target"] = "this"
+                    span { +"Local Docker" }; small { +"Connecting to Engine…" }
+                }
             }
             div("main-shell") {
                 header("topbar") {
@@ -54,7 +58,7 @@ fun FlowContent.icon(name: String) {
     val path = when (name) {
         "sun" -> "<circle cx='12' cy='12' r='4'/><path d='M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5'/>"
         "moon" -> "<path d='M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z'/>"
-        "containers" -> "<path d='m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5'/>"
+        "compose", "containers" -> "<path d='m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5'/>"
         "images" -> "<rect x='3' y='3' width='18' height='18' rx='3'/><path d='m3 16 6-6 12 10'/><circle cx='16' cy='8' r='1'/>"
         "volumes" -> "<ellipse cx='12' cy='5' rx='8' ry='3'/><path d='M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0'/>"
         "networks" -> "<rect x='8' y='2' width='8' height='6' rx='1'/><path d='M12 8v5M5 17v-4h14v4'/><rect x='2' y='17' width='6' height='5' rx='1'/><rect x='16' y='17' width='6' height='5' rx='1'/>"

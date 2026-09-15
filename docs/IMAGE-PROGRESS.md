@@ -1,6 +1,6 @@
 # Image operation progress
 
-Available since the published `1.0.0-rc` and included in the upcoming stable `1.0.0`. Existing convenience overloads remain available.
+Available since `1.0.0-rc` and included in stable `1.0.0` and `1.0.1`. Existing convenience overloads remain available.
 
 ```kotlin
 val result = client.images.create("alpine:latest") { update ->

@@ -4,7 +4,7 @@
 
 KMP Docker Client provides coroutine-based access to a single Docker host. Start here for complete workflows, then use the package and class navigation below for individual API methods.
 
-This guide covers the upcoming **1.0.1**, including `DockerClient.use`. The published Maven Central baseline is **1.0.0**; the lifecycle additions require a 1.0.1 development build until release. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
+This guide covers **1.1.0**, including Compose discovery and multi-service logs, `DockerClient.use`, connection diagnostics and exception context. Release publication is in progress. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
 
 ### Install
 
@@ -13,7 +13,7 @@ Use Maven Central. In a Kotlin Multiplatform project, add the dependencies to `c
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.0.0")
+    implementation("dev.limebeck.libs:docker-client:1.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
     implementation("io.ktor:ktor-io:3.5.2")
@@ -49,7 +49,7 @@ suspend fun listContainers(socketPath: String = "/var/run/docker.sock") {
 }
 ```
 
-`DockerClient.use` requires the upcoming 1.0.1 build. On published 1.0.0/1.0.0-rc, retain `try/finally` with `docker.client.close()`.
+`DockerClient.use` is available since 1.0.1. On 1.0.0/1.0.0-rc, retain `try/finally` with `docker.client.close()`.
 
 Reuse a client for an application lifecycle. Stop and join your collectors and close interactive sessions before calling `docker.close()` at shutdown. `DockerClient` implements `AutoCloseable`; raw terminal sessions have their own lifetime and must be closed separately. Examples below receive an application-owned `docker` client.
 
@@ -245,7 +245,7 @@ The SDK does not retry/reconnect automatically. Live streams can finish with nor
 
 Refresh a snapshot after reconnect. Recreate event subscriptions using a saved timestamp with a small overlap and deduplicate; Docker event history is finite. Choose log `since`/`tail` to control replay, and re-prepare logs after container replacement. Reset your stats baseline. Start a new terminal explicitly without replaying commands. Read [recovery and tested boundaries](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/STREAM-RECOVERY.md).
 
-### Connection diagnostics (1.0.1, unreleased)
+### Connection diagnostics (since 1.0.1)
 
 The diagnostic extensions are opt-in and do not change errors returned by ordinary API calls.
 `diagnoseConnection` checks the configured socket and fixed API version with a five-second default
@@ -269,9 +269,9 @@ SDK-produced reports contain only a category, fixed messages and HTTP status: no
 raw exceptions, headers or response bodies. This also applies to `toString()`. The probe is excluded
 from the SDK HTTP logging plugin. Caller-held exceptions and custom logging/plugins remain outside
 this guarantee; do not send them to the panel or log them without separate handling. A clean stream EOF has no exception and still needs reconciliation.
-These additions require the upcoming 1.0.1 release and are not present in published 1.0.0.
+These additions are available in 1.0.1 and are not present in 1.0.0.
 
-### Exception context (1.0.1, unreleased)
+### Exception context (since 1.0.1)
 
 HTTP request, response decoding, stream and SDK-created exec/attach session failures carry
 safe operation metadata. The SDK retains the original exception type and cause; context is attached

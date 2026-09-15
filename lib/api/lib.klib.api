@@ -10501,6 +10501,134 @@ final class dev.limebeck.libs.docker.client/DockerClientConfig { // dev.limebeck
     }
 }
 
+final class dev.limebeck.libs.docker.compose/Compose { // dev.limebeck.libs.docker.compose/Compose|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.compose/Compose.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final fun logs(kotlin/String, kotlin.collections/Set<kotlin/String>? = ..., dev.limebeck.libs.docker.client.model/ContainerLogsParameters = ..., kotlin/Boolean = ..., kotlin/Int = ...): kotlinx.coroutines.flow/Flow<dev.limebeck.libs.docker.compose/ComposeLogLine> // dev.limebeck.libs.docker.compose/Compose.logs|logs(kotlin.String;kotlin.collections.Set<kotlin.String>?;dev.limebeck.libs.docker.client.model.ContainerLogsParameters;kotlin.Boolean;kotlin.Int){}[0]
+    final fun logs(kotlin/String, kotlin/String, dev.limebeck.libs.docker.client.model/ContainerLogsParameters = ..., kotlin/Boolean = ..., kotlin/Int = ...): kotlinx.coroutines.flow/Flow<dev.limebeck.libs.docker.compose/ComposeLogLine> // dev.limebeck.libs.docker.compose/Compose.logs|logs(kotlin.String;kotlin.String;dev.limebeck.libs.docker.client.model.ContainerLogsParameters;kotlin.Boolean;kotlin.Int){}[0]
+    final suspend fun discover(): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeDiscovery, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.discover|discover(){}[0]
+    final suspend fun getProject(kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeProject?, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.getProject|getProject(kotlin.String){}[0]
+    final suspend fun getService(kotlin/String, kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.compose/ComposeService?, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.compose/Compose.getService|getService(kotlin.String;kotlin.String){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeContainer { // dev.limebeck.libs.docker.compose/ComposeContainer|null[0]
+    constructor <init>(kotlin/String, kotlin/String?, kotlin/String?, kotlin/String?, kotlin/Int?, kotlin/Boolean?, kotlin/String?, dev.limebeck.libs.docker.client.model/ContainerState?) // dev.limebeck.libs.docker.compose/ComposeContainer.<init>|<init>(kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.Int?;kotlin.Boolean?;kotlin.String?;dev.limebeck.libs.docker.client.model.ContainerState?){}[0]
+
+    final val id // dev.limebeck.libs.docker.compose/ComposeContainer.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeContainer.id.<get-id>|<get-id>(){}[0]
+    final val image // dev.limebeck.libs.docker.compose/ComposeContainer.image|{}image[0]
+        final fun <get-image>(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.image.<get-image>|<get-image>(){}[0]
+    final val name // dev.limebeck.libs.docker.compose/ComposeContainer.name|{}name[0]
+        final fun <get-name>(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.name.<get-name>|<get-name>(){}[0]
+    final val oneOff // dev.limebeck.libs.docker.compose/ComposeContainer.oneOff|{}oneOff[0]
+        final fun <get-oneOff>(): kotlin/Boolean? // dev.limebeck.libs.docker.compose/ComposeContainer.oneOff.<get-oneOff>|<get-oneOff>(){}[0]
+    final val project // dev.limebeck.libs.docker.compose/ComposeContainer.project|{}project[0]
+        final fun <get-project>(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.project.<get-project>|<get-project>(){}[0]
+    final val replicaNumber // dev.limebeck.libs.docker.compose/ComposeContainer.replicaNumber|{}replicaNumber[0]
+        final fun <get-replicaNumber>(): kotlin/Int? // dev.limebeck.libs.docker.compose/ComposeContainer.replicaNumber.<get-replicaNumber>|<get-replicaNumber>(){}[0]
+    final val service // dev.limebeck.libs.docker.compose/ComposeContainer.service|{}service[0]
+        final fun <get-service>(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.service.<get-service>|<get-service>(){}[0]
+    final val state // dev.limebeck.libs.docker.compose/ComposeContainer.state|{}state[0]
+        final fun <get-state>(): dev.limebeck.libs.docker.client.model/ContainerState? // dev.limebeck.libs.docker.compose/ComposeContainer.state.<get-state>|<get-state>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeContainer.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.component4|component4(){}[0]
+    final fun component5(): kotlin/Int? // dev.limebeck.libs.docker.compose/ComposeContainer.component5|component5(){}[0]
+    final fun component6(): kotlin/Boolean? // dev.limebeck.libs.docker.compose/ComposeContainer.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeContainer.component7|component7(){}[0]
+    final fun component8(): dev.limebeck.libs.docker.client.model/ContainerState? // dev.limebeck.libs.docker.compose/ComposeContainer.component8|component8(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/Int? = ..., kotlin/Boolean? = ..., kotlin/String? = ..., dev.limebeck.libs.docker.client.model/ContainerState? = ...): dev.limebeck.libs.docker.compose/ComposeContainer // dev.limebeck.libs.docker.compose/ComposeContainer.copy|copy(kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.Int?;kotlin.Boolean?;kotlin.String?;dev.limebeck.libs.docker.client.model.ContainerState?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeContainer.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeContainer.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeContainer.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeDiscovery { // dev.limebeck.libs.docker.compose/ComposeDiscovery|null[0]
+    constructor <init>(kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeProject>, kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer>) // dev.limebeck.libs.docker.compose/ComposeDiscovery.<init>|<init>(kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeProject>;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainer>){}[0]
+
+    final val projects // dev.limebeck.libs.docker.compose/ComposeDiscovery.projects|{}projects[0]
+        final fun <get-projects>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeProject> // dev.limebeck.libs.docker.compose/ComposeDiscovery.projects.<get-projects>|<get-projects>(){}[0]
+    final val unassignedContainers // dev.limebeck.libs.docker.compose/ComposeDiscovery.unassignedContainers|{}unassignedContainers[0]
+        final fun <get-unassignedContainers>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeDiscovery.unassignedContainers.<get-unassignedContainers>|<get-unassignedContainers>(){}[0]
+
+    final fun component1(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeProject> // dev.limebeck.libs.docker.compose/ComposeDiscovery.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeDiscovery.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeProject> = ..., kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> = ...): dev.limebeck.libs.docker.compose/ComposeDiscovery // dev.limebeck.libs.docker.compose/ComposeDiscovery.copy|copy(kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeProject>;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainer>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeDiscovery.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeDiscovery.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeDiscovery.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeLogLine { // dev.limebeck.libs.docker.compose/ComposeLogLine|null[0]
+    constructor <init>(kotlin/String, kotlin/String?, kotlin/String, kotlin/String?, kotlin/Int?, kotlin/Boolean?, dev.limebeck.libs.docker.client.model/LogLine) // dev.limebeck.libs.docker.compose/ComposeLogLine.<init>|<init>(kotlin.String;kotlin.String?;kotlin.String;kotlin.String?;kotlin.Int?;kotlin.Boolean?;dev.limebeck.libs.docker.client.model.LogLine){}[0]
+
+    final val containerId // dev.limebeck.libs.docker.compose/ComposeLogLine.containerId|{}containerId[0]
+        final fun <get-containerId>(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeLogLine.containerId.<get-containerId>|<get-containerId>(){}[0]
+    final val containerName // dev.limebeck.libs.docker.compose/ComposeLogLine.containerName|{}containerName[0]
+        final fun <get-containerName>(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeLogLine.containerName.<get-containerName>|<get-containerName>(){}[0]
+    final val log // dev.limebeck.libs.docker.compose/ComposeLogLine.log|{}log[0]
+        final fun <get-log>(): dev.limebeck.libs.docker.client.model/LogLine // dev.limebeck.libs.docker.compose/ComposeLogLine.log.<get-log>|<get-log>(){}[0]
+    final val oneOff // dev.limebeck.libs.docker.compose/ComposeLogLine.oneOff|{}oneOff[0]
+        final fun <get-oneOff>(): kotlin/Boolean? // dev.limebeck.libs.docker.compose/ComposeLogLine.oneOff.<get-oneOff>|<get-oneOff>(){}[0]
+    final val project // dev.limebeck.libs.docker.compose/ComposeLogLine.project|{}project[0]
+        final fun <get-project>(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeLogLine.project.<get-project>|<get-project>(){}[0]
+    final val replicaNumber // dev.limebeck.libs.docker.compose/ComposeLogLine.replicaNumber|{}replicaNumber[0]
+        final fun <get-replicaNumber>(): kotlin/Int? // dev.limebeck.libs.docker.compose/ComposeLogLine.replicaNumber.<get-replicaNumber>|<get-replicaNumber>(){}[0]
+    final val service // dev.limebeck.libs.docker.compose/ComposeLogLine.service|{}service[0]
+        final fun <get-service>(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeLogLine.service.<get-service>|<get-service>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeLogLine.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeLogLine.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeLogLine.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // dev.limebeck.libs.docker.compose/ComposeLogLine.component4|component4(){}[0]
+    final fun component5(): kotlin/Int? // dev.limebeck.libs.docker.compose/ComposeLogLine.component5|component5(){}[0]
+    final fun component6(): kotlin/Boolean? // dev.limebeck.libs.docker.compose/ComposeLogLine.component6|component6(){}[0]
+    final fun component7(): dev.limebeck.libs.docker.client.model/LogLine // dev.limebeck.libs.docker.compose/ComposeLogLine.component7|component7(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String? = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/Int? = ..., kotlin/Boolean? = ..., dev.limebeck.libs.docker.client.model/LogLine = ...): dev.limebeck.libs.docker.compose/ComposeLogLine // dev.limebeck.libs.docker.compose/ComposeLogLine.copy|copy(kotlin.String;kotlin.String?;kotlin.String;kotlin.String?;kotlin.Int?;kotlin.Boolean?;dev.limebeck.libs.docker.client.model.LogLine){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeLogLine.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeLogLine.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeLogLine.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeProject { // dev.limebeck.libs.docker.compose/ComposeProject|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeService>, kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer>) // dev.limebeck.libs.docker.compose/ComposeProject.<init>|<init>(kotlin.String;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeService>;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainer>){}[0]
+
+    final val name // dev.limebeck.libs.docker.compose/ComposeProject.name|{}name[0]
+        final fun <get-name>(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeProject.name.<get-name>|<get-name>(){}[0]
+    final val services // dev.limebeck.libs.docker.compose/ComposeProject.services|{}services[0]
+        final fun <get-services>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeService> // dev.limebeck.libs.docker.compose/ComposeProject.services.<get-services>|<get-services>(){}[0]
+    final val unassignedContainers // dev.limebeck.libs.docker.compose/ComposeProject.unassignedContainers|{}unassignedContainers[0]
+        final fun <get-unassignedContainers>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeProject.unassignedContainers.<get-unassignedContainers>|<get-unassignedContainers>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeProject.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeService> // dev.limebeck.libs.docker.compose/ComposeProject.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeProject.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeService> = ..., kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> = ...): dev.limebeck.libs.docker.compose/ComposeProject // dev.limebeck.libs.docker.compose/ComposeProject.copy|copy(kotlin.String;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeService>;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainer>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeProject.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeProject.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeProject.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.compose/ComposeService { // dev.limebeck.libs.docker.compose/ComposeService|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer>) // dev.limebeck.libs.docker.compose/ComposeService.<init>|<init>(kotlin.String;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainer>){}[0]
+
+    final val containers // dev.limebeck.libs.docker.compose/ComposeService.containers|{}containers[0]
+        final fun <get-containers>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeService.containers.<get-containers>|<get-containers>(){}[0]
+    final val name // dev.limebeck.libs.docker.compose/ComposeService.name|{}name[0]
+        final fun <get-name>(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeService.name.<get-name>|<get-name>(){}[0]
+    final val replicas // dev.limebeck.libs.docker.compose/ComposeService.replicas|{}replicas[0]
+        final fun <get-replicas>(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeService.replicas.<get-replicas>|<get-replicas>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeService.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> // dev.limebeck.libs.docker.compose/ComposeService.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<dev.limebeck.libs.docker.compose/ComposeContainer> = ...): dev.limebeck.libs.docker.compose/ComposeService // dev.limebeck.libs.docker.compose/ComposeService.copy|copy(kotlin.String;kotlin.collections.List<dev.limebeck.libs.docker.compose.ComposeContainer>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.compose/ComposeService.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.compose/ComposeService.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.compose/ComposeService.toString|toString(){}[0]
+}
+
 final value class <#A: out kotlin/Any?, #B: out kotlin/Any?> dev.limebeck.libs.docker.client.model/Result { // dev.limebeck.libs.docker.client.model/Result|null[0]
     constructor <init>(kotlin/Any?) // dev.limebeck.libs.docker.client.model/Result.<init>|<init>(kotlin.Any?){}[0]
 
@@ -10655,6 +10783,8 @@ final val dev.limebeck.libs.docker.client.diagnostics/dockerContext // dev.limeb
     final fun (kotlin/Throwable).<get-dockerContext>(): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext? // dev.limebeck.libs.docker.client.diagnostics/dockerContext.<get-dockerContext>|<get-dockerContext>@kotlin.Throwable(){}[0]
 final val dev.limebeck.libs.docker.client.utils/isError // dev.limebeck.libs.docker.client.utils/isError|@dev.limebeck.libs.docker.client.utils.HijackHandshake{}isError[0]
     final fun (dev.limebeck.libs.docker.client.utils/HijackHandshake).<get-isError>(): kotlin/Boolean // dev.limebeck.libs.docker.client.utils/isError.<get-isError>|<get-isError>@dev.limebeck.libs.docker.client.utils.HijackHandshake(){}[0]
+final val dev.limebeck.libs.docker.compose/compose // dev.limebeck.libs.docker.compose/compose|@dev.limebeck.libs.docker.client.DockerClient{}compose[0]
+    final fun (dev.limebeck.libs.docker.client/DockerClient).<get-compose>(): dev.limebeck.libs.docker.compose/Compose // dev.limebeck.libs.docker.compose/compose.<get-compose>|<get-compose>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
 
 final fun (dev.limebeck.libs.docker.client/DockerClient).dev.limebeck.libs.docker.client.diagnostics/diagnoseFailure(kotlin/Throwable): dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic // dev.limebeck.libs.docker.client.diagnostics/diagnoseFailure|diagnoseFailure@dev.limebeck.libs.docker.client.DockerClient(kotlin.Throwable){}[0]
 final fun (io.ktor.client.statement/HttpResponse).dev.limebeck.libs.docker.client.diagnostics/operationContext(dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext // dev.limebeck.libs.docker.client.diagnostics/operationContext|operationContext@io.ktor.client.statement.HttpResponse(dev.limebeck.libs.docker.client.diagnostics.DockerFailureStage){}[0]

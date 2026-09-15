@@ -1,6 +1,6 @@
 # Dashboard example
 
-The bundled htmx dashboard demonstrates single-host SDK workflows. Its UI behavior is not an SDK release gate. It remains a development example bound to loopback; user authentication, roles, credential storage and audit are application concerns. It does not implement Compose.
+The bundled htmx dashboard demonstrates single-host SDK workflows. Its UI behavior is not an SDK release gate. It remains a development example bound to loopback; user authentication, roles, credential storage and audit are application concerns. It includes read-only Compose discovery and logs.
 
 ## Run
 
@@ -30,7 +30,7 @@ The binary is a workflow artifact, not an attachment to the GitHub Release.
 
 ## Interface
 
-The dashboard opens on Containers. A sidebar links to Images, Volumes, Networks and System. The sun/moon button switches between Graphite and Light; only that preference is saved in browser storage.
+The dashboard opens on Host overview. A sidebar links to Host, Containers, Compose, Images, Volumes, Networks and System. The sun/moon button switches between Graphite and Light; only that preference is saved in browser storage.
 
 - Lists provide name/ID/image search, sorting and container-state filtering. Search and filters live in the URL, work with browser history and are retained when returning from details within the current page session.
 - Container details have Overview, Logs, Terminal and Configuration sections. Overview shows the latest memory sample with readable units and usage percentage, not historical metrics.
@@ -97,3 +97,72 @@ python3 sample/htmxDashboard/tests/history_smoke.py http://127.0.0.1:18080
 ```
 
 History restoration requests receive the full document, with `main-content` marked as the history region. Back/forward replace only that region, preserving navigation, theme controls and shared listeners. History caching remains disabled.
+
+## Compose projects
+
+Compose lists existing container-backed projects. Open a project to inspect services, replicas,
+one-off containers, individual states and health. Service links show one service; container links
+open the existing container details and terminal. Missing project/service labels remain explicit.
+Projects without containers cannot be discovered.
+
+Project pages open on Topology; the Services tab retains the searchable table with
+state/health badges and expandable container lists. Summary cards show discovered services and observed container counts;
+replicas show running / observed regular containers, not the desired YAML scale.
+Topology, Services, Containers, Volumes, Networks and Logs have separate tabs. Volumes and networks
+include resources carrying the project label, excluding external unlabeled resources.
+The directory comes from Docker labels and is never opened. Ports include configured or
+exposed container ports, including stopped containers; they are not host port bindings.
+
+The log view defaults to finite history. Select one or more services and Apply, or select Live
+for ongoing output. Clearing all services stops reading; All project containers also includes
+containers without service labels. Filters are carried in the URL and survive browser navigation.
+Every record identifies its service, container and stdout/stderr/unknown stream. History requests
+200 records per container, while the view retains at most 200 total. Reconnect discovers new
+replicas; subscriptions are closed on navigation and upstream requests are cancelled on disconnect.
+The SDK's 64-container subscription limit applies. No Compose mutations or YAML/CLI operations
+are exposed yet.
+
+With a running dashboard, exercise Compose pages and streams against a disposable fixture:
+
+```sh
+scripts/with-compose-fixture.sh python3 sample/htmxDashboard/tests/compose_smoke.py http://127.0.0.1:18081
+```
+
+## Host overview
+
+`/host` shows running, unhealthy, exited-nonzero and stopped container counts.
+Needs attention lists up to 12 containers, ordered by unhealthy, restarting, dead,
+then exited-nonzero; ties use the last finish timestamp. Health checks can be stale
+for stopped containers. Compose bars represent observed containers, including one-offs,
+not desired scale. Counts refresh on request. Live events subscribe from connection
+time and use the shared bounded stream view with navigation cleanup.
+
+The sidebar loads Engine version, OS, architecture, memory and CPU from `/host/summary`
+once per full page load; section navigation retains it without polling. The metadata
+is a snapshot, not a live connection monitor. A failed read shows Engine unavailable
+with a page-reload hint.
+
+### Compose topology
+
+Network areas group the project containers by their inspected network endpoints, including
+external networks. A container attached to multiple networks appears in each area.
+The network membership diagram does not infer traffic or application dependencies.
+
+Host binding cards link to container cards. Solid lines represent current Engine port
+mappings; dashed lines represent configuration without an active mapping. Loopback,
+all-interface and specific/default addresses have distinct labels and colors. Exposed
+ports alone never produce host binding lines. Missing addresses remain unassigned.
+
+Selecting a container opens Overview, Logs, Inspect, Stats and Config in a side panel.
+Stats shows the existing latest-memory stream for a running container; no historical
+CPU/memory graph is inferred. Streams close when the panel or page is replaced.
+Health check output, port bindings and mounts appear in separate sections.
+
+The desktop topology uses a split layout: compact summary and network canvas on the left,
+container inspector alongside the summary on the right, with service/network tables below.
+Brand SVGs are bundled from Simple Icons (CC0), with a generic fallback for other images.
+Validate topology with:
+
+```sh
+scripts/with-compose-fixture.sh python3 sample/htmxDashboard/tests/topology_smoke.py http://127.0.0.1:18081
+```

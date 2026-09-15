@@ -80,7 +80,40 @@ API extensions already exist through extension properties and the public api() d
 
 Related contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.context`.
 
+### Phased Compose integration {#deferred.compose}
+On 2026-09-15 the owner selected both existing-project management and compose.yaml lifecycle support, delivered incrementally. Stage 1 is assigned to the owner-authorized 1.1.0 release on 2026-09-15; later-stage release numbers and dates remain unassigned. Compose remains an integration layer above the Engine APIs, consistent with #boundary. At the owner’s request, stage 1 is packaged inside lib; a future CLI backend can remain a separate module. The sequence below does not change other accepted milestones or the current platform baseline.
+
+#### Existing-project discovery {#deferred.compose.discovery}
+- Introduce a Compose integration package inside lib using the existing DockerClient and its configured endpoint. Discover projects and services from Compose labels, including stopped containers; expose replicas, individual container states and health without implying that a project is healthy merely because containers are running.
+- Distinguish one-off containers and resources with incomplete labels. Do not infer membership from container names or trust labels containing local file paths as permission to open files.
+- Provide project/service inspection and multiplexed logs with service, container and stdout/stderr identity. Preserve bounded streaming, cancellation and client ownership.
+- Acceptance: Kotlin tests on supported targets with a real disposable Compose project, stopped/scaled services, one-off containers, unrelated containers and stream cleanup. Document that projects with no remaining labeled resources cannot be discovered through Engine alone.
+
+Stage 1 implementation uses the `dev.limebeck.libs.docker.compose` package inside `lib` and `DockerClient.compose`, with container-backed discovery, nullable project/service lookup and cold multiplexed logs. Network/volume-only projects are not discovered. Missing project/service labels remain explicit unassigned containers; invalid replica/one-off labels remain unknown. Discovery returns SDK error Results without losing context; log collection propagates failures and cancels sibling streams. The owner selected multi-service logs: services is a nullable set of exact names; null selects all project containers, an empty set produces an empty flow without Docker requests, and blank names are invalid. Copy the selection on API invocation. Provide a single-service String overload delegating to the set-based method with identical options and validation. Log selection defaults to at most 64 streams, rejecting larger selections before opening logs. Usage and limitations: docs/COMPOSE.md. This stage does not assign a release version or add mutation/UI operations.
+
+#### Existing-resource controls and dashboard {#deferred.compose.controls}
+The owner requested dashboard integration of the read-only stage 1 API on 2026-09-15: project/service views, replica state/health, existing container links and multi-service history/live logs. Mutating Compose controls remain deferred.
+The owner subsequently requested a project-page layout based on a supplied reference: summary cards, service table, search/status filtering and resource tabs. Counts and metadata reflect observed Docker resources; the view does not imply desired YAML scale or open label-supplied filesystem paths.
+- Add explicit start/stop/restart operations for existing project/service containers, reporting per-container results and partial failures. These controls do not promise Compose dependency ordering, readiness or reconciliation.
+- Add dashboard project/service views, state and logs, followed by these controls. Reuse existing resource details and terminal support.
+- Acceptance: project isolation, partial failure reporting, cancellation, preserved volumes and dashboard smoke checks. Do not expose these controls as compose up/down.
+
+#### Compose file lifecycle {#deferred.compose.cli}
+- Add an optional backend invoking an installed Docker Compose CLI for config validation, up, down, pull and build. Delegate interpolation, file merging, profiles, dependencies and recreation to Compose.
+- Require explicit trusted project directory, file list, project name and profile selection. Align the CLI Docker endpoint with the selected SDK endpoint; reject unsupported connection configurations rather than silently using another Docker context.
+- Implement process adapters for the supported JVM, NodeJS and Linux X64 runtimes. Pass argument arrays without shell interpolation; specify working directory and environment handling, executable/version checks, bounded output, exit failures and cancellation/process cleanup. CLI credentials are a separate contract from the SDK in-memory auth map and must be documented.
+- Preserve volumes by default; volume removal must be explicit. Document partial resource changes after failure or cancellation; do not imply transactional rollback.
+- Acceptance: real-Compose integration tests for each supported runtime covering up/down, pull/build, profiles, multiple files, endpoint isolation, missing CLI, invalid configuration, nonzero exits, cancellation and retained data. Pin and document the tested Compose compatibility range.
+
+#### Compose file lifecycle in dashboard {#deferred.compose.dashboard}
+- Expose configured trusted Compose projects and CLI operations with progress and actionable failures after the backend passes its acceptance checks.
+- Keep discovery-only projects usable without source files; require explicit source configuration before enabling file-based operations. Do not promise reconstruction of compose.yaml from Engine metadata.
+- Acceptance: dashboard smoke tests for progress, failures, unavailable CLI/source files and explicit destructive options; SDK and backend integration gates remain independent of UI checks.
+
 ## Changelog {#changelog}
+- 2026-09-15: owner selected nullable service-set log filtering plus a single-service String overload; empty sets perform no Docker requests.
+- 2026-09-15: owner requested moving stage 1 Compose into lib and using filter/map for discovery; separate CLI backend remains a future option.
+- 2026-09-15: owner selected phased Compose support for both existing projects and compose.yaml lifecycle; recorded integration stages and acceptance gates.
 - 2026-09-15: owner clarified that API extensions already exist; plan diagnostic integration with them instead of a new extension mechanism.
 - 2026-09-13: owner requested stable preparation and a user guide integrated with Dokka.
 - 2026-09-13: owner clarified that SDK releases require library integration tests, not dashboard application acceptance.

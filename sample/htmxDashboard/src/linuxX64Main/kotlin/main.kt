@@ -9,6 +9,8 @@ import io.ktor.server.engine.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.WebSockets
+import routes.host.hostRoute
+import routes.compose.composeRoute
 import routes.containers.containersRoute
 import routes.exec.execRoute
 import routes.images.imagesRoute
@@ -39,8 +41,10 @@ fun main(args: Array<String>) {
     }) {
         install(WebSockets)
         routing {
-            get("/") { call.respondRedirect("/containers") }
+            get("/") { call.respondRedirect("/host") }
 
+            hostRoute(dockerClient)
+            composeRoute(dockerClient)
             containersRoute(dockerClient)
             execRoute(dockerClient)
             imagesRoute(dockerClient)

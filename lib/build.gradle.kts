@@ -27,6 +27,22 @@ val generateGuideSamples = tasks.register("generateGuideSamples") {
     }
 }
 
+// Only the disposable fixture harness enables these real-Docker tests.
+val fixtureProject = providers.gradleProperty("composeFixtureProject")
+val fixtureSources = layout.buildDirectory.dir("generated/composeFixture")
+val generateComposeFixture = tasks.register("generateComposeFixture") {
+    inputs.property("projectName", fixtureProject.orElse(""))
+    outputs.dir(fixtureSources)
+    doLast {
+        val name = fixtureProject.get()
+        require(name.matches(Regex("[a-z0-9][a-z0-9_-]+")))
+        fixtureSources.get().file("FixtureProject.kt").asFile.apply {
+            parentFile.mkdirs()
+            writeText("package dev.limebeck.libs.docker.compose\ninternal const val FIXTURE_PROJECT = \"$name\"\n")
+        }
+    }
+}
+
 kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
     abiValidation {
@@ -69,6 +85,10 @@ kotlin {
 
         }
         commonTest {
+            if (fixtureProject.isPresent) {
+                kotlin.srcDir("src/composeTest/kotlin")
+                kotlin.srcDir(generateComposeFixture.map { fixtureSources.get() })
+            }
             kotlin.srcDir(generateGuideSamples.map { guideSamplesDir.get() })
         }
         commonTest.dependencies {

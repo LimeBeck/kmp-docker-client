@@ -24,7 +24,7 @@ class Page(HTMLParser):
 
 base = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:18080'
 checks = 0
-for path in ['/containers', '/containers/create', '/images', '/networks']:
+for path in ['/host', '/containers', '/containers/create', '/images', '/networks']:
     for headers, full_page in [({}, True), ({'HX-Request': 'true'}, False),
                                ({'HX-Request': 'true', 'HX-History-Restore-Request': 'true'}, True),
                                ({'HX-History-Restore-Request': 'true'}, True)]:
