@@ -187,6 +187,6 @@ fun FlowContent.renderCreateForm(info: ContainerInspectResponse? = null, action:
                 div("form-footer") { pageLink("Cancel", back, "btn"); button(type = ButtonType.submit, classes = "btn btn-primary") { +(if (replacing) "Prepare replacement" else "Create and run") } }
             }
         }
-        details("panel section-disclosure") { summary { +"Need to pull an image first?" }; renderPullForm(embedded = true) }
+        details("panel section-disclosure supplemental-panel") { summary { +"Need to pull an image first?" }; renderPullForm(embedded = true) }
     }
 }

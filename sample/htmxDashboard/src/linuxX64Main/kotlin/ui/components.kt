@@ -42,7 +42,7 @@ fun HTML.renderLayout(pageTitle: String, content: FlowContent.() -> Unit) {
                         span { attributes["data-theme-moon"] = ""; hidden = true; icon("moon") }
                     }
                 }
-                main("main-content") { id = "main-content"; attributes["tabindex"] = "-1"; content() }
+                main("main-content") { id = "main-content"; attributes["hx-history-elt"] = ""; attributes["tabindex"] = "-1"; content() }
             }
         }
         unsafe { +"""<dialog id="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><h2 id="confirm-title">Confirm action</h2><p id="confirm-message"></p><label class="field" id="confirm-label" hidden>Type the resource name to confirm<input id="confirm-input" autocomplete="off"></label><div class="actions"><button class="btn" value="cancel">Cancel</button><button class="btn btn-danger" id="confirm-submit" value="confirm">Confirm</button></div></form></dialog>""" }

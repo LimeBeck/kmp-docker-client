@@ -17,7 +17,8 @@ import ui.renderLayout
 suspend fun RoutingContext.respondSmart(title: String, status: HttpStatusCode = HttpStatusCode.OK, block: FlowContent.() -> Unit) {
     call.response.headers.append("Cache-Control", "no-store")
     val isHtmx = call.request.headers["HX-Request"] == "true"
-    if (isHtmx) {
+    val isHistoryRestore = call.request.headers["HX-History-Restore-Request"] == "true"
+    if (isHtmx && !isHistoryRestore) {
         call.respondHtml(status) { head { title("$title · Docker dashboard") }; body { block() } }
     } else {
         call.respondHtml(status) { renderLayout(title) { block() } }
