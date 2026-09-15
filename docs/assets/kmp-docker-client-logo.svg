@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 160" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 544 160" width="100%" height="100%">
   <defs>
     <!-- Градиенты знака (не зависят от темы) -->
     <linearGradient id="hWhale" x1="0%" y1="100%" x2="100%" y2="0%">
@@ -23,25 +23,12 @@
       <stop offset="0%" stop-color="#00D2FF" />
       <stop offset="100%" stop-color="#60EFFF" />
     </linearGradient>
-    <linearGradient id="hKmpText" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#C711E1" />
-      <stop offset="100%" stop-color="#7F52FF" />
-    </linearGradient>
   </defs>
 
   <style>
-    /* 1. Светлая тема (Белый фон) */
-    .txt-docker { fill: #0F172A; } /* Глубокий темный графит */
-    .txt-client { fill: #0284C7; } /* Насыщенный Docker Blue (WCAG AA) */
-    .txt-dash   { fill: #94A3B8; }
-    .txt-sub    { fill: #475569; }
-
-    /* 2. Темная тема GitHub (Dark Mode) */
+    .wordmark { fill: #0F172A; }
     @media (prefers-color-scheme: dark) {
-      .txt-docker { fill: #F8FAFC; }
-      .txt-client { fill: #38BDF8; }
-      .txt-dash   { fill: #64748B; }
-      .txt-sub    { fill: #94A3B8; }
+      .wordmark { fill: #F8FAFC; }
     }
   </style>
 
@@ -75,11 +62,7 @@
     </g>
   </g>
 
-  <!-- Типографика -->
-  <text x="168" y="82" font-family="system-ui, -apple-system, 'JetBrains Sans', 'Inter', sans-serif" font-size="38" font-weight="700" letter-spacing="-0.5">
-    <tspan fill="url(#hKmpText)">kmp</tspan><tspan class="txt-dash">-</tspan><tspan class="txt-docker">docker</tspan><tspan class="txt-dash">-</tspan><tspan class="txt-client">client</tspan>
-  </text>
-  <text x="170" y="112" class="txt-sub" font-family="system-ui, -apple-system, 'JetBrains Sans', 'Inter', monospace" font-size="15" font-weight="500" letter-spacing="0.2">
-    Kotlin Multiplatform Docker Remote API Client
-  </text>
+  <text x="168" y="94" class="wordmark"
+        font-family="system-ui, -apple-system, 'Inter', sans-serif"
+        font-size="42" font-weight="600" letter-spacing="-1">KMP Docker Client</text>
 </svg>

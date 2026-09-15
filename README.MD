@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/kmp-docker-client-logo.svg" alt="KMP Docker Client" width="680">
+  <img src="docs/assets/kmp-docker-client-logo.svg" alt="KMP Docker Client" width="544">
 </p>
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.limebeck.libs/docker-client)](https://central.sonatype.com/artifact/dev.limebeck.libs/docker-client)
