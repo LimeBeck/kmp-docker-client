@@ -5,13 +5,16 @@ import dev.limebeck.libs.docker.client.api.networks
 import io.ktor.server.routing.*
 import logger
 import routes.respondSmart
+import routes.pageAction
 
 fun Route.networksRoute(dockerClient: DockerClient) {
     route("/networks") {
         get {
             logger.info { "Fetching networks list" }
-            val networks = dockerClient.networks.list().getOrNull() ?: emptyList()
+            pageAction("Networks") {
+            val networks = dockerClient.networks.list().getOrThrow()
             respondSmart("Networks") { renderNetworksPage(networks) }
+            }
         }
     }
 }

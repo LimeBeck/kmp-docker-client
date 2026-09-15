@@ -8,6 +8,7 @@
 - Contracts: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#client.ownership, spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.dashboard-sizing and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#docs.
 
 ## Completed in Last Session
+- Dashboard redesign completed (2026-09-15): unified shell, icon theme toggle, responsive resource cards, forms retaining invalid input, confirmations, stopped logs and stream lifecycle. Browser verified 320/375/768/1280 px, filtered-list return, disposable container creation and terminal I/O/fullscreen/Escape/alternate buffer; test resources removed. Native debug link with --warning-mode=fail, 7 DOM tests and 28 Docker HTTP smoke checks passed. Touched sample/htmxDashboard and docs/DASHBOARD*.md. Preview: http://127.0.0.1:18080; original 8080 instance untouched. No SDK/version/release changes. Contracts: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#boundary and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.dashboard-sizing. Next: owner visual review. Resume: npm test --prefix sample/htmxDashboard/tests; git diff --check. Exact 200% zoom and fullscreen API-denial fallback were not separately forced.
 - Added htmx-dashboard-linux-x64 workflow artifact to Release CI and PR Docker 28.5.2/JDK 21, with explicit release linking and missing-file failure. Documented download/chmod/run. Local release link passed (3m21s); ELF Linux X64 executable and workflow YAML/configuration verified. Log: /tmp/dashboard-artifact-build.log. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.dashboard-artifact. Remote artifact appears after successful CI; no GitHub Release asset publication.
 - KDoc usability improvements for MR #8: documented log option units/defaults, container creation/name/port semantics, filter examples and contextual Result/exec failures. Linked key APIs to existing compiled guide samples through Dokka samples configuration. Dokka and guide compilation passed with --warning-mode=fail; rendered samples/local links verified on getOrThrow, getLogs, startInteractive and diagnoseConnection. No runtime changes. Logs: /tmp/kdoc-improvement.log and /tmp/kdoc-final.log. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#docs.
 - Exception operation context: full SDK suite passed (118 JVM + 62 JS + 62 Linux X64 = 242, no failures/skips). Dokka and compiled guide passed; dockerContext API page verified. Context/read-write/Result/getOrThrow/map/mapError/cancellation/privacy regression tests passed. Logs: /tmp/kmp-operation-all-checks.log; final ABI check: /tmp/kmp-operation-abi-check.log.
@@ -26,7 +27,7 @@
 - API 1.51 fixed, no negotiation. Supported Linux JVM/Node/Linux X64 only.
 - Dashboard UI acceptance remains outside SDK release gates; retain Kotlin SDK and isolated-daemon checks.
 - Local review report stays ignored and must never be committed.
-- Running dashboard has not been restarted; relink/restart to see UI changes.
+- Updated dashboard preview runs on loopback port 18080; original dashboard on 8080 and Docker daemon were not restarted.
 
 ## Decisions Pending
 - Future macOS/Windows release must include both JVM and Native. Version/date remain unassigned.

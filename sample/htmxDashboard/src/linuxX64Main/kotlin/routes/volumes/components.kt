@@ -1,66 +1,33 @@
 package routes.volumes
 
 import dev.limebeck.libs.docker.client.model.Volume
-import kotlinx.html.FlowContent
-import kotlinx.html.button
-import kotlinx.html.div
-import kotlinx.html.h1
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.table
-import kotlinx.html.tbody
-import kotlinx.html.td
-import kotlinx.html.th
-import kotlinx.html.thead
-import kotlinx.html.tr
-import ui.card
-
+import kotlinx.html.*
+import ui.*
 
 fun FlowContent.renderVolumesPage(volumes: List<Volume>) {
-    h1("text-3xl font-bold mb-6 text-yellow-400") { +"📦 Volumes" }
-
-    card("mb-6 flex gap-4") {
-        input(classes = "bg-gray-700 border-none rounded px-4 py-2 flex-grow") {
-            id = "volume-name"
-            name = "name"
-            placeholder = "Volume Name"
-        }
-        button(classes = "bg-green-600 hover:bg-green-500 px-6 py-2 rounded font-bold") {
-            attributes["hx-post"] = "/volumes"
-            attributes["hx-include"] = "#volume-name"
-            attributes["hx-target"] = "#main-content"
-            +"Create Volume"
-        }
-        button(classes = "border border-red-500 text-red-500 hover:bg-red-500/10 px-6 py-2 rounded font-bold") {
-            attributes["hx-post"] = "/volumes/prune"
-            attributes["hx-target"] = "#main-content"
-            +"Prune"
+    pageHeading("Volumes", "Persistent data on your Docker host")
+    details("panel section-disclosure") {
+        summary { +"Create a volume" }
+        form(classes = "toolbar") {
+            attributes["hx-post"] = "/volumes"; attributes["hx-target"] = "#main-content"; attributes["hx-sync"] = "this:drop"
+            label("field") { +"Volume name (optional)"; input(type = InputType.text, name = "name") { placeholder = "e.g. postgres-data" } }
+            button(type = ButtonType.submit, classes = "btn btn-primary") { +"Create volume" }
         }
     }
-
-    div("bg-gray-800 rounded-lg overflow-hidden border border-gray-700") {
-        table("w-full text-left") {
-            thead("bg-gray-700 text-gray-400 uppercase text-xs") {
-                tr {
-                    listOf("Name", "Driver", "Mountpoint", "Action").forEach { th(classes = "px-6 py-3") { +it } }
-                }
-            }
-            tbody("divide-y divide-gray-700") {
-                volumes.forEach { vol ->
-                    tr("hover:bg-gray-700/50") {
-                        td("px-6 py-4 font-bold") { +vol.name }
-                        td("px-6 py-4") { +vol.driver }
-                        td("px-6 py-4 text-xs font-mono text-gray-400") { +vol.mountpoint }
-                        td("px-6 py-4") {
-                            button(classes = "text-red-400 hover:text-red-300") {
-                                attributes["hx-delete"] = "/volumes/${vol.name}"
-                                attributes["hx-target"] = "#main-content"
-                                +"Delete"
-                            }
-                        }
-                    }
-                }
-            }
+    div("toolbar") { actionButton("Prune unused anonymous volumes", "/volumes/prune", confirm = "Permanently remove unused anonymous volumes and their data? Named volumes are retained. Docker determines eligibility when this runs.", danger = true) }
+    if (volumes.isEmpty()) { emptyState("No volumes yet", "Create a named volume to keep data independently of containers."); return }
+    filterToolbar()
+    div("table-wrap") {
+        attributes["role"] = "region"; attributes["aria-label"] = "Volumes"; attributes["tabindex"] = "0"
+        table { thead { tr { listOf("Name", "Driver", "Mountpoint", "Actions").forEach { th { scope = ThScope.col; +it } } } }
+            tbody { volumes.forEach { volume -> tr {
+                attributes["data-name"] = volume.name.lowercase(); attributes["data-search-text"] = "${volume.name} ${volume.driver} ${volume.mountpoint}".lowercase()
+                td { attributes["data-label"] = "Name"; strong("resource-name") { +volume.name } }; td { attributes["data-label"] = "Driver"; +volume.driver }; td { attributes["data-label"] = "Mountpoint"; code { +volume.mountpoint } }
+                td { attributes["data-label"] = "Actions"; details("action-menu") { summary("btn btn-small") { attributes["aria-label"] = "Actions for ${volume.name}"; +"Actions" }; div("menu-content") {
+                    actionButton("Delete volume", "/volumes/${volume.name}", "delete", "Permanently delete ${volume.name} and its data? This cannot be undone. A volume in use cannot be deleted.", volume.name, true)
+                } } }
+            } } }
         }
     }
+    tableFoot()
 }
