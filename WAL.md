@@ -1,6 +1,7 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
+- README branding (2026-09-15): owner supplied gemini-svg (4).svg; copied unchanged as docs/assets/kmp-docker-client-logo.svg and used as the centered README header with accessible alt text. Original download retained. SVG XML/path checked. Included with release-documentation follow-up MR #12.
 - 1.1.0 published on GitHub (2026-09-15): https://github.com/LimeBeck/kmp-docker-client/releases/tag/v1.1.0 with Linux X64 dashboard asset. Release CI 35014019338 and Docs CI 35013981163 passed. Central Portal accepted AUTOMATIC deployment abf6ec9b-0928-4bf2-aaf9-088b5cad1646 and reported publishing; public Maven POM still returns 404 during propagation. Independent consumer log: /tmp/release110-maven-consumer.log. Do not republish. Next: resolve all variants from /tmp/kmp-110-consumer and remove propagation notes.
 - 1.1.0 release running (2026-09-15): MR #11 merged at 7f9161bfe02491724cd0b4997396941472b84508, tree equals CI-validated ff33da227e0a824619dc1311c2fe4f723da10329. Final PR CI 35013164308 passed all four cells. Immutable v1.1.0 pushed; Release CI 35014019338 and Docs CI 35013981163 running. Do not republish or move the tag. Next: wait publication, create GitHub Release, verify /tmp/kmp-110-consumer and remove in-progress notes.
 - Owner requested 1.1.0 in documentation immediately (2026-09-15): installation snippets and current-version guides updated in MR #11 before publication; short in-progress note remains until Maven verification. Final documentation commit restarts CI and must pass before tagging.
