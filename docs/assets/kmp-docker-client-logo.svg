@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 544 160" width="100%" height="100%">
+  <defs>
+    <!-- Градиенты знака (не зависят от темы) -->
+    <linearGradient id="hWhale" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C711E1" />
+      <stop offset="35%" stop-color="#7F52FF" />
+      <stop offset="80%" stop-color="#2496ED" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+    <linearGradient id="hBox1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C711E1" />
+      <stop offset="100%" stop-color="#8A3FFC" />
+    </linearGradient>
+    <linearGradient id="hBox2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7F52FF" />
+      <stop offset="100%" stop-color="#2496ED" />
+    </linearGradient>
+    <linearGradient id="hBox3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2496ED" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+    <linearGradient id="hBoxTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#60EFFF" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .wordmark { fill: #0F172A; }
+    @media (prefers-color-scheme: dark) {
+      .wordmark { fill: #F8FAFC; }
+    }
+  </style>
+
+  <!-- Знак (слева) -->
+  <g transform="translate(16, 16)">
+    <rect width="128" height="128" rx="28" fill="#0A0E17" />
+    <g transform="translate(10, 10) scale(0.42)">
+      <path d="M36 156 L76 198 L184 198 C216 198 230 178 230 156 L124 156 L94 126 L54 126 Z" fill="url(#hWhale)" />
+      <path d="M36 156 L18 138 L18 174 Z" fill="#C711E1" />
+      <path d="M96 172 L180 172" stroke="#FFFFFF" stroke-width="2" opacity="0.3" />
+      <path d="M112 184 L168 184" stroke="#FFFFFF" stroke-width="2" opacity="0.3" />
+
+      <!-- Контейнеры -->
+      <path d="M58 118 L90 118 L112 96 L80 96 Z" fill="url(#hBox1)" />
+      <line x1="74" y1="118" x2="96" y2="96" stroke="#FFFFFF" stroke-width="1.5" opacity="0.35" />
+      <line x1="82" y1="118" x2="104" y2="96" stroke="#FFFFFF" stroke-width="1.5" opacity="0.35" />
+
+      <path d="M98 118 L130 118 L152 96 L120 96 Z" fill="url(#hBox2)" />
+      <line x1="114" y1="118" x2="136" y2="96" stroke="#FFFFFF" stroke-width="1.5" opacity="0.35" />
+      <line x1="122" y1="118" x2="144" y2="96" stroke="#FFFFFF" stroke-width="1.5" opacity="0.35" />
+
+      <path d="M138 118 L170 118 L192 96 L160 96 Z" fill="url(#hBox3)" />
+      <line x1="154" y1="118" x2="176" y2="96" stroke="#FFFFFF" stroke-width="1.5" opacity="0.35" />
+      <line x1="162" y1="118" x2="184" y2="96" stroke="#FFFFFF" stroke-width="1.5" opacity="0.35" />
+
+      <path d="M118 90 L150 90 L172 68 L140 68 Z" fill="url(#hBoxTop)" />
+      <line x1="134" y1="90" x2="156" y2="68" stroke="#FFFFFF" stroke-width="1.5" opacity="0.4" />
+      <line x1="142" y1="90" x2="164" y2="68" stroke="#FFFFFF" stroke-width="1.5" opacity="0.4" />
+
+      <circle cx="204" cy="172" r="3.5" fill="#FFFFFF" opacity="0.9" />
+    </g>
+  </g>
+
+  <text x="168" y="94" class="wordmark"
+        font-family="system-ui, -apple-system, 'Inter', sans-serif"
+        font-size="42" font-weight="600" letter-spacing="-1">KMP Docker Client</text>
+</svg>

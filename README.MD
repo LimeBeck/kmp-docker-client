@@ -1,4 +1,6 @@
-# KMP Docker Client
+<p align="center">
+  <img src="docs/assets/kmp-docker-client-logo.svg" alt="KMP Docker Client" width="544">
+</p>
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.limebeck.libs/docker-client)](https://central.sonatype.com/artifact/dev.limebeck.libs/docker-client)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4.20-blue.svg?logo=kotlin)](https://kotlinlang.org)
