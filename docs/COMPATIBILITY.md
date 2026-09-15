@@ -1,6 +1,6 @@
 # Compatibility policy
 
-This policy applies to the published 1.0.0-rc and the upcoming stable 1.0.0. The RC passed its SDK checks and is available on Maven Central. Stable publication remains pending its final checks and release tag.
+This policy applies to stable 1.0.0 and 1.0.0-rc, both published on Maven Central. Stable 1.0.0 passed the Docker/JDK PR matrix, ABI checks and release SDK tests with the same public API as the RC.
 
 ## Supported scope and CI matrix
 

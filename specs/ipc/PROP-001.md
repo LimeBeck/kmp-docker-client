@@ -19,6 +19,10 @@ Anything outside this set is out of active support scope in current baseline.
 `DockerClient` exposes cached DSL APIs grouped by Docker domains.  
 Each group must return typed `Result<*, ErrorResponse>` for request/response operations, except streaming functions that may return `Flow<...>`.
 
+## Client ownership {#client.ownership}
+- DockerClient implements Kotlin AutoCloseable; close() delegates to its owned HttpClient and is idempotent. It initiates shutdown without waiting for active HTTP calls.
+- Short-lived examples use .use {}; application-scoped clients close at shutdown after collectors stop. Raw exec/attach sessions retain independent ownership and must be closed separately.
+
 ## Containers behavior {#containers}
 Must provide:
 - list/inspect/create/start/stop/restart/kill/remove/rename/pause/unpause/wait
@@ -75,6 +79,7 @@ Must support command execution lifecycle including interactive session/hijack fl
 - A cancelled handshake closes the acquired connection and propagates cancellation. Prefix forwarding is scoped to collection, with no detached forwarding job.
 
 ### Dashboard terminal sizing {#exec.dashboard-sizing}
+- Hide the terminal viewport scrollbar only while the alternate screen buffer is active (for applications such as mc/vim); restore it in the normal shell buffer. Preserve scrolling and refit after buffer changes in both normal and fullscreen modes.
 - Attach and exec terminal panels fit their available space on initial connection, container layout changes, browser resize, and fullscreen transitions. Changed row/column counts are forwarded to the matching Docker TTY resize endpoint; non-TTY attach skips Docker resize.
 - The shared panel offers browser fullscreen with a visible exit button and supports the browser's normal Escape behavior. If the browser rejects fullscreen, the panel fills the viewport with an explicit exit button and Escape support.
 - Dashboard WebSocket input uses binary UTF-8 frames; text frames carry JSON resize controls with integer rows/cols in 1..1000. Control frames never reach shell stdin.
@@ -86,8 +91,23 @@ Must provide:
 - events streaming as `Flow<EventMessage>` with line-by-line decode and invalid-line skip.
 
 ## Error handling and resilience {#errors}
+
+### Connection diagnostics {#errors.diagnostics}
+- Provide opt-in diagnoseConnection and diagnoseFailure APIs without changing existing operation Result/exception contracts or adding retries.
+- Probe the configured socket using the fixed versioned ping, positive per-probe HTTP timeouts and at most 4096 response bytes; close the response after inspection.
+- Owner privacy requirement: SDK-produced reports expose only category, fixed summary/suggestion and HTTP status. Do not retain socket paths, original exceptions, response bodies or headers, including via data-class toString/copy/components. Exclude diagnostic probe requests from the SDK HTTP logging plugin. Caller-owned exceptions, cancellation and custom logging are outside the report guarantee.
+- Distinguish known missing-socket, access-denied, refused/lost-connection, timeout and explicit API-version-rejection signals. Unknown/localized errors remain unknown; generic HTTP 400/404 is not proof of API incompatibility.
+- Propagate caller cancellation unchanged. These APIs do not establish permissions for every endpoint or recover streams; consumers still own reconciliation, resubscription and interpretation of clean EOF.
+
 - Any non-success HTTP response should map to `ErrorResponse`.
 - Event/log streams should tolerate malformed lines without terminating stream processing globally.
+
+### Exception operation context {#errors.context}
+- Attach safe method, allowlisted route template, API version, failure stage and known HTTP status to exceptions observed at SDK HTTP request/response/stream and exec/attach connect/handshake/read/write boundaries.
+- Preserve exception identity/type and cause; use a suppressed DockerContextException marker and a dockerContext accessor that follows bounded, cycle-safe cause chains for coroutine stack recovery. Do not annotate caller cancellation.
+- Context omits endpoint paths, identifiers, query values, headers and payloads. Original exceptions/causes and raw daemon error fields remain for trusted debugging and are not safe UI/log output.
+- DockerApiException.message contains numeric status only; error retains raw daemon details. Non-HTTP handshake failures propagate with context instead of being reduced to an ErrorResponse string. HTTP handshake rejections remain error Results.
+- SDK HTTP error Results, image progress failures and HTTP handshake rejections retain operation context through map/mapError and getOrThrow. getOrThrow raises DockerResultException (an IllegalStateException) with safe message, raw error property and retained cause when available. Arbitrary caller-created Results and raw channels consumed outside SDK boundaries may have no context.
 
 ### Cold stream failures {#errors.streams}
 - Logs, streaming stats, and events remain cold: the streaming HTTP request opens on collection and closes on completion or cancellation.

@@ -10,14 +10,14 @@ A Kotlin Multiplatform Docker API client for managing a single Docker host, with
 
 ## Installation
 
-`1.0.0-rc` is published on Maven Central. Stable `1.0.0` is being prepared with the same public API; switch the dependency version after its release is published.
+`1.0.0` is published on Maven Central. Its public API is unchanged from `1.0.0-rc`.
 
 For a JVM project, add:
 
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.0.0-rc")
+    implementation("dev.limebeck.libs:docker-client:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
 }
@@ -27,6 +27,8 @@ For a Multiplatform project, put these dependencies in `commonMain.dependencies`
 
 ## Quick start
 
+`DockerClient.use` below requires the upcoming 1.0.1 build. With published 1.0.0/1.0.0-rc, use `try/finally` and `docker.client.close()` instead.
+
 Run this suspending function from your application's coroutine scope. A JVM CLI can call it inside `runBlocking`.
 
 ```kotlin
@@ -35,12 +37,9 @@ import dev.limebeck.libs.docker.client.api.containers
 import dev.limebeck.libs.docker.client.api.system
 
 suspend fun listContainers() {
-    val docker = DockerClient() // /var/run/docker.sock
-    try {
+    DockerClient().use { docker -> // /var/run/docker.sock
         docker.system.ping().getOrThrow()
         docker.containers.getList().getOrThrow().forEach { println(it.names) }
-    } finally {
-        docker.client.close()
     }
 }
 ```
@@ -77,7 +76,7 @@ Image callbacks report progress; only the final Result establishes the operation
 
 ## Development and documentation
 
-Use JDK 21 for development. The repository's default version is `1.0.0`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
+Use JDK 21 for development. The repository's default version is `1.0.1`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
 
 ```sh
 # Requires a development Docker daemon at /var/run/docker.sock.

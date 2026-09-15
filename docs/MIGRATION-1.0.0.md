@@ -1,6 +1,6 @@
 # Migration to 1.0.0
 
-1.0.0-rc is published on Maven Central. Stable 1.0.0 is being prepared with the same public API; no source migration from the published RC is required.
+Stable 1.0.0 is published on Maven Central with the same public API as 1.0.0-rc; no source migration from the published RC is required.
 
 ## From 0.1.0
 
@@ -33,3 +33,17 @@ The changes below were introduced in 0.1.0 and still apply:
 The isolated JVM/Docker 29 restart acceptance test verifies old-stream termination and explicit application resubscription. The SDK does not automatically retry or reconnect. Handle EOF as well as transport failures, reconcile current state, and open new terminal sessions without replaying commands. See [stream recovery](STREAM-RECOVERY.md) for the tested scope and application policy.
 
 For the supported runtime combinations and post-1.0 policy, see [compatibility](COMPATIBILITY.md).
+
+## 1.0.1 (unreleased)
+
+`DockerClient` now implements Kotlin `AutoCloseable`. Replace manual `try/finally { docker.client.close() }` with `DockerClient(...).use { docker -> ... }`, or call `docker.close()` for an application-owned client. Existing `docker.client.close()` calls remain valid. Close raw exec/attach sessions separately and stop collectors before closing the client. The new method initiates HTTP client shutdown; it does not wait for in-flight requests. This addition is not available in the published 1.0.0 artifacts.
+
+### Connection diagnostics (1.0.1, unreleased)
+
+Optional extensions in `dev.limebeck.libs.docker.client.diagnostics` add `diagnoseConnection` and `diagnoseFailure`, returning `ConnectionDiagnostic` with a `ConnectionProblem` category. Existing request/stream exceptions and Result signatures are unchanged. Cancellation propagates; these helpers neither retry nor reconnect. These additions are included in the upcoming 1.0.1 release.
+
+The unreleased diagnostic report intentionally omits the earlier `endpoint` and `cause` fields: socket paths and exception graphs can contain credentials or private host details. UI/log output should use the SDK-produced report, not the original exception. Diagnostic probes bypass SDK HTTP logging.
+
+### Exception context (1.0.1, unreleased)
+
+The SDK adds a suppressed `DockerContextException` carrying safe operation metadata while retaining original exception types/causes. Read `Throwable.dockerContext`; do not parse messages or assume suppressed exceptions are empty. Cancellation remains unannotated. `DockerApiException.message` no longer embeds raw daemon text (read its existing `error` property in trusted code). Non-HTTP exec/attach handshake failures now throw the original exception instead of reducing it to an ErrorResponse string. SDK HTTP error Results and image progress failures retain context through map/mapError. Their getOrThrow now raises DockerResultException (still an IllegalStateException), exposing the original error through its error property and the cause when available. Caller-created Results may remain unannotated.

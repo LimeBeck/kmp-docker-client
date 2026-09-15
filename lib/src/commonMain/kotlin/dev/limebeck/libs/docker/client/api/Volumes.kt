@@ -6,11 +6,21 @@ import dev.limebeck.libs.docker.client.model.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 
+/** Cached volumes API bound to this client and its connection configuration. */
 val DockerClient.volumes by ::Volumes.api()
 
+/**
+ * Docker volumes operations using the owning [DockerClient].
+ *
+ * Result-returning methods report daemon HTTP errors as [ErrorResponse]. Transport/decoding failures
+ * and cancellation can throw. Live flows report request failures during collection.
+ */
 class Volumes(private val dockerClient: DockerClient) {
     /**
      * List volumes
+     *
+     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun getList(
         filters: Map<String, List<String>>? = null
@@ -28,6 +38,9 @@ class Volumes(private val dockerClient: DockerClient) {
 
     /**
      * Create a volume
+     *
+     * @param config Configuration sent to Docker as JSON.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun create(
         config: VolumeCreateOptions = VolumeCreateOptions()
@@ -42,7 +55,8 @@ class Volumes(private val dockerClient: DockerClient) {
     /**
      * Inspect a volume
      *
-     * @param name Volume name or ID
+     * @param name Resource name or ID accepted by Docker.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun getInfo(name: String): Result<Volume, ErrorResponse> =
         with(dockerClient) {
@@ -50,10 +64,12 @@ class Volumes(private val dockerClient: DockerClient) {
         }
 
     /**
-     * Remove a volume
+     * Deletes a volume and its persistent data. Invoke only for an explicit data-deletion action.
+     * Container removal does not require deleting its named volumes.
      *
-     * @param name Volume name or ID
-     * @param force Force the removal of the volume
+     * @param name Resource name or ID accepted by Docker.
+     * @param force Request forced removal; Docker still enforces its resource constraints.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun remove(
         name: String,
@@ -66,7 +82,10 @@ class Volumes(private val dockerClient: DockerClient) {
         }
 
     /**
-     * Delete unused volumes
+     * Deletes unused volumes selected by Docker and the supplied filters. This can destroy persistent data.
+     *
+     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun prune(
         filters: Map<String, List<String>>? = null

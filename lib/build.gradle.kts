@@ -225,6 +225,7 @@ dokka {
 
     dokkaSourceSets.named("commonMain") {
         includes.from(usageGuide)
+        samples.from(guideSamplesDir)
     }
 
     pluginsConfiguration.html {

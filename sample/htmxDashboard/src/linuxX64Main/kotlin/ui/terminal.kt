@@ -51,6 +51,12 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                     function scheduleFit() {
                         if (!disposed && !frame) frame = requestAnimationFrame(fitTerminal);
                     }
+                    function updateBufferMode() {
+                        panel.classList.toggle('terminal-alternate-screen', term.buffer.active.type === 'alternate');
+                        scheduleFit();
+                    }
+                    const bufferMode = term.buffer.onBufferChange(updateBufferMode);
+                    updateBufferMode();
                     const observer = new ResizeObserver(scheduleFit);
                     observer.observe(host);
                     window.addEventListener('resize', scheduleFit);
@@ -121,6 +127,7 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                         if (document.fullscreenElement === panel) document.exitFullscreen().catch(function() {});
                         socket.close();
                         input.dispose();
+                        bufferMode.dispose();
                         term.dispose();
                     }
                     document.addEventListener('htmx:beforeCleanupElement', cleanup);

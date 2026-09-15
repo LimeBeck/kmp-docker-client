@@ -63,6 +63,18 @@ jobs:
       - name: Build, test, and generate documentation
         run: ./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2
 
+      - name: Build dashboard release executable
+        if: matrix.docker == 'v28.5.2' && matrix.java == '21'
+        run: ./gradlew :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2
+
+      - name: Upload dashboard executable
+        if: matrix.docker == 'v28.5.2' && matrix.java == '21'
+        uses: actions/upload-artifact@v6
+        with:
+          name: htmx-dashboard-linux-x64
+          path: sample/htmxDashboard/build/bin/linuxX64/releaseExecutable/htmxDashboard.kexe
+          if-no-files-found: error
+
       - name: Verify isolated daemon restart and resubscription
         timeout-minutes: 8
         if: matrix.docker == 'v29.0.0' && matrix.java == '21'

@@ -11,6 +11,14 @@ fun HTML.renderLayout(pageTitle: String, content: FlowContent.() -> Unit) {
         script(src = "https://unpkg.com/htmx.org@1.9.10/dist/ext/sse.js") {}
 
         link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css")
+        style {
+            unsafe {
+                +"""
+                #terminal-panel.terminal-alternate-screen .xterm-viewport { scrollbar-width: none; }
+                #terminal-panel.terminal-alternate-screen .xterm-viewport::-webkit-scrollbar { display: none; width: 0; }
+                """.trimIndent()
+            }
+        }
         script(src = "https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js") {}
         script(src = "https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js") {}
 

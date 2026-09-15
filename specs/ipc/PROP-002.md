@@ -32,6 +32,12 @@ Test artifacts:
 - Both `build` and `test` jobs must upload their reports with distinct artifact names (`unit-test-results-build` and `unit-test-results-test`).
 - Report publication must run after both jobs reach a terminal state, including when `test` is skipped because `build` failed, and download only `unit-test-results-*` artifacts.
 
+### Dashboard binary artifact {#ci.dashboard-artifact}
+- Release CI build and the PR CI Docker 28.5.2/JDK 21 cell explicitly link the dashboard release executable with :sample:htmxDashboard:linkReleaseExecutableLinuxX64.
+- Upload sample/htmxDashboard/build/bin/linuxX64/releaseExecutable/htmxDashboard.kexe as the htmx-dashboard-linux-x64 workflow artifact; a missing file is an error.
+- The artifact targets Linux X64. Document restoring executable permission after extraction. This is workflow artifact publication, not Maven publication or a GitHub Release asset.
+- Binary packaging does not add dashboard UI acceptance to SDK release gates.
+
 ### Pull-request validation {#ci.pr}
 - PR CI runs build (including all platform tests) and Dokka with --warning-mode=fail and at most two Gradle workers.
 - PR CI uses ubuntu-24.04 with the Cartesian matrix Docker 28.5.2/29.0.0 × Temurin JDK 17/21. Every cell builds/tests JVM, Node.js and Linux X64 against the same explicit API 1.51 URL prefix. Test report artifact names include Docker and JDK versions; fail-fast is disabled.
@@ -63,7 +69,7 @@ Test artifacts:
   - Maven Central credentials: `OSSRH_USERNAME`, `OSSRH_PASSWORD`
 
 ### Development version {#publish.development}
-- The default `libVersion` in `gradle.properties` is `1.0.0`, the next release target.
+- The default `libVersion` in `gradle.properties` is `1.0.1`, the next release target.
 - Release tags continue to override this default through `-PlibVersion`; changing the default does not publish a release.
 
 ## Test results publication contract {#test-results}
@@ -72,6 +78,7 @@ Test artifacts:
 - Test-results job must have GitHub token permission `checks: write` (or equivalent) to create check runs.
 
 ## Dokka docs publication contract {#docs}
+- Handwritten public client and domain methods carry KDoc describing parameters, returned values, failure timing, and resource ownership where relevant; generated API pages must include these descriptions.
 - Pipeline must include a GitHub Pages deployment job for Dokka HTML docs.
 - Docs job must run `:lib:dokkaGenerateHtml`.
 - Include docs/USAGE.md as the Dokka module guide, linking workflows to generated API documentation. Marked Kotlin examples are extracted into commonTest sources and compiled; Dokka generation depends on JVM test-source compilation without running Docker tests.
@@ -100,6 +107,7 @@ Test artifacts:
 - If release strategy changes (for example, adding PR trigger or changing publish target), update corresponding anchors first.
 
 ## Changelog {#changelog}
+- 2026-09-13: owner assigned AutoCloseable, KDoc and terminal scrollbar improvements to 1.0.1.
 - 2026-09-13: owner requested stable 1.0.0 preparation and a Dokka-integrated usage guide with compiled examples.
 - 2026-09-13: owner removed dashboard acceptance from SDK release scope; retained Kotlin SDK integration and isolated recovery checks.
 - 2026-09-12: required isolated daemon recovery and real dashboard application acceptance before publication, with failure logs retained.

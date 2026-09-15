@@ -4,7 +4,7 @@
 
 KMP Docker Client provides coroutine-based access to a single Docker host. Start here for complete workflows, then use the package and class navigation below for individual API methods.
 
-This guide describes the **1.0.0 API**, currently being prepared for stable release. Until 1.0.0 is published, use **1.0.0-rc** from Maven Central; the examples work with that candidate too. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
+This guide covers the upcoming **1.0.1**, including `DockerClient.use`. The published Maven Central baseline is **1.0.0**; the lifecycle additions require a 1.0.1 development build until release. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
 
 ### Install
 
@@ -13,7 +13,7 @@ Use Maven Central. In a Kotlin Multiplatform project, add the dependencies to `c
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.0.0-rc")
+    implementation("dev.limebeck.libs:docker-client:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
     implementation("io.ktor:ktor-io:3.5.2")
@@ -33,31 +33,31 @@ All following examples use these imports. The examples are suspending functions 
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.DockerClientConfig
 import dev.limebeck.libs.docker.client.api.*
+import dev.limebeck.libs.docker.client.diagnostics.*
 import dev.limebeck.libs.docker.client.model.*
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 suspend fun listContainers(socketPath: String = "/var/run/docker.sock") {
-    val docker = DockerClient(DockerClientConfig(
+    DockerClient(DockerClientConfig(
         connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(socketPath),
-    ))
-    try {
+    )).use { docker ->
         docker.system.ping().getOrThrow()
         docker.containers.getList().getOrThrow().forEach { println(it.names) }
-    } finally {
-        docker.client.close()
     }
 }
 ```
 
-Reuse a client for an application lifecycle. Stop and join your collectors and close interactive sessions before calling `docker.client.close()` at shutdown. `DockerClient` itself is not `AutoCloseable`; raw terminal sessions have their own lifetime and must be closed separately. Examples below receive an application-owned `docker` client.
+`DockerClient.use` requires the upcoming 1.0.1 build. On published 1.0.0/1.0.0-rc, retain `try/finally` with `docker.client.close()`.
+
+Reuse a client for an application lifecycle. Stop and join your collectors and close interactive sessions before calling `docker.close()` at shutdown. `DockerClient` implements `AutoCloseable`; raw terminal sessions have their own lifetime and must be closed separately. Examples below receive an application-owned `docker` client.
 
 API entry points: [DockerClient][dev.limebeck.libs.docker.client.DockerClient], [Containers][dev.limebeck.libs.docker.client.api.Containers], [Images][dev.limebeck.libs.docker.client.api.Images], [Volumes][dev.limebeck.libs.docker.client.api.Volumes], [Networks][dev.limebeck.libs.docker.client.api.Networks], [Exec][dev.limebeck.libs.docker.client.api.Exec] and [System][dev.limebeck.libs.docker.client.api.System]. Import `api.*` to bring the `containers`, `images`, `volumes`, `networks`, `exec` and `system` extension properties into scope.
 
 ### Results and exceptions
 
-Ordinary operations return this library's `Result<T, ErrorResponse>`, not Kotlin's single-parameter `Result<T>`. Use `fold`, `onError` or `errorOrNull` to handle daemon errors. `getOrThrow()` is convenient when any error should abort the current workflow; it throws `IllegalStateException` for an error result.
+Ordinary operations return this library's `Result<T, ErrorResponse>`, not Kotlin's single-parameter `Result<T>`. Use `fold`, `onError` or `errorOrNull` to handle daemon errors. `getOrThrow()` is convenient when any error should abort the current workflow; SDK errors with operation context throw `DockerResultException` (an `IllegalStateException`), retaining the original error and available cause. Read `failure.dockerContext` for sanitized operation details; raw errors and causes may contain sensitive data. Caller-created error results without context throw a plain `IllegalStateException`.
 
 <!-- compile-sample -->
 ```kotlin
@@ -245,6 +245,70 @@ The SDK does not retry/reconnect automatically. Live streams can finish with nor
 
 Refresh a snapshot after reconnect. Recreate event subscriptions using a saved timestamp with a small overlap and deduplicate; Docker event history is finite. Choose log `since`/`tail` to control replay, and re-prepare logs after container replacement. Reset your stats baseline. Start a new terminal explicitly without replaying commands. Read [recovery and tested boundaries](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/STREAM-RECOVERY.md).
 
+### Connection diagnostics (1.0.1, unreleased)
+
+The diagnostic extensions are opt-in and do not change errors returned by ordinary API calls.
+`diagnoseConnection` checks the configured socket and fixed API version with a five-second default
+HTTP timeout. It reads at most 4 KiB of the response and never creates resources or retries operations.
+
+<!-- compile-sample -->
+```kotlin
+suspend fun checkDockerConnection(docker: DockerClient) {
+    val report = docker.diagnoseConnection(timeoutMillis = 5_000)
+    println("${report.problem}: ${report.message}")
+    println(report.suggestion)
+}
+```
+
+Import `dev.limebeck.libs.docker.client.diagnostics.*`. A `NONE` result means the versioned ping
+succeeded, not that every operation is authorized. For a transport exception from a call, stream or
+terminal, use `docker.diagnoseFailure(failure)` to obtain the same categories. Preserve cancellation;
+do not classify application callback exceptions as transport failures. Known OS messages/codes are
+recognized best-effort; unknown or localized errors remain `UNKNOWN`.
+SDK-produced reports contain only a category, fixed messages and HTTP status: no socket paths,
+raw exceptions, headers or response bodies. This also applies to `toString()`. The probe is excluded
+from the SDK HTTP logging plugin. Caller-held exceptions and custom logging/plugins remain outside
+this guarantee; do not send them to the panel or log them without separate handling. A clean stream EOF has no exception and still needs reconciliation.
+These additions require the upcoming 1.0.1 release and are not present in published 1.0.0.
+
+### Exception context (1.0.1, unreleased)
+
+HTTP request, response decoding, stream and SDK-created exec/attach session failures carry
+safe operation metadata. The SDK retains the original exception type and cause; context is attached
+as a suppressed `DockerContextException`. `dockerContext` also follows cause chains created by
+coroutine stack recovery. Caller cancellation is not annotated.
+
+<!-- compile-sample -->
+```kotlin
+suspend fun inspectWithContext(docker: DockerClient, id: String) {
+    try {
+        docker.containers.getInfo(id).getOrThrow()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        failure.dockerContext?.let { context ->
+            println("${context.method} ${context.route}: ${context.stage}, HTTP ${context.httpStatus}")
+        }
+        throw failure
+    }
+}
+```
+
+Context contains method, an allowlisted route such as `/containers/{resource}/stats`, API version,
+failure stage and HTTP status when known. It contains no socket path, resource IDs, query values,
+headers or bodies. Unknown routes become `/{unknown}`. A stage records where an error was observed,
+not whether retrying is safe. Original exception messages, causes, suppressed cleanup failures and
+`DockerApiException.error` remain sensitive: keep full stack traces within trusted debugging.
+`DockerApiException.message` itself includes only the numeric HTTP status.
+
+SDK HTTP error Results and image progress failures preserve context through `map`/`mapError`.
+Their `getOrThrow()` throws `DockerResultException`, an `IllegalStateException` with safe context
+in its message. Its `error` property retains the typed error value, and `cause` retains the original
+exception when available. Caller-created Results and raw channels consumed outside SDK boundaries
+may have no operation context. Non-HTTP terminal handshake
+failures now throw their original exception with context instead of returning only an error string;
+HTTP handshake rejections still return an error Result. Caller-created sessions may have no context.
+
 ### Troubleshooting and upgrade
 
 | Symptom | Check |
@@ -256,6 +320,6 @@ Refresh a snapshot after reconnect. Recreate event subscriptions using a saved t
 | Terminal prompt delayed or text corrupted | Use incomingChunks and an incremental UTF-8 decoder; match TTY mode. |
 | Container replacement fails | Reconcile IDs and preserve volumes; do not blindly repeat destructive steps. |
 
-The 1.0.0 preparation preserves the published 1.0.0-rc API. From 0.1.0, `DriverData.data` is nullable and `DockerClient.logger` uses Ktor's logger type. From 0.0.x, also account for unsigned counters and session ownership changes. See [migration](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/MIGRATION-1.0.0.md) and [compatibility policy](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/COMPATIBILITY.md). Generated public models are covered by the same compatibility policy as handwritten APIs.
+The 1.0.0 release preserves the published 1.0.0-rc API. From 0.1.0, `DriverData.data` is nullable and `DockerClient.logger` uses Ktor's logger type. From 0.0.x, also account for unsigned counters and session ownership changes. See [migration](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/MIGRATION-1.0.0.md) and [compatibility policy](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/COMPATIBILITY.md). Generated public models are covered by the same compatibility policy as handwritten APIs.
 
 Full Docker API coverage, Compose orchestration and application authentication/roles are not supplied by the SDK. The bundled dashboard is an independent example; its UI behavior is not a library release gate.

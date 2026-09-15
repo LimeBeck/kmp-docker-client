@@ -1,37 +1,36 @@
 # WAL (Write-Ahead Log)
 
 ## Current Focus
-- Preparing stable 1.0.0 and a Dokka-integrated usage guide on codex/prepare-1.0.0-docs, based on merged master 48b3dc2 (MR #6).
-- Scope: version/docs/build verification only. No new SDK API, dashboard acceptance or platform implementation. Stable release publication is not authorized by preparation.
-- Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#milestones.stable and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#docs.
+- Exception context: safe suppressed metadata for HTTP/request/response/stream and exec/attach boundaries, preserving original exception types/causes and cancellation. Non-HTTP handshake failures now throw instead of losing the cause in an error string. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.context. SDK error Results also retain context through map/mapError/getOrThrow; DockerResultException retains raw error and available cause with a safe message. Caller-created Results/raw channels outside SDK boundaries may have no context.
+- Privacy audit: removed raw endpoint/cause from unreleased diagnostic reports and excluded probes from SDK HTTP logging. Synthetic secret/report/DEBUG-log checks passed, including sensitive socket paths, exception cause/suppressed messages and arbitrary response headers/body. Six diagnostic tests, JVM/JS/Linux X64 compilation, Dokka and updated ABI checks passed. No endpoint or Throwable remains in reports; original exceptions/cancellation and custom client logging remain outside this guarantee. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.diagnostics.
+- Connection diagnostics included in MR #8 on codex/prepare-1.0.1 at the owner’s request: opt-in versioned ping probe and failure classification, bounded response and cancellation preservation. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.diagnostics. Target release: 1.0.1.
+- One MR on codex/prepare-1.0.1 contains diagnostics, safe exception context, AutoCloseable, KDoc and terminal scrollbar changes. Owner selected 1.0.1; no new release is authorized by the MR request.
+- Contracts: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#client.ownership, spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#exec.dashboard-sizing and spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#docs.
 
 ## Completed in Last Session
-- Set libVersion=1.0.0; published installation baseline remains 1.0.0-rc until stable artifacts exist.
-- Added docs/USAGE.md with connection, ownership, errors, lifecycle, data retention, streaming, terminals, authentication, image progress and recovery. Marked Kotlin blocks are extracted into commonTest and compiled; Dokka depends on JVM compilation, not test execution.
-- Updated README, compatibility and migration guidance, retained the old RC migration URL as a redirecting document, and added docs/RELEASE-1.0.0.md for final evidence.
-- Full local build passed: 224 SDK tests (102 JVM, 61 JS, 61 Linux X64), no failures/skips, unchanged ABI and compiled guide examples on every target. Final Dokka generation passed; verified guide sections/code and 14 local links. Isolated SDK restart test passed (11s Gradle run); fixture cleaned up.
+- Added htmx-dashboard-linux-x64 workflow artifact to Release CI and PR Docker 28.5.2/JDK 21, with explicit release linking and missing-file failure. Documented download/chmod/run. Local release link passed (3m21s); ELF Linux X64 executable and workflow YAML/configuration verified. Log: /tmp/dashboard-artifact-build.log. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#ci.dashboard-artifact. Remote artifact appears after successful CI; no GitHub Release asset publication.
+- KDoc usability improvements for MR #8: documented log option units/defaults, container creation/name/port semantics, filter examples and contextual Result/exec failures. Linked key APIs to existing compiled guide samples through Dokka samples configuration. Dokka and guide compilation passed with --warning-mode=fail; rendered samples/local links verified on getOrThrow, getLogs, startInteractive and diagnoseConnection. No runtime changes. Logs: /tmp/kdoc-improvement.log and /tmp/kdoc-final.log. Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-002.md#docs.
+- Exception operation context: full SDK suite passed (118 JVM + 62 JS + 62 Linux X64 = 242, no failures/skips). Dokka and compiled guide passed; dockerContext API page verified. Context/read-write/Result/getOrThrow/map/mapError/cancellation/privacy regression tests passed. Logs: /tmp/kmp-operation-all-checks.log; final ABI check: /tmp/kmp-operation-abi-check.log.
+- DockerClient implements AutoCloseable; close delegates to owned HttpClient. Examples use .use; migration notes distinguish upcoming 1.0.1 from published 1.0.0. Raw sessions retain independent ownership.
+- Lifecycle JVM test and test/example compilation on JVM/JS/Linux X64 passed. ABI adds only AutoCloseable and close(); check passed. KDoc covers 63 domain methods plus client/config/auth/Result/ExecSession; Dokka and six key generated pages/links verified.
+- Dashboard scrollbar hides only in alternate buffer (mc/vim), returns in shell, and refits on switches. Listener is disposed. Dashboard Kotlin compilation passed.
+- v1.0.0 is immutable at 16ea5077. Release CI 34765187140, Docs CI 34765167302 and PR CI 34754961852 passed. Maven common/JVM/JS/Linux X64 1.0.0 and dependencies now resolved in /tmp/kmp-stable-consumer (89s); publication follow-up docs updated.
 
 ## Next Steps
-1. Local preparation checks are complete. Create the preparation MR and verify final remote CI. Logs: /tmp/kmp-stable-build.log, /tmp/kmp-stable-dokka-final.log, /tmp/kmp-stable-recovery.log.
-2. Create preparation MR and verify the full Docker/JDK matrix. Record final commit/run evidence in its body. Stable tag and Maven/GitHub publication remain separate owner-authorized actions.
-3. Published v1.0.0-rc is immutable; all four Maven artifacts and dependencies already resolved successfully. Do not republish it.
+- Integrate diagnostics with the existing api()/ApiDelegate extension mechanism per spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.api-extensions; cover opt-in safe diagnostic metadata, preserved lifecycle/error behavior, compatibility and updating the existing extension example; do not redesign extension support. Version/date unassigned.
+- TODO in diagnostics/OperationContext.kt: replace the closed route allowlist with explicit safe route metadata supplied by API extensions; preserve /{unknown} fallback. The API is intentionally extensible. No behavior change in this reminder.
+- Review combined MR #8: https://github.com/LimeBeck/kmp-docker-client/pull/8 and inspect CI for the updated head before merging. Local SDK suite (242 tests), Dokka and ABI checks passed.
+- After merge, owner may authorize v1.0.1 publication. Do not move existing tags or republish Maven versions.
 
 ## Known Risks / Constraints
-- Release CI and Docs CI passed on the merged commit. The first release attempt failed two timing-sensitive tests; the second passed both build and separate allTests jobs.
-- API 1.51 is fixed; no version negotiation. Release CI provisions Docker 28.5.2.
-- CIO reports disconnect between complete HTTP chunks as EOF even without a terminal zero chunk. Recovery must handle EOF as well as exceptions; finite event history also requires refreshing resource state.
-- Unsigned schema counters now have unsigned Kotlin types, a model API change in 0.1.0.
-- incoming.first()/take() closes the session; output is collected once. Binary chunks may split UTF-8 and require streaming decoding.
-- Authentication/roles/audit belong to the application; sample still binds to loopback.
-- The review report is local and excluded via .git/info/exclude; never commit it.
-- Do not move v0.0.9/v0.0.10 or re-upload the published Maven version.
+- API 1.51 fixed, no negotiation. Supported Linux JVM/Node/Linux X64 only.
+- Dashboard UI acceptance remains outside SDK release gates; retain Kotlin SDK and isolated-daemon checks.
+- Local review report stays ignored and must never be committed.
+- Running dashboard has not been restarted; relink/restart to see UI changes.
 
 ## Decisions Pending
-- Owner selected one future release with BOTH macOS and Windows on BOTH JVM and Native. Recorded in spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.desktop-platforms (separate roadmap commit). Version/date and exact architecture matrix remain to be selected; current RC scope is unchanged.
-- Scheduling the next SDK release; current RC publication and Maven resolution are complete.
+- Future macOS/Windows release must include both JVM and Native. Version/date remain unassigned.
 
 ## Resume Commands
-- `./gradlew :sample:htmxDashboard:linkDebugExecutableLinuxX64 :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2`
 - `git diff --check`
-- `./gradlew :lib:jvmTest --warning-mode=fail --console=plain --max-workers=2`
-- `./gradlew build :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2`
+- `./gradlew :lib:dokkaGenerateHtml :lib:checkKotlinAbi :lib:jvmTest --tests '*DockerClientLifecycleTest' --warning-mode=fail --console=plain --max-workers=2`
