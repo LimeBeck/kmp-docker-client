@@ -87,3 +87,13 @@ python3 sample/htmxDashboard/tests/http_smoke.py http://127.0.0.1:18080
 ```
 
 The dashboard's HTMX/xterm assets are still loaded from CDNs. Its application styles and interaction code are embedded in the Native executable; no separate asset directory or frontend bundler is needed.
+
+### History navigation regression
+
+Run the read-only response checks against a running dashboard:
+
+```sh
+python3 sample/htmxDashboard/tests/history_smoke.py http://127.0.0.1:18080
+```
+
+History restoration requests receive the full document, with `main-content` marked as the history region. Back/forward replace only that region, preserving navigation, theme controls and shared listeners. History caching remains disabled.
