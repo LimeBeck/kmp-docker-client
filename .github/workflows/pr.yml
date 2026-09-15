@@ -61,7 +61,7 @@ jobs:
 
 
       - name: Build, test, and generate documentation
-        run: ./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2
+        run: scripts/with-compose-fixture.sh ./gradlew build :lib:checkKotlinAbi :lib:dokkaGenerateHtml --warning-mode=fail --console=plain --max-workers=2
 
       - name: Build dashboard release executable
         if: matrix.docker == 'v28.5.2' && matrix.java == '21'

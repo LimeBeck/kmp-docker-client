@@ -58,6 +58,8 @@ The [user guide](docs/USAGE.md) covers:
 
 Detailed guides: [container lifecycle](docs/CONTAINER-LIFECYCLE.md), [image progress](docs/IMAGE-PROGRESS.md), [stream recovery](docs/STREAM-RECOVERY.md).
 
+The unreleased [Compose API](docs/COMPOSE.md), included in `lib`, adds discovery and logs for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
+
 ## API scope
 
 The SDK implements container, image, volume, network, exec and system operations. Models are generated from Docker's OpenAPI 1.51 schema. Complete Docker API coverage is not claimed: Swarm, nodes, services, tasks, secrets, configs and plugins are outside the current scope. Compose orchestration, user authentication, roles and audit belong to the application.
