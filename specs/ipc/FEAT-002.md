@@ -69,7 +69,19 @@ The owner selected macOS and Windows support for one future release on 2026-09-1
 - Add platform CI, ABI validation and publication/consumer checks for all new native artifacts. Compilation alone is not platform acceptance.
 - Distinguish running the client on Windows from managing Windows containers. Decide and document Windows-container coverage separately; do not infer it from Docker Desktop Linux-container tests.
 
+### Diagnostics integration with existing API extensions {#deferred.api-extensions}
+API extensions already exist through extension properties and the public api() delegate with ApiCacheHolder/ApiDelegate; built-in API groups use the same mechanism. Preserve this mechanism and its existing usage patterns. The work here is to integrate safe diagnostics with extensions, not to introduce a replacement extension framework. Release number and date remain unassigned.
+
+- Design a way for existing API extensions to supply safe operation metadata, including route templates, without adding their routes to a central SDK allowlist.
+- Apply this metadata consistently to ordinary HTTP and exec/attach failures while retaining existing request, serialization, typed-error, cancellation and ownership contracts.
+- Define the trust boundary: extension-supplied templates must not contain credentials, actual resource identifiers or query values. Keep `/{unknown}` when safe metadata is absent; do not fall back to exposing raw paths.
+- Extend the existing extension example to demonstrate diagnostic metadata. Validate that an external API group receives useful error context without core route changes, and test sensitive-data exclusion and cancellation.
+- Preserve compatibility with existing extensions that do not supply metadata; document the opt-in integration and check public API compatibility.
+
+Related contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.context`.
+
 ## Changelog {#changelog}
+- 2026-09-15: owner clarified that API extensions already exist; plan diagnostic integration with them instead of a new extension mechanism.
 - 2026-09-13: owner requested stable preparation and a user guide integrated with Dokka.
 - 2026-09-13: owner clarified that SDK releases require library integration tests, not dashboard application acceptance.
 - 2026-09-13: owner selected a future release combining macOS and Windows support on both JVM and Kotlin/Native.

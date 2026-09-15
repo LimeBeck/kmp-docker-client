@@ -68,6 +68,9 @@ internal fun operationContext(
     status: Int? = null,
 ): DockerOperationContext {
     val route = path.substringBefore('?').removePrefix("/v${DockerClient.API_VERSION}")
+    // TODO: Replace this closed route allowlist with explicit safe route metadata supplied by API
+    // extensions. The API is intentionally extensible; diagnostics must not require editing a central
+    // route registry for each extension. Keep /{unknown} when metadata is absent; never expose raw paths.
     val safeRoute = when {
         route in setOf("/_ping", "/version", "/info", "/auth", "/events", "/system/df",
             "/containers/json", "/containers/create", "/containers/prune", "/images/json",

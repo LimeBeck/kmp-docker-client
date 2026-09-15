@@ -16,6 +16,8 @@
 - v1.0.0 is immutable at 16ea5077. Release CI 34765187140, Docs CI 34765167302 and PR CI 34754961852 passed. Maven common/JVM/JS/Linux X64 1.0.0 and dependencies now resolved in /tmp/kmp-stable-consumer (89s); publication follow-up docs updated.
 
 ## Next Steps
+- Integrate diagnostics with the existing api()/ApiDelegate extension mechanism per spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#deferred.api-extensions; cover opt-in safe diagnostic metadata, preserved lifecycle/error behavior, compatibility and updating the existing extension example; do not redesign extension support. Version/date unassigned.
+- TODO in diagnostics/OperationContext.kt: replace the closed route allowlist with explicit safe route metadata supplied by API extensions; preserve /{unknown} fallback. The API is intentionally extensible. No behavior change in this reminder.
 - Review combined MR #8: https://github.com/LimeBeck/kmp-docker-client/pull/8 and inspect CI for the updated head before merging. Local SDK suite (242 tests), Dokka and ABI checks passed.
 - After merge, owner may authorize v1.0.1 publication. Do not move existing tags or republish Maven versions.
 
