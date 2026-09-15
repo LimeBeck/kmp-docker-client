@@ -4,7 +4,7 @@
 
 KMP Docker Client provides coroutine-based access to a single Docker host. Start here for complete workflows, then use the package and class navigation below for individual API methods.
 
-This guide covers published **1.0.1**, including `DockerClient.use`, connection diagnostics and exception context. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
+This guide covers **1.1.0**, including Compose discovery and multi-service logs, `DockerClient.use`, connection diagnostics and exception context. Release publication is in progress. Published targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
 
 ### Install
 
@@ -13,7 +13,7 @@ Use Maven Central. In a Kotlin Multiplatform project, add the dependencies to `c
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.0.1")
+    implementation("dev.limebeck.libs:docker-client:1.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
     implementation("io.ktor:ktor-io:3.5.2")

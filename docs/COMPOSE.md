@@ -6,8 +6,13 @@ Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#def
 
 ## Availability
 
-This API ships in the 1.1.0 release target inside `dev.limebeck.libs:docker-client`;
-no separate Compose artifact is needed. Publication is pending release verification.
+Available in **1.1.0** inside the existing artifact; no separate Compose module is needed.
+Release publication is in progress.
+
+```kotlin
+implementation("dev.limebeck.libs:docker-client:1.1.0")
+```
+
 Use `implementation(project(":lib"))` when working in this repository.
 Compose CLI is needed only by the real-Compose test harness.
 

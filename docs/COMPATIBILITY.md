@@ -1,6 +1,6 @@
 # Compatibility policy
 
-This policy applies to published 1.0.1, 1.0.0 and 1.0.0-rc. Version 1.0.1 passed all four Docker/JDK PR matrix cells and release SDK checks; its metadata, JVM, JS and Linux X64 artifacts are available on Maven Central. Stable 1.0.0 passed the Docker/JDK PR matrix, ABI checks and release SDK tests with the same public API as the RC.
+This policy applies to 1.1.0 and the published 1.0.1, 1.0.0 and 1.0.0-rc releases. The 1.1.0 release adds Compose APIs without changing the supported targets; publication is in progress. Version 1.0.1 passed all four Docker/JDK PR matrix cells and release SDK checks; its metadata, JVM, JS and Linux X64 artifacts are available on Maven Central. Stable 1.0.0 passed the Docker/JDK PR matrix, ABI checks and release SDK tests with the same public API as the RC.
 
 ## Supported scope and CI matrix
 

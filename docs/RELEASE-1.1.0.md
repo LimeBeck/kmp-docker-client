@@ -15,6 +15,6 @@ Owner authorized release on 2026-09-15. Additive Compose APIs use a minor versio
 - Native dashboard build and read-only/disposable dashboard checks must pass.
 - Merge validated head, verify the merge tree, create immutable v1.1.0 once.
 - Wait for Release CI publication and verify all Maven variants independently.
-- Update installation/publication status only after artifacts resolve.
+- Installation examples use 1.1.0 at the owner’s request; retain a publication-in-progress note until artifacts resolve.
 
 Contract: spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#acceptance.
