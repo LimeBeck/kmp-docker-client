@@ -38,6 +38,36 @@ val dashboardScript = """
         notify(notices[initialUrl.searchParams.get('notice')], false);
         initialUrl.searchParams.delete('notice'); history.replaceState(history.state, '', initialUrl);
     }
+    function closeMenus(except, restoreFocus) {
+        document.querySelectorAll('.action-menu[open]').forEach(menu => {
+            if (menu === except) return;
+            menu.open = false;
+            if (restoreFocus) menu.querySelector('summary').focus();
+        });
+    }
+    document.addEventListener('toggle', function(event) {
+        const menu = event.target;
+        if (!menu.matches?.('.action-menu') || !menu.open) return;
+        closeMenus(menu, false);
+        const trigger = menu.querySelector('summary').getBoundingClientRect();
+        const content = menu.querySelector('.menu-content');
+        const width = content.offsetWidth;
+        const height = content.offsetHeight;
+        content.style.left = Math.max(12, Math.min(trigger.right - width, document.documentElement.clientWidth - width - 12)) + 'px';
+        const below = trigger.bottom + 6;
+        content.style.top = Math.max(12, below + height <= innerHeight - 12 ? below : trigger.top - height - 6) + 'px';
+    }, true);
+    document.addEventListener('click', function(event) {
+        closeMenus(event.target.closest('.action-menu'), false);
+        if (event.target.closest('.menu-content a,.menu-content button')) closeMenus(null, false);
+    });
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && document.querySelector('.action-menu[open]')) {
+            closeMenus(null, true); event.preventDefault();
+        }
+    });
+    document.addEventListener('scroll', () => closeMenus(null, false), true);
+    window.addEventListener('resize', () => closeMenus(null, false));
     let confirmRequest = null;
     document.addEventListener('htmx:confirm', function(event) {
         if (!event.detail.question) return;

@@ -23,9 +23,9 @@ fun FlowContent.renderVolumesPage(volumes: List<Volume>) {
             tbody { volumes.forEach { volume -> tr {
                 attributes["data-name"] = volume.name.lowercase(); attributes["data-search-text"] = "${volume.name} ${volume.driver} ${volume.mountpoint}".lowercase()
                 td { attributes["data-label"] = "Name"; strong("resource-name") { +volume.name } }; td { attributes["data-label"] = "Driver"; +volume.driver }; td { attributes["data-label"] = "Mountpoint"; code { +volume.mountpoint } }
-                td { attributes["data-label"] = "Actions"; details("action-menu") { summary("btn btn-small") { attributes["aria-label"] = "Actions for ${volume.name}"; +"Actions" }; div("menu-content") {
+                td { attributes["data-label"] = "Actions"; actionMenu(accessibleLabel = "Actions for ${volume.name}") {
                     actionButton("Delete volume", "/volumes/${volume.name}", "delete", "Permanently delete ${volume.name} and its data? This cannot be undone. A volume in use cannot be deleted.", volume.name, true)
-                } } }
+                } }
             } } }
         }
     }

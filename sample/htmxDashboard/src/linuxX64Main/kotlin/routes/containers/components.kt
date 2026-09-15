@@ -31,12 +31,9 @@ fun FlowContent.containerTable(containers: List<ContainerSummary>) {
                                 td { attributes["data-label"] = "Actions"; div("actions") {
                                     if (state == "running") actionButton("Stop", "/containers/$id/stop")
                                     else if (state in listOf("exited", "created")) actionButton("Start", "/containers/$id/start")
-                                    details("action-menu") {
-                                        summary("btn btn-small") { attributes["aria-label"] = "More actions for $name"; +"More" }
-                                        div("menu-content") {
+                                    actionMenu("More", "More actions for $name") {
                                             pageLink("Logs", "/containers/$id?tab=logs", "btn btn-small")
                                             actionButton("Delete", "/containers/$id", "delete", "Delete $name? A running container will be forcibly stopped. Its writable layer is removed; named volumes are retained.", danger = true)
-                                        }
                                     }
                                 } }
                             }
@@ -57,10 +54,10 @@ fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectRes
     pageHeading(name, info.config?.image ?: info.image ?: "Unknown image") {
         if (info.state?.running == true) actionButton("Stop", "/containers/$id/stop")
         else if (state in listOf("exited", "created")) actionButton("Start", "/containers/$id/start")
-        details("action-menu") { summary("btn") { +"More actions" }; div("menu-content") {
+        actionMenu("More actions", "More actions for $name", small = false) {
             if (info.config?.labels?.get(MANAGED_LABEL) == "true" && !pendingReplacement) pageLink("Recreate", "/containers/$id/recreate", "btn btn-small")
             actionButton("Delete container", "/containers/$id", "delete", "Delete $name? This forcibly stops a running container and removes its writable layer. Named volumes are retained.", danger = true)
-        } }
+        }
     }
     div("actions") {
         val failed = state == "exited" && info.state?.exitCode?.let { it != 0 } == true

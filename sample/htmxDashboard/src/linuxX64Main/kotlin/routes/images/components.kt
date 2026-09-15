@@ -19,10 +19,10 @@ fun FlowContent.renderImagesPage(images: List<ImageSummary>) {
                     attributes["data-name"] = name.lowercase(); attributes["data-search-text"] = "$name ${image.id}".lowercase()
                     td { attributes["data-label"] = "Image"; pageLink(name, "/images/${image.id}", "resource-name"); code("resource-id") { +image.id.removePrefix("sha256:").take(12) } }
                     td("numeric") { attributes["data-label"] = "Size"; +bytes(image.propertySize.toULong()) }
-                    td { attributes["data-label"] = "Actions"; details("action-menu") { summary("btn btn-small") { attributes["aria-label"] = "Actions for $name"; +"Actions" }; div("menu-content") {
+                    td { attributes["data-label"] = "Actions"; actionMenu(accessibleLabel = "Actions for $name") {
                         pageLink("Inspect", "/images/${image.id}", "btn btn-small")
                         actionButton("Delete", "/images/${image.id}", "delete", "Delete $name (${image.id.removePrefix("sha256:").take(12)})? Containers using this image may prevent deletion.", danger = true)
-                    } } }
+                    } }
                 }
             } }
         }

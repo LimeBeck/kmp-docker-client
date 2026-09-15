@@ -118,3 +118,16 @@ test('Cancel does not put form values in a GET and breadcrumb navigation refresh
   assert.deepEqual(detail.parameters,{});
   dom.window.close();
 });
+test('shared action menus close peers, outside clicks and Escape with focus restored', () => {
+  const dom = shell('<details class="action-menu"><summary>First</summary><div class="menu-content"><button>Delete</button></div></details><details class="action-menu"><summary>Second</summary><div class="menu-content"><a href="#">Inspect</a></div></details><button id="outside">Outside</button>');
+  const doc = dom.window.document;
+  const [first, second] = doc.querySelectorAll('details');
+  const open = menu => { menu.open = true; menu.dispatchEvent(new dom.window.Event('toggle')); };
+  open(first); open(second);
+  assert.equal(first.open, false); assert.equal(second.open, true);
+  second.querySelector('summary').dispatchEvent(new dom.window.KeyboardEvent('keydown', {key:'Escape', bubbles:true}));
+  assert.equal(second.open, false); assert.equal(doc.activeElement, second.querySelector('summary'));
+  open(first); doc.querySelector('#outside').click(); assert.equal(first.open, false);
+  open(first); first.querySelector('button').click(); assert.equal(first.open, false);
+  dom.window.close();
+});

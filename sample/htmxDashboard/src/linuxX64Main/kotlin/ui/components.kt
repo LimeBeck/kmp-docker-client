@@ -125,3 +125,13 @@ fun bytes(value: ULong?): String {
     return "${rounded / 10}${if (unit == 0) "" else ".${rounded % 10}"} ${units[unit]}"
 }
 fun String.escapeHtml() = replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")
+
+fun FlowContent.actionMenu(label: String = "Actions", accessibleLabel: String = label, small: Boolean = true, content: FlowContent.() -> Unit) {
+    details("action-menu") {
+        summary(if (small) "btn btn-small" else "btn") {
+            attributes["aria-label"] = accessibleLabel
+            +label
+        }
+        div("menu-content") { content() }
+    }
+}
