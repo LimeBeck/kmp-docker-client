@@ -1,5 +1,6 @@
 package dev.limebeck.libs.docker.client
 
+import dev.limebeck.libs.docker.client.diagnostics.*
 import dev.limebeck.libs.docker.client.utils.readDockerLine
 
 import dev.limebeck.libs.docker.client.DockerClientConfig.Auth
@@ -63,6 +64,13 @@ open class DockerClient(
      * Changing its configuration can affect all API groups sharing this client.
      */
     val client = HttpClient(CIO) {
+        HttpResponseValidator {
+            handleResponseExceptionWithRequest { failure, request ->
+                throw failure.withDockerContext(operationContext(
+                    request.method.value, request.url.encodedPath, DockerFailureStage.REQUEST,
+                ))
+            }
+        }
         install(SSE)
         install(HttpTimeout)
         install(Logging) {
@@ -78,7 +86,9 @@ open class DockerClient(
                     header.equals(HttpHeaders.Authorization, ignoreCase = true) ||
                     header.equals(HttpHeaders.ProxyAuthorization, ignoreCase = true)
             }
-            filter { request -> !request.url.encodedPath.endsWith("/auth") }
+            filter { request ->
+                !request.attributes.contains(DiagnosticProbe) && !request.url.encodedPath.endsWith("/auth")
+            }
         }
         defaultRequest {
             when (config.connectionConfig) {
@@ -114,10 +124,14 @@ open class DockerClient(
     }
 
     suspend inline fun <reified T> HttpResponse.parse(): Result<T, ErrorResponse> {
-        return if (status.isSuccess()) {
-            json.decodeFromString<T>(bodyAsText()).asSuccess()
-        } else {
-            errorResponse().asError()
+        try {
+            return if (status.isSuccess()) {
+                json.decodeFromString<T>(bodyAsText()).asSuccess()
+            } else {
+                errorResult()
+            }
+        } catch (failure: Exception) {
+            throw failure.withDockerContext(operationContext(DockerFailureStage.RESPONSE))
         }
     }
 
@@ -125,15 +139,21 @@ open class DockerClient(
         return if (status.isSuccess()) {
             Unit.asSuccess()
         } else {
-            errorResponse().asError()
+            errorResult()
         }
     }
+
+    /** An HTTP error Result retaining safe request context for getOrThrow. */
+    suspend fun HttpResponse.errorResult(): Result<Nothing, ErrorResponse> =
+        errorResponse().asError().withOperationContext(operationContext(DockerFailureStage.RESPONSE))
 
     /** Handles bodyless HEAD errors and non-JSON daemon/proxy responses. */
     suspend fun HttpResponse.errorResponse(): ErrorResponse {
         val fallback = ErrorResponse("Docker API returned HTTP ${status.value} ${status.description}")
         if (request.method == HttpMethod.Head) return fallback
-        val text = bodyAsText()
+        val text = try { bodyAsText() } catch (failure: Exception) {
+            throw failure.withDockerContext(operationContext(DockerFailureStage.RESPONSE))
+        }
         if (text.isBlank()) return fallback
         return try {
             json.decodeFromString<ErrorResponse>(text)
@@ -144,18 +164,21 @@ open class DockerClient(
 
     /** Cold streams surface HTTP failures during collection, before decoding data. */
     suspend fun HttpResponse.requireStreamSuccess() {
-        if (!status.isSuccess()) throw DockerApiException(status, errorResponse())
+        if (!status.isSuccess()) throw DockerApiException(status, errorResponse()).withDockerContext(operationContext(DockerFailureStage.STREAM))
     }
 
     /** Validate transport completion as well as status; CIO can report a short body as clean EOF. */
     suspend fun <T> HttpResponse.consumeStream(block: suspend (ByteReadChannel) -> T): T {
         requireStreamSuccess()
         val channel = bodyAsChannel().counted()
-        val result = block(channel)
-        channel.closedCause?.let { throw it }
+        val result = try { block(channel) } catch (failure: Exception) {
+            throw failure.withDockerContext(operationContext(DockerFailureStage.STREAM))
+        }
+        channel.closedCause?.let { throw it.withDockerContext(operationContext(DockerFailureStage.STREAM)) }
         val expected = headers[HttpHeaders.ContentLength]?.toLongOrNull()
         if (headers[HttpHeaders.TransferEncoding] == null && expected != null && channel.totalBytesRead != expected) {
             throw kotlinx.io.EOFException("Truncated Docker response: expected $expected bytes, received ${channel.totalBytesRead}")
+                .withDockerContext(operationContext(DockerFailureStage.STREAM))
         }
         return result
     }
@@ -167,7 +190,7 @@ open class DockerClient(
         auxSerializer: KSerializer<TAux>,
         onProgress: suspend (ImageProgress<TAux>) -> Unit,
     ): Result<Unit, ErrorResponse> {
-        if (!status.isSuccess()) return errorResponse().asError()
+        if (!status.isSuccess()) return errorResult()
         val channel = bodyAsChannel().counted()
         while (true) {
             val line = try {
@@ -175,34 +198,35 @@ open class DockerClient(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError()
+                return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError().withOperationContext(operationContext(DockerFailureStage.STREAM), error)
             } ?: break
             if (line.isBlank()) continue
             val message = try {
                 json.parseToJsonElement(line) as? JsonObject
-            } catch (_: SerializationException) {
-                null
-            } ?: return ErrorResponse("Invalid Docker image progress response").asError()
+            } catch (failure: SerializationException) {
+                return ErrorResponse("Invalid Docker image progress response").asError()
+                    .withOperationContext(operationContext(DockerFailureStage.STREAM), failure)
+            } ?: return ErrorResponse("Invalid Docker image progress response").asError().withOperationContext(operationContext(DockerFailureStage.STREAM))
             val detail = (message["errorDetail"] as? JsonObject)?.get("message") as? JsonPrimitive
             val legacyError = message["error"] as? JsonPrimitive
             val error = detail?.contentOrNull?.takeIf { it.isNotBlank() }
                 ?: legacyError?.contentOrNull?.takeIf { it.isNotBlank() }
-            if (error != null) return ErrorResponse(error).asError()
+            if (error != null) return ErrorResponse(error).asError().withOperationContext(operationContext(DockerFailureStage.STREAM))
             val progress = try {
                 json.decodeFromJsonElement(ImageProgress.serializer(auxSerializer), message)
-            } catch (_: SerializationException) {
-                return ErrorResponse("Invalid Docker image progress response").asError()
+            } catch (failure: SerializationException) {
+                return ErrorResponse("Invalid Docker image progress response").asError().withOperationContext(operationContext(DockerFailureStage.STREAM), failure)
             }
             // Deliberately outside parsing/read catches: consumer failures belong to the caller.
             onProgress(progress)
         }
         channel.closedCause?.let { error ->
             if (error is CancellationException) throw error
-            return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError()
+            return ErrorResponse(error.message ?: "Failed to read Docker image progress").asError().withOperationContext(operationContext(DockerFailureStage.STREAM), error)
         }
         val expected = headers[HttpHeaders.ContentLength]?.toLongOrNull()
         if (headers[HttpHeaders.TransferEncoding] == null && expected != null && channel.totalBytesRead != expected) {
-            return ErrorResponse("Truncated Docker image progress response").asError()
+            return ErrorResponse("Truncated Docker image progress response").asError().withOperationContext(operationContext(DockerFailureStage.STREAM))
         }
         return Unit.asSuccess()
     }

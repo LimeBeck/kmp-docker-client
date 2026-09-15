@@ -1,8 +1,10 @@
 package dev.limebeck.libs.docker.client.model
 
+import dev.limebeck.libs.docker.client.diagnostics.*
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.socket.DockerRawConnection
 import io.ktor.utils.io.writeFully
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -42,6 +44,8 @@ class ExecSession internal constructor(
         DockerClient.logger.debug("ExecSession $sessionId started (tty = $isTty)")
     }
 
+    internal var operationContext: DockerOperationContext? = null
+
     private val closed = AtomicBoolean(false)
     private val collection = Mutex()
 
@@ -55,7 +59,11 @@ class ExecSession internal constructor(
         check(collection.tryLock()) { "Session output can only be collected once" }
         try {
             check(!closed.load()) { "Session is closed" }
-            source.collect { emit(it) }
+            source.catch { failure ->
+                throw operationContext?.let {
+                    failure.withDockerContext(it.copy(stage = DockerFailureStage.SESSION_READ))
+                } ?: failure
+            }.collect { emit(it) }
         } finally {
             close()
         }
@@ -69,8 +77,14 @@ class ExecSession internal constructor(
     suspend fun send(bytes: ByteArray) {
         check(!closed.load()) { "Session is closed" }
         DockerClient.logger.trace("ExecSession $sessionId try to send ${bytes.size} bytes")
-        connection.write.writeFully(bytes)
-        connection.write.flush()
+        try {
+            connection.write.writeFully(bytes)
+            connection.write.flush()
+        } catch (failure: Exception) {
+            throw operationContext?.let {
+                failure.withDockerContext(it.copy(stage = DockerFailureStage.SESSION_WRITE))
+            } ?: failure
+        }
         DockerClient.logger.trace("ExecSession $sessionId sent ${bytes.size} bytes")
     }
 

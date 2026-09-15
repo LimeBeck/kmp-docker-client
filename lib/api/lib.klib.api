@@ -6,6 +6,41 @@
 // - Show declarations: true
 
 // Library unique name: <dev.limebeck.libs:lib>
+final enum class dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem : kotlin/Enum<dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem> { // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem|null[0]
+    enum entry API_VERSION_UNSUPPORTED // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.API_VERSION_UNSUPPORTED|null[0]
+    enum entry CONNECTION_LOST // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.CONNECTION_LOST|null[0]
+    enum entry CONNECTION_REFUSED // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.CONNECTION_REFUSED|null[0]
+    enum entry HTTP_ERROR // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.HTTP_ERROR|null[0]
+    enum entry NONE // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.NONE|null[0]
+    enum entry PERMISSION_DENIED // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.PERMISSION_DENIED|null[0]
+    enum entry SOCKET_NOT_FOUND // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.SOCKET_NOT_FOUND|null[0]
+    enum entry TIMEOUT // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.TIMEOUT|null[0]
+    enum entry UNEXPECTED_RESPONSE // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.UNEXPECTED_RESPONSE|null[0]
+    enum entry UNKNOWN // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.UNKNOWN|null[0]
+
+    final val entries // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem> // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem> // dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem.values|values#static(){}[0]
+}
+
+final enum class dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage : kotlin/Enum<dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage> { // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage|null[0]
+    enum entry CONNECT // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.CONNECT|null[0]
+    enum entry HANDSHAKE // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.HANDSHAKE|null[0]
+    enum entry REQUEST // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.REQUEST|null[0]
+    enum entry RESPONSE // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.RESPONSE|null[0]
+    enum entry SESSION_READ // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.SESSION_READ|null[0]
+    enum entry SESSION_WRITE // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.SESSION_WRITE|null[0]
+    enum entry STREAM // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.STREAM|null[0]
+
+    final val entries // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage> // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage> // dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage.values|values#static(){}[0]
+}
+
 final enum class dev.limebeck.libs.docker.client.model/ChangeType : kotlin/Enum<dev.limebeck.libs.docker.client.model/ChangeType> { // dev.limebeck.libs.docker.client.model/ChangeType|null[0]
     enum entry _0 // dev.limebeck.libs.docker.client.model/ChangeType._0|null[0]
     enum entry _1 // dev.limebeck.libs.docker.client.model/ChangeType._1|null[0]
@@ -293,6 +328,63 @@ final class dev.limebeck.libs.docker.client.api/Volumes { // dev.limebeck.libs.d
     final suspend fun getList(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/VolumeListResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Volumes.getList|getList(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
     final suspend fun prune(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/VolumePruneResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Volumes.prune|prune(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
     final suspend fun remove(kotlin/String, kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Volumes.remove|remove(kotlin.String;kotlin.Boolean){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic { // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem, kotlin/String, kotlin/String, kotlin/Int? = ...) // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.<init>|<init>(dev.limebeck.libs.docker.client.diagnostics.ConnectionProblem;kotlin.String;kotlin.String;kotlin.Int?){}[0]
+
+    final val httpStatus // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.httpStatus|{}httpStatus[0]
+        final fun <get-httpStatus>(): kotlin/Int? // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.httpStatus.<get-httpStatus>|<get-httpStatus>(){}[0]
+    final val message // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.message|{}message[0]
+        final fun <get-message>(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.message.<get-message>|<get-message>(){}[0]
+    final val problem // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.problem|{}problem[0]
+        final fun <get-problem>(): dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.problem.<get-problem>|<get-problem>(){}[0]
+    final val suggestion // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.suggestion|{}suggestion[0]
+        final fun <get-suggestion>(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.suggestion.<get-suggestion>|<get-suggestion>(){}[0]
+
+    final fun component1(): dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.component3|component3(){}[0]
+    final fun component4(): kotlin/Int? // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.component4|component4(){}[0]
+    final fun copy(dev.limebeck.libs.docker.client.diagnostics/ConnectionProblem = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Int? = ...): dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.copy|copy(dev.limebeck.libs.docker.client.diagnostics.ConnectionProblem;kotlin.String;kotlin.String;kotlin.Int?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.diagnostics/DockerContextException : kotlin/Exception { // dev.limebeck.libs.docker.client.diagnostics/DockerContextException|null[0]
+    final val context // dev.limebeck.libs.docker.client.diagnostics/DockerContextException.context|{}context[0]
+        final fun <get-context>(): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext // dev.limebeck.libs.docker.client.diagnostics/DockerContextException.context.<get-context>|<get-context>(){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext { // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage, kotlin/Int? = ...) // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;dev.limebeck.libs.docker.client.diagnostics.DockerFailureStage;kotlin.Int?){}[0]
+
+    final val apiVersion // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.apiVersion|{}apiVersion[0]
+        final fun <get-apiVersion>(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.apiVersion.<get-apiVersion>|<get-apiVersion>(){}[0]
+    final val httpStatus // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.httpStatus|{}httpStatus[0]
+        final fun <get-httpStatus>(): kotlin/Int? // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.httpStatus.<get-httpStatus>|<get-httpStatus>(){}[0]
+    final val method // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.method|{}method[0]
+        final fun <get-method>(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.method.<get-method>|<get-method>(){}[0]
+    final val route // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.route|{}route[0]
+        final fun <get-route>(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.route.<get-route>|<get-route>(){}[0]
+    final val stage // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.stage|{}stage[0]
+        final fun <get-stage>(): dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.stage.<get-stage>|<get-stage>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.component3|component3(){}[0]
+    final fun component4(): dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.component4|component4(){}[0]
+    final fun component5(): kotlin/Int? // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.component5|component5(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage = ..., kotlin/Int? = ...): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.copy|copy(kotlin.String;kotlin.String;kotlin.String;dev.limebeck.libs.docker.client.diagnostics.DockerFailureStage;kotlin.Int?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext.toString|toString(){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.diagnostics/DockerResultException : kotlin/IllegalStateException { // dev.limebeck.libs.docker.client.diagnostics/DockerResultException|null[0]
+    final val error // dev.limebeck.libs.docker.client.diagnostics/DockerResultException.error|{}error[0]
+        final fun <get-error>(): kotlin/Any? // dev.limebeck.libs.docker.client.diagnostics/DockerResultException.error.<get-error>|<get-error>(){}[0]
 }
 
 final class dev.limebeck.libs.docker.client.model/Address { // dev.limebeck.libs.docker.client.model/Address|null[0]
@@ -10425,6 +10517,7 @@ final value class <#A: out kotlin/Any?, #B: out kotlin/Any?> dev.limebeck.libs.d
     final fun getOrThrow(): #A // dev.limebeck.libs.docker.client.model/Result.getOrThrow|getOrThrow(){}[0]
     final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.client.model/Result.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.model/Result.toString|toString(){}[0]
+    final fun withOperationContext(dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext, kotlin/Throwable? = ...): dev.limebeck.libs.docker.client.model/Result<#A, #B> // dev.limebeck.libs.docker.client.model/Result.withOperationContext|withOperationContext(dev.limebeck.libs.docker.client.diagnostics.DockerOperationContext;kotlin.Throwable?){}[0]
     final inline fun <#A1: kotlin/Any?> fold(kotlin/Function1<#A, #A1>, kotlin/Function1<#B, #A1>): #A1 // dev.limebeck.libs.docker.client.model/Result.fold|fold(kotlin.Function1<1:0,0:0>;kotlin.Function1<1:1,0:0>){0§<kotlin.Any?>}[0]
     final inline fun <#A1: kotlin/Any?> map(kotlin/Function1<#A, #A1>): dev.limebeck.libs.docker.client.model/Result<#A1, #B> // dev.limebeck.libs.docker.client.model/Result.map|map(kotlin.Function1<1:0,0:0>){0§<kotlin.Any?>}[0]
     final inline fun <#A1: kotlin/Any?> mapError(kotlin/Function1<#B, #A1>): dev.limebeck.libs.docker.client.model/Result<#A, #A1> // dev.limebeck.libs.docker.client.model/Result.mapError|mapError(kotlin.Function1<1:1,0:0>){0§<kotlin.Any?>}[0]
@@ -10436,6 +10529,13 @@ final value class <#A: out kotlin/Any?, #B: out kotlin/Any?> dev.limebeck.libs.d
 
         final val error // dev.limebeck.libs.docker.client.model/Result.Failure.error|{}error[0]
             final fun <get-error>(): kotlin/Any? // dev.limebeck.libs.docker.client.model/Result.Failure.error.<get-error>|<get-error>(){}[0]
+
+        final var cause // dev.limebeck.libs.docker.client.model/Result.Failure.cause|{}cause[0]
+            final fun <get-cause>(): kotlin/Throwable? // dev.limebeck.libs.docker.client.model/Result.Failure.cause.<get-cause>|<get-cause>(){}[0]
+            final fun <set-cause>(kotlin/Throwable?) // dev.limebeck.libs.docker.client.model/Result.Failure.cause.<set-cause>|<set-cause>(kotlin.Throwable?){}[0]
+        final var context // dev.limebeck.libs.docker.client.model/Result.Failure.context|{}context[0]
+            final fun <get-context>(): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext? // dev.limebeck.libs.docker.client.model/Result.Failure.context.<get-context>|<get-context>(){}[0]
+            final fun <set-context>(dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext?) // dev.limebeck.libs.docker.client.model/Result.Failure.context.<set-context>|<set-context>(dev.limebeck.libs.docker.client.diagnostics.DockerOperationContext?){}[0]
 
         final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.model/Result.Failure.toString|toString(){}[0]
     }
@@ -10463,6 +10563,7 @@ open class dev.limebeck.libs.docker.client/DockerClient : dev.limebeck.libs.dock
     final fun (io.ktor.client.request/HttpRequestBuilder).applyStreamConfig() // dev.limebeck.libs.docker.client/DockerClient.applyStreamConfig|applyStreamConfig@io.ktor.client.request.HttpRequestBuilder(){}[0]
     final fun apiPath(kotlin/String): kotlin/String // dev.limebeck.libs.docker.client/DockerClient.apiPath|apiPath(kotlin.String){}[0]
     final suspend fun (io.ktor.client.statement/HttpResponse).errorResponse(): dev.limebeck.libs.docker.client.model/ErrorResponse // dev.limebeck.libs.docker.client/DockerClient.errorResponse|errorResponse@io.ktor.client.statement.HttpResponse(){}[0]
+    final suspend fun (io.ktor.client.statement/HttpResponse).errorResult(): dev.limebeck.libs.docker.client.model/Result<kotlin/Nothing, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client/DockerClient.errorResult|errorResult@io.ktor.client.statement.HttpResponse(){}[0]
     final suspend fun (io.ktor.client.statement/HttpResponse).requireStreamSuccess() // dev.limebeck.libs.docker.client/DockerClient.requireStreamSuccess|requireStreamSuccess@io.ktor.client.statement.HttpResponse(){}[0]
     final suspend fun (io.ktor.client.statement/HttpResponse).validateImageProgress(): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client/DockerClient.validateImageProgress|validateImageProgress@io.ktor.client.statement.HttpResponse(){}[0]
     final suspend fun <#A1: kotlin/Any?> (io.ktor.client.statement/HttpResponse).consumeStream(kotlin.coroutines/SuspendFunction1<io.ktor.utils.io/ByteReadChannel, #A1>): #A1 // dev.limebeck.libs.docker.client/DockerClient.consumeStream|consumeStream@io.ktor.client.statement.HttpResponse(kotlin.coroutines.SuspendFunction1<io.ktor.utils.io.ByteReadChannel,0:0>){0§<kotlin.Any?>}[0]
@@ -10550,16 +10651,23 @@ final val dev.limebeck.libs.docker.client.api/system // dev.limebeck.libs.docker
     final fun (dev.limebeck.libs.docker.client/DockerClient).<get-system>(): dev.limebeck.libs.docker.client.api/System // dev.limebeck.libs.docker.client.api/system.<get-system>|<get-system>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
 final val dev.limebeck.libs.docker.client.api/volumes // dev.limebeck.libs.docker.client.api/volumes|@dev.limebeck.libs.docker.client.DockerClient{}volumes[0]
     final fun (dev.limebeck.libs.docker.client/DockerClient).<get-volumes>(): dev.limebeck.libs.docker.client.api/Volumes // dev.limebeck.libs.docker.client.api/volumes.<get-volumes>|<get-volumes>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
+final val dev.limebeck.libs.docker.client.diagnostics/dockerContext // dev.limebeck.libs.docker.client.diagnostics/dockerContext|@kotlin.Throwable{}dockerContext[0]
+    final fun (kotlin/Throwable).<get-dockerContext>(): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext? // dev.limebeck.libs.docker.client.diagnostics/dockerContext.<get-dockerContext>|<get-dockerContext>@kotlin.Throwable(){}[0]
 final val dev.limebeck.libs.docker.client.utils/isError // dev.limebeck.libs.docker.client.utils/isError|@dev.limebeck.libs.docker.client.utils.HijackHandshake{}isError[0]
     final fun (dev.limebeck.libs.docker.client.utils/HijackHandshake).<get-isError>(): kotlin/Boolean // dev.limebeck.libs.docker.client.utils/isError.<get-isError>|<get-isError>@dev.limebeck.libs.docker.client.utils.HijackHandshake(){}[0]
 
+final fun (dev.limebeck.libs.docker.client/DockerClient).dev.limebeck.libs.docker.client.diagnostics/diagnoseFailure(kotlin/Throwable): dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic // dev.limebeck.libs.docker.client.diagnostics/diagnoseFailure|diagnoseFailure@dev.limebeck.libs.docker.client.DockerClient(kotlin.Throwable){}[0]
+final fun (io.ktor.client.statement/HttpResponse).dev.limebeck.libs.docker.client.diagnostics/operationContext(dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext // dev.limebeck.libs.docker.client.diagnostics/operationContext|operationContext@io.ktor.client.statement.HttpResponse(dev.limebeck.libs.docker.client.diagnostics.DockerFailureStage){}[0]
+final fun (kotlin/Throwable).dev.limebeck.libs.docker.client.diagnostics/withDockerContext(dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext): kotlin/Throwable // dev.limebeck.libs.docker.client.diagnostics/withDockerContext|withDockerContext@kotlin.Throwable(dev.limebeck.libs.docker.client.diagnostics.DockerOperationContext){}[0]
 final fun <#A: kotlin/Any, #B: dev.limebeck.libs.docker.client.dsl/ApiCacheHolder> (kotlin/Function1<#B, #A>).dev.limebeck.libs.docker.client.dsl/api(): dev.limebeck.libs.docker.client.dsl/ApiDelegate<#A, #B> // dev.limebeck.libs.docker.client.dsl/api|api@kotlin.Function1<0:1,0:0>(){0§<kotlin.Any>;1§<dev.limebeck.libs.docker.client.dsl.ApiCacheHolder>}[0]
 final fun <#A: kotlin/Any, #B: dev.limebeck.libs.docker.client.dsl/ApiCacheHolder> dev.limebeck.libs.docker.client.dsl/api(kotlin/Function1<#B, #A>): dev.limebeck.libs.docker.client.dsl/ApiDelegate<#A, #B> // dev.limebeck.libs.docker.client.dsl/api|api(kotlin.Function1<0:1,0:0>){0§<kotlin.Any>;1§<dev.limebeck.libs.docker.client.dsl.ApiCacheHolder>}[0]
 final fun <#A: kotlin/Any?> (#A).dev.limebeck.libs.docker.client.model/asError(): dev.limebeck.libs.docker.client.model/Result<kotlin/Nothing, #A> // dev.limebeck.libs.docker.client.model/asError|asError@0:0(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (#A).dev.limebeck.libs.docker.client.model/asSuccess(): dev.limebeck.libs.docker.client.model/Result<#A, kotlin/Nothing> // dev.limebeck.libs.docker.client.model/asSuccess|asSuccess@0:0(){0§<kotlin.Any?>}[0]
 final fun dev.limebeck.libs.docker.client.api/resolveServerForRegistry(kotlin/String): kotlin.collections/List<kotlin/String> // dev.limebeck.libs.docker.client.api/resolveServerForRegistry|resolveServerForRegistry(kotlin.String){}[0]
+final fun dev.limebeck.libs.docker.client.diagnostics/operationContext(kotlin/String, kotlin/String, dev.limebeck.libs.docker.client.diagnostics/DockerFailureStage, kotlin/Int? = ...): dev.limebeck.libs.docker.client.diagnostics/DockerOperationContext // dev.limebeck.libs.docker.client.diagnostics/operationContext|operationContext(kotlin.String;kotlin.String;dev.limebeck.libs.docker.client.diagnostics.DockerFailureStage;kotlin.Int?){}[0]
 final fun dev.limebeck.libs.docker.client.utils/buildHttpHeader(io.ktor.http/HttpMethod, kotlin/String, io.ktor.http/Parameters = ..., kotlin.collections/Map<kotlin/String, kotlin/String> = ...): kotlin/String // dev.limebeck.libs.docker.client.utils/buildHttpHeader|buildHttpHeader(io.ktor.http.HttpMethod;kotlin.String;io.ktor.http.Parameters;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
 final suspend fun (dev.limebeck.libs.docker.client/DockerClient).dev.limebeck.libs.docker.client.api/auth(dev.limebeck.libs.docker.client.model/AuthConfig): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/SystemAuthResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/auth|auth@dev.limebeck.libs.docker.client.DockerClient(dev.limebeck.libs.docker.client.model.AuthConfig){}[0]
+final suspend fun (dev.limebeck.libs.docker.client/DockerClient).dev.limebeck.libs.docker.client.diagnostics/diagnoseConnection(kotlin/Long = ...): dev.limebeck.libs.docker.client.diagnostics/ConnectionDiagnostic // dev.limebeck.libs.docker.client.diagnostics/diagnoseConnection|diagnoseConnection@dev.limebeck.libs.docker.client.DockerClient(kotlin.Long){}[0]
 final suspend fun (dev.limebeck.libs.docker.client/DockerClient).dev.limebeck.libs.docker.client.utils/createInteractiveSession(kotlin/Boolean, io.ktor.http/HttpMethod, kotlin/String, io.ktor.http/Parameters = ..., kotlin.collections/Map<kotlin/String, kotlin/String> = ..., kotlin/ByteArray? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/ExecSession, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.utils/createInteractiveSession|createInteractiveSession@dev.limebeck.libs.docker.client.DockerClient(kotlin.Boolean;io.ktor.http.HttpMethod;kotlin.String;io.ktor.http.Parameters;kotlin.collections.Map<kotlin.String,kotlin.String>;kotlin.ByteArray?){}[0]
 final suspend fun (io.ktor.utils.io/ByteReadChannel).dev.limebeck.libs.docker.client.utils/readLogLines(kotlin/Boolean, kotlin.coroutines/SuspendFunction1<dev.limebeck.libs.docker.client.model/LogLine, kotlin/Unit>) // dev.limebeck.libs.docker.client.utils/readLogLines|readLogLines@io.ktor.utils.io.ByteReadChannel(kotlin.Boolean;kotlin.coroutines.SuspendFunction1<dev.limebeck.libs.docker.client.model.LogLine,kotlin.Unit>){}[0]
 final suspend fun dev.limebeck.libs.docker.client.socket/openRawConnectionUnix(kotlin/String = ...): dev.limebeck.libs.docker.client.socket/DockerRawConnection // dev.limebeck.libs.docker.client.socket/openRawConnectionUnix|openRawConnectionUnix(kotlin.String){}[0]

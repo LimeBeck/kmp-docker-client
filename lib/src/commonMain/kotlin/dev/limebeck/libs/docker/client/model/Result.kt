@@ -1,6 +1,7 @@
 package dev.limebeck.libs.docker.client.model
 
 import kotlin.jvm.JvmInline
+import dev.limebeck.libs.docker.client.diagnostics.*
 
 /**
  * Success value [T] or typed error [E], distinct from kotlin.Result.
@@ -15,6 +16,8 @@ value class Result<out T, out E>(
     // Helper marker class for errors.
     // It is necessary to distinguish Success<String> from Error<String>.
     class Failure(val error: Any?) {
+        @PublishedApi internal var context: DockerOperationContext? = null
+        @PublishedApi internal var cause: Throwable? = null
         override fun toString() = "Failure($error)"
     }
 
@@ -50,7 +53,24 @@ value class Result<out T, out E>(
     @Suppress("UNCHECKED_CAST")
     fun getOrThrow(): T {
         if (isSuccess) return unboxed as T
+        val failure = unboxed as Failure
+        failure.context?.let { context ->
+            throw DockerResultException(failure.error, context, failure.cause).withDockerContext(context)
+        }
         throw IllegalStateException("Result is an error: ${errorOrNull()}")
+    }
+
+
+    internal fun errorResultOrNull(): Result<Nothing, E>? = if (isError) Result(unboxed) else null
+
+    @PublishedApi
+    internal fun withOperationContext(context: DockerOperationContext, cause: Throwable? = null): Result<T, E> {
+        if (isSuccess) return this
+        val previous = unboxed as Failure
+        return Result(Failure(previous.error).also {
+            it.context = previous.context ?: context
+            it.cause = previous.cause ?: cause
+        })
     }
 
     override fun toString(): String = if (isSuccess) "Success($unboxed)" else "Error(${errorOrNull()})"
@@ -92,7 +112,9 @@ value class Result<out T, out E>(
     inline fun <R> mapError(transform: (E) -> R): Result<T, R> {
         return if (isError) {
             @Suppress("UNCHECKED_CAST")
-            (error(transform((unboxed as Failure).error as E)))
+            (error(transform((unboxed as Failure).error as E)).let { mapped ->
+                unboxed.context?.let { mapped.withOperationContext(it, unboxed.cause) } ?: mapped
+            })
         } else {
             @Suppress("UNCHECKED_CAST")
             (Result(unboxed))

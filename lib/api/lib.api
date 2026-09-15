@@ -11,6 +11,7 @@ public class dev/limebeck/libs/docker/client/DockerClient : dev/limebeck/libs/do
 	public fun close ()V
 	public final fun consumeStream (Lio/ktor/client/statement/HttpResponse;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun errorResponse (Lio/ktor/client/statement/HttpResponse;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun errorResult-MstoyBY (Lio/ktor/client/statement/HttpResponse;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getApiCache ()Ljava/util/Map;
 	public final fun getClient ()Lio/ktor/client/HttpClient;
 	public final fun getConfig ()Ldev/limebeck/libs/docker/client/DockerClientConfig;
@@ -239,6 +240,95 @@ public final class dev/limebeck/libs/docker/client/api/Volumes {
 
 public final class dev/limebeck/libs/docker/client/api/VolumesKt {
 	public static final fun getVolumes (Ldev/limebeck/libs/docker/client/DockerClient;)Ldev/limebeck/libs/docker/client/api/Volumes;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnostic {
+	public fun <init> (Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun copy (Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;)Ldev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnostic;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnostic;Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnostic;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHttpStatus ()Ljava/lang/Integer;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getProblem ()Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public final fun getSuggestion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnosticsKt {
+	public static final fun diagnoseConnection (Ldev/limebeck/libs/docker/client/DockerClient;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun diagnoseConnection$default (Ldev/limebeck/libs/docker/client/DockerClient;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun diagnoseFailure (Ldev/limebeck/libs/docker/client/DockerClient;Ljava/lang/Throwable;)Ldev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnostic;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/ConnectionProblem : java/lang/Enum {
+	public static final field API_VERSION_UNSUPPORTED Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field CONNECTION_LOST Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field CONNECTION_REFUSED Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field HTTP_ERROR Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field NONE Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field PERMISSION_DENIED Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field SOCKET_NOT_FOUND Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field TIMEOUT Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field UNEXPECTED_RESPONSE Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static final field UNKNOWN Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+	public static fun values ()[Ldev/limebeck/libs/docker/client/diagnostics/ConnectionProblem;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/DockerContextException : java/lang/Exception {
+	public final fun getContext ()Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/DockerFailureStage : java/lang/Enum {
+	public static final field CONNECT Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static final field HANDSHAKE Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static final field REQUEST Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static final field RESPONSE Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static final field SESSION_READ Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static final field SESSION_WRITE Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static final field STREAM Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public static fun values ()[Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/DockerOperationContext {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;Ljava/lang/Integer;)Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApiVersion ()Ljava/lang/String;
+	public final fun getHttpStatus ()Ljava/lang/Integer;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getRoute ()Ljava/lang/String;
+	public final fun getStage ()Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/DockerResultException : java/lang/IllegalStateException {
+	public final fun getError ()Ljava/lang/Object;
+}
+
+public final class dev/limebeck/libs/docker/client/diagnostics/OperationContextKt {
+	public static final fun getDockerContext (Ljava/lang/Throwable;)Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+	public static final fun operationContext (Lio/ktor/client/statement/HttpResponse;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;)Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+	public static final fun operationContext (Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;Ljava/lang/Integer;)Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+	public static synthetic fun operationContext$default (Ljava/lang/String;Ljava/lang/String;Ldev/limebeck/libs/docker/client/diagnostics/DockerFailureStage;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
+	public static final fun withDockerContext (Ljava/lang/Throwable;Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;)Ljava/lang/Throwable;
 }
 
 public abstract interface class dev/limebeck/libs/docker/client/dsl/ApiCacheHolder {
@@ -6703,6 +6793,8 @@ public final class dev/limebeck/libs/docker/client/model/Result {
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (Ljava/lang/Object;)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
+	public static final fun withOperationContext-MstoyBY (Ljava/lang/Object;Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;Ljava/lang/Throwable;)Ljava/lang/Object;
+	public static synthetic fun withOperationContext-MstoyBY$default (Ljava/lang/Object;Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;Ljava/lang/Throwable;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class dev/limebeck/libs/docker/client/model/Result$Companion {
@@ -6712,7 +6804,11 @@ public final class dev/limebeck/libs/docker/client/model/Result$Companion {
 
 public final class dev/limebeck/libs/docker/client/model/Result$Failure {
 	public fun <init> (Ljava/lang/Object;)V
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getContext ()Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;
 	public final fun getError ()Ljava/lang/Object;
+	public final fun setCause (Ljava/lang/Throwable;)V
+	public final fun setContext (Ldev/limebeck/libs/docker/client/diagnostics/DockerOperationContext;)V
 	public fun toString ()Ljava/lang/String;
 }
 

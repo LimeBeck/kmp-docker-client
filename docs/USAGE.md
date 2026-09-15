@@ -33,6 +33,7 @@ All following examples use these imports. The examples are suspending functions 
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.DockerClientConfig
 import dev.limebeck.libs.docker.client.api.*
+import dev.limebeck.libs.docker.client.diagnostics.*
 import dev.limebeck.libs.docker.client.model.*
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.*
@@ -243,6 +244,70 @@ HTTP diagnostics mask credential headers and exclude `/auth` exchanges and bodie
 The SDK does not retry/reconnect automatically. Live streams can finish with normal EOF as well as an exception; CIO cannot distinguish every disconnect between complete HTTP chunks from a clean end. Treat either as a reason to reconcile if the subscription should still be live. Use bounded backoff with jitter for selected transient failures, and propagate cancellation, decoding failures and consumer errors.
 
 Refresh a snapshot after reconnect. Recreate event subscriptions using a saved timestamp with a small overlap and deduplicate; Docker event history is finite. Choose log `since`/`tail` to control replay, and re-prepare logs after container replacement. Reset your stats baseline. Start a new terminal explicitly without replaying commands. Read [recovery and tested boundaries](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/STREAM-RECOVERY.md).
+
+### Connection diagnostics (1.0.1, unreleased)
+
+The diagnostic extensions are opt-in and do not change errors returned by ordinary API calls.
+`diagnoseConnection` checks the configured socket and fixed API version with a five-second default
+HTTP timeout. It reads at most 4 KiB of the response and never creates resources or retries operations.
+
+<!-- compile-sample -->
+```kotlin
+suspend fun checkDockerConnection(docker: DockerClient) {
+    val report = docker.diagnoseConnection(timeoutMillis = 5_000)
+    println("${report.problem}: ${report.message}")
+    println(report.suggestion)
+}
+```
+
+Import `dev.limebeck.libs.docker.client.diagnostics.*`. A `NONE` result means the versioned ping
+succeeded, not that every operation is authorized. For a transport exception from a call, stream or
+terminal, use `docker.diagnoseFailure(failure)` to obtain the same categories. Preserve cancellation;
+do not classify application callback exceptions as transport failures. Known OS messages/codes are
+recognized best-effort; unknown or localized errors remain `UNKNOWN`.
+SDK-produced reports contain only a category, fixed messages and HTTP status: no socket paths,
+raw exceptions, headers or response bodies. This also applies to `toString()`. The probe is excluded
+from the SDK HTTP logging plugin. Caller-held exceptions and custom logging/plugins remain outside
+this guarantee; do not send them to the panel or log them without separate handling. A clean stream EOF has no exception and still needs reconciliation.
+These additions require the upcoming 1.0.1 release and are not present in published 1.0.0.
+
+### Exception context (1.0.1, unreleased)
+
+HTTP request, response decoding, stream and SDK-created exec/attach session failures carry
+safe operation metadata. The SDK retains the original exception type and cause; context is attached
+as a suppressed `DockerContextException`. `dockerContext` also follows cause chains created by
+coroutine stack recovery. Caller cancellation is not annotated.
+
+<!-- compile-sample -->
+```kotlin
+suspend fun inspectWithContext(docker: DockerClient, id: String) {
+    try {
+        docker.containers.getInfo(id).getOrThrow()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        failure.dockerContext?.let { context ->
+            println("${context.method} ${context.route}: ${context.stage}, HTTP ${context.httpStatus}")
+        }
+        throw failure
+    }
+}
+```
+
+Context contains method, an allowlisted route such as `/containers/{resource}/stats`, API version,
+failure stage and HTTP status when known. It contains no socket path, resource IDs, query values,
+headers or bodies. Unknown routes become `/{unknown}`. A stage records where an error was observed,
+not whether retrying is safe. Original exception messages, causes, suppressed cleanup failures and
+`DockerApiException.error` remain sensitive: keep full stack traces within trusted debugging.
+`DockerApiException.message` itself includes only the numeric HTTP status.
+
+SDK HTTP error Results and image progress failures preserve context through `map`/`mapError`.
+Their `getOrThrow()` throws `DockerResultException`, an `IllegalStateException` with safe context
+in its message. Its `error` property retains the typed error value, and `cause` retains the original
+exception when available. Caller-created Results and raw channels consumed outside SDK boundaries
+may have no operation context. Non-HTTP terminal handshake
+failures now throw their original exception with context instead of returning only an error string;
+HTTP handshake rejections still return an error Result. Caller-created sessions may have no context.
 
 ### Troubleshooting and upgrade
 

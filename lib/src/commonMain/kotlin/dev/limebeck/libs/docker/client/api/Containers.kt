@@ -85,10 +85,9 @@ class Containers(private val dockerClient: DockerClient) {
     ): Result<Flow<LogLine>, ErrorResponse> =
         with(dockerClient) {
             coroutineScope {
-                val container = getInfo(id).onError {
-                    return@coroutineScope it.asError()
-                }.getOrNull()
-                    ?: return@coroutineScope ErrorResponse("Container not found").asError()
+                val inspection = getInfo(id)
+                inspection.errorResultOrNull()?.let { return@coroutineScope it }
+                val container = inspection.getOrThrow()
 
                 val logs = channelFlow {
                     client.prepareGet(apiPath("/containers/${id}/logs")) {
@@ -472,7 +471,7 @@ class Containers(private val dockerClient: DockerClient) {
             return if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                response.errorResponse().asError()
+                response.errorResult()
             }
         }
 
@@ -495,7 +494,7 @@ class Containers(private val dockerClient: DockerClient) {
             return if (response.status.isSuccess()) {
                 (response.headers["X-Docker-Container-Path-Stat"] ?: "").asSuccess()
             } else {
-                response.errorResponse().asError()
+                response.errorResult()
             }
         }
 
@@ -518,7 +517,7 @@ class Containers(private val dockerClient: DockerClient) {
             return if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                response.errorResponse().asError()
+                response.errorResult()
             }
         }
 
@@ -594,9 +593,9 @@ class Containers(private val dockerClient: DockerClient) {
     ): Result<ExecSession, ErrorResponse> =
         with(dockerClient) {
             coroutineScope {
-                val container = getInfo(id).onError {
-                    return@coroutineScope Result.error(it)
-                }.getOrNull() ?: return@coroutineScope ErrorResponse("Container not found").asError()
+                val inspection = getInfo(id)
+                inspection.errorResultOrNull()?.let { return@coroutineScope it }
+                val container = inspection.getOrThrow()
 
                 val isTty = container.config?.tty == true
 

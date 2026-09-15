@@ -1,5 +1,6 @@
 package dev.limebeck.libs.docker.client.api
 
+import dev.limebeck.libs.docker.client.diagnostics.*
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.dsl.api
 import dev.limebeck.libs.docker.client.model.*
@@ -107,6 +108,7 @@ class Images(private val dockerClient: DockerClient) {
                 OciImageRefParser.normalize(fromImage).registry
             } catch (e: IllegalArgumentException) {
                 return@with ErrorResponse("Invalid image name: $fromImage: ${e.message}").asError()
+                    .withOperationContext(operationContext("POST", "/images/create", DockerFailureStage.REQUEST), e)
             }
 
             client.preparePost(apiPath("/images/create")) {
@@ -197,6 +199,7 @@ class Images(private val dockerClient: DockerClient) {
                 OciImageRefParser.normalize(name).registry
             } catch (e: IllegalArgumentException) {
                 return@with ErrorResponse("Invalid image name: $name: ${e.message}").asError()
+                    .withOperationContext(operationContext("POST", "/images/{resource}/push", DockerFailureStage.REQUEST), e)
             }
 
             client.preparePost(apiPath("/images/$name/push")) {
@@ -314,7 +317,7 @@ class Images(private val dockerClient: DockerClient) {
             if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                response.errorResponse().asError()
+                response.errorResult()
             }
         }
 
@@ -340,7 +343,7 @@ class Images(private val dockerClient: DockerClient) {
             if (response.status.isSuccess()) {
                 response.bodyAsChannel().asSuccess()
             } else {
-                response.errorResponse().asError()
+                response.errorResult()
             }
         }
 

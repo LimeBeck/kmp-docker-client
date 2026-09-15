@@ -1,5 +1,6 @@
 package dev.limebeck.libs.docker.client.utils
 
+import dev.limebeck.libs.docker.client.diagnostics.*
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.model.*
 import io.ktor.http.*
@@ -125,7 +126,9 @@ suspend fun DockerClient.createInteractiveSession(
     headers: Map<String, String> = emptyMap(),
     body: ByteArray? = null
 ): Result<ExecSession, ErrorResponse> = coroutineScope {
-    val conn = openRawConnection()
+    val conn = try { openRawConnection() } catch (failure: Exception) {
+        throw failure.withDockerContext(operationContext(method.value, path, DockerFailureStage.CONNECT))
+    }
 
     val headers = buildHttpHeader(
         method = method,
@@ -141,13 +144,14 @@ suspend fun DockerClient.createInteractiveSession(
         body?.let { conn.write.writeFully(it) }
         conn.write.flush()
 
-        DockerClient.logger.debug("Send hijack request: ${method.value} ${apiPath(path)}")
+        DockerClient.logger.debug("Send hijack request: ${operationContext(method.value, path, DockerFailureStage.HANDSHAKE)}")
 
         val hs = readHttp11Headers(conn.read)
 
         if (hs.isError) {
             conn.close()
             return@coroutineScope ErrorResponse("Docker hijack failed: HTTP ${hs.status}").asError()
+                .withOperationContext(operationContext(method.value, path, DockerFailureStage.HANDSHAKE, hs.status))
         }
 
         DockerClient.logger.debug("Connection hjacked")
@@ -163,12 +167,16 @@ suspend fun DockerClient.createInteractiveSession(
             }
         }
 
-        val session = ExecSession(incomingFlow, tty, conn, chunks)
+        val session = ExecSession(incomingFlow, tty, conn, chunks).also {
+            it.operationContext = operationContext(method.value, path, DockerFailureStage.HANDSHAKE, hs.status)
+        }
 
         return@coroutineScope session.asSuccess()
     } catch (t: Throwable) {
-        runCatching { conn.close() }
+        runCatching { conn.close() }.exceptionOrNull()?.let { cleanup ->
+            if (cleanup !== t) t.addSuppressed(cleanup)
+        }
         if (t is CancellationException) throw t
-        return@coroutineScope ErrorResponse(message = t.message ?: "createInteractiveSession failed").asError()
+        throw t.withDockerContext(operationContext(method.value, path, DockerFailureStage.HANDSHAKE))
     }
 }
