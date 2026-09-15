@@ -20,6 +20,10 @@ import kotlin.uuid.Uuid
  * Collect exactly one of [incomingChunks] or [incoming], once. Completion, cancellation or failure of
  * that collection closes the connection. Close explicitly if output is never collected; `use` is supported.
  * Closing a connection does not guarantee that Docker terminates the remote process.
+ * Read/write failures propagate with their original causes; SDK-created sessions attach
+ * [dev.limebeck.libs.docker.client.diagnostics.dockerContext] when available.
+ *
+ * @sample dev.limebeck.libs.docker.guide.openShell
  *
  * @property isTty Whether output uses raw TTY bytes instead of Docker stdout/stderr multiplex framing.
  * @property connection Raw transport. Reading it directly bypasses buffered handshake data and output framing.

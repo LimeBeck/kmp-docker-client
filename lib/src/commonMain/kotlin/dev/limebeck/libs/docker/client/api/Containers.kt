@@ -38,7 +38,9 @@ class Containers(private val dockerClient: DockerClient) {
      * @param all Include stopped containers; false lists running containers.
      * @param limit Maximum number of entries; null leaves the daemon default.
      * @param size Include container filesystem sizes.
-     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @param filters Docker filter names mapped to values, for example mapOf("status" to listOf("running"))
+     * for listing, or mapOf("label" to listOf("app=worker")). Allowed keys depend on the operation;
+     * the SDK encodes the map as JSON and Docker validates it.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun getList(
@@ -76,7 +78,8 @@ class Containers(private val dockerClient: DockerClient) {
      * Follow mode has no implicit timeout; the caller owns its deadline and resubscription policy.
      *
      * @param id Container ID or name.
-     * @param parameters Log streams, history bounds and follow mode.
+     * @sample dev.limebeck.libs.docker.guide.observeForThirtySeconds
+     * @param parameters Log streams, history bounds and follow mode; see [ContainerLogsParameters] for units/defaults.
      * @return Prepared flow or an error encountered before collection; see collection failure semantics above.
      */
     suspend fun getLogs(
@@ -117,9 +120,13 @@ class Containers(private val dockerClient: DockerClient) {
      * Creates but does not start the container. Pull the image first if absent.
      * A name conflict is returned as an error; existing resources are not replaced.
      *
-     * @param name Resource name or ID accepted by Docker.
-     * @param config Configuration sent to Docker as JSON.
-     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
+     * @see start
+     * @sample dev.limebeck.libs.docker.guide.createWorker
+     * @param name New container name; null lets Docker generate one. A conflicting name is an error.
+     * @param config Container image, command and environment. Commands are argument lists, not shell
+     * expressions: use listOf("sh", "-c", "...") explicitly when shell expansion is needed.
+     * @return Created container ID and daemon warnings, or a Docker error. Transport/decoding failures
+     * and cancellation throw; success does not mean the container has started.
      */
     suspend fun create(
         name: String? = null,
@@ -137,9 +144,18 @@ class Containers(private val dockerClient: DockerClient) {
      * Creates but does not start the container. Pull the image first if absent.
      * A name conflict is returned as an error; existing resources are not replaced.
      *
-     * @param name Resource name or ID accepted by Docker.
-     * @param config Configuration sent to Docker as JSON.
-     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
+     * hostConfig configures mounts, published ports and resource limits; networkingConfig selects
+     * initial network attachments. Declaring exposedPorts alone does not publish a host port.
+     *
+     * @see start
+     * @see ContainerCreateRequest
+     * @see HostConfig
+     * @sample dev.limebeck.libs.docker.guide.createService
+     * @param name New container name; null lets Docker generate one. A conflicting name is an error.
+     * @param config Container image, command and environment. Commands are argument lists, not shell
+     * expressions: use listOf("sh", "-c", "...") explicitly when shell expansion is needed.
+     * @return Created container ID and daemon warnings, or a Docker error. Transport/decoding failures
+     * and cancellation throw; success does not mean the container has started.
      */
     suspend fun create(
         name: String? = null,
@@ -154,7 +170,11 @@ class Containers(private val dockerClient: DockerClient) {
         }
 
     /**
-     * Start a container
+     * Starts an already-created container. Success means Docker accepted the start, not that the
+     * application is ready. A failed start does not remove the container.
+     *
+     * @see create
+     * @see wait
      *
      * @param id Container ID or name.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
@@ -270,7 +290,7 @@ class Containers(private val dockerClient: DockerClient) {
      * Rename a container
      *
      * @param id Container ID or name.
-     * @param name Resource name or ID accepted by Docker.
+     * @param name New container name, not an existing ID.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun rename(
@@ -319,7 +339,9 @@ class Containers(private val dockerClient: DockerClient) {
     /**
      * Delete unused containers
      *
-     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @param filters Docker filter names mapped to values, for example mapOf("status" to listOf("running"))
+     * for listing, or mapOf("label" to listOf("app=worker")). Allowed keys depend on the operation;
+     * the SDK encodes the map as JSON and Docker validates it.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun prune(
@@ -381,6 +403,7 @@ class Containers(private val dockerClient: DockerClient) {
      * Cancellation releases the streaming request. CPU percentages require successive counter samples.
      *
      * @param id Container ID or name.
+     * @sample dev.limebeck.libs.docker.guide.oneStatsSample
      * @param stream Use a live cold flow when true; fetch a single response immediately when false.
      * @param oneShot Request one sample without waiting for a second CPU sample; used with stream=false.
      * @return Prepared flow or an error encountered before collection; see collection failure semantics above.
@@ -554,8 +577,10 @@ class Containers(private val dockerClient: DockerClient) {
      * Pass the returned ID to [Exec.startInteractive] or [Exec.startAndForget].
      *
      * @param id Container ID or name.
-     * @param config Configuration sent to Docker as JSON.
-     * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
+     * @param config Command arguments, working directory, user and stdin/stdout/stderr attachment flags.
+     * For an interactive shell, enable stdin/stdout/stderr attachment and use the same tty value at start.
+     * @sample dev.limebeck.libs.docker.guide.openShell
+     * @return Exec instance ID for [Exec.startInteractive] or [Exec.startAndForget]; creating it does not run the command.
      */
     suspend fun execCreate(
         id: String,

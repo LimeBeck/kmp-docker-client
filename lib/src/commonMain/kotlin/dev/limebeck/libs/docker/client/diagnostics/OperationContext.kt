@@ -11,6 +11,12 @@ enum class DockerFailureStage { REQUEST, RESPONSE, STREAM, CONNECT, HANDSHAKE, S
 /**
  * Safe metadata attached to an SDK exception. SDK-produced contexts omit socket paths, resource identifiers,
  * query parameters, headers, payloads and exception messages. The original exception itself remains sensitive.
+ *
+ * @property method HTTP verb, or UNKNOWN for an unrecognized method.
+ * @property route Allowlisted route template, such as /containers/{resource}/stats; unknown routes use /{unknown}.
+ * @property apiVersion Fixed API version used by this SDK.
+ * @property stage Boundary where the SDK observed the failure; it does not establish whether a retry is safe.
+ * @property httpStatus Response status when available; null when no response status was captured.
  */
 data class DockerOperationContext(
     val method: String,
@@ -27,6 +33,9 @@ class DockerContextException internal constructor(val context: DockerOperationCo
 /**
  * Context attached by the SDK, including through coroutine-recovered cause chains, or null when absent.
  * Read this instead of printing the original exception when producing user-facing diagnostics.
+ * Cancellation and failures outside SDK boundaries may have no context.
+ *
+ * @sample dev.limebeck.libs.docker.guide.inspectWithContext
  */
 val Throwable.dockerContext: DockerOperationContext?
     get() {

@@ -57,7 +57,9 @@ class Images(private val dockerClient: DockerClient) {
      * Callbacks are sequential and apply backpressure; callback exceptions and cancellation propagate.
      * There is no implicit request/idle deadline. Cancelling closes the request without rolling back daemon work.
      *
-     * @param fromImage Image reference to pull; also used to select stored registry credentials.
+     * @sample dev.limebeck.libs.docker.guide.createWorker
+     * @param fromImage Image reference to pull, for example alpine:latest or registry.example.com/team/app:v1;
+     * also used to select stored registry credentials.
      * @param fromSrc Optional import source forwarded to Docker; this overload does not upload an import body.
      * @param repo Destination repository name.
      * @param tag Image tag; null leaves tag selection to Docker.
@@ -83,7 +85,9 @@ class Images(private val dockerClient: DockerClient) {
      * Callbacks are sequential and apply backpressure; callback exceptions and cancellation propagate.
      * There is no implicit request/idle deadline. Cancelling closes the request without rolling back daemon work.
      *
-     * @param fromImage Image reference to pull; also used to select stored registry credentials.
+     * @sample dev.limebeck.libs.docker.guide.createWorker
+     * @param fromImage Image reference to pull, for example alpine:latest or registry.example.com/team/app:v1;
+     * also used to select stored registry credentials.
      * @param fromSrc Optional import source forwarded to Docker; this overload does not upload an import body.
      * @param repo Destination repository name.
      * @param tag Image tag; null leaves tag selection to Docker.
@@ -91,6 +95,8 @@ class Images(private val dockerClient: DockerClient) {
      * @param changes Dockerfile instructions applied by Docker during import.
      * @param platform Optional Docker platform selector, for example linux/amd64.
      * @param onProgress Suspending callback invoked sequentially for each progress record.
+     * Fields can be absent; progress counts describe a layer rather than the whole operation.
+     * Use the returned Result to determine completion, not status text or a percentage.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun create(
@@ -164,6 +170,7 @@ class Images(private val dockerClient: DockerClient) {
      * Callbacks are sequential and apply backpressure; callback exceptions and cancellation propagate.
      * There is no implicit request/idle deadline. Cancelling closes the request without rolling back daemon work.
      *
+     * @sample dev.limebeck.libs.docker.guide.pushImage
      * @param name Tagged repository reference including its registry, for example registry.example.com/team/app.
      * @param tag Image tag; null leaves tag selection to Docker.
      * @param platform Optional Docker platform selector, for example linux/amd64.
@@ -182,10 +189,13 @@ class Images(private val dockerClient: DockerClient) {
      * Callbacks are sequential and apply backpressure; callback exceptions and cancellation propagate.
      * There is no implicit request/idle deadline. Cancelling closes the request without rolling back daemon work.
      *
+     * @sample dev.limebeck.libs.docker.guide.pushImage
      * @param name Tagged repository reference including its registry, for example registry.example.com/team/app.
      * @param tag Image tag; null leaves tag selection to Docker.
      * @param platform Optional Docker platform selector, for example linux/amd64.
      * @param onProgress Suspending callback invoked sequentially for each progress record.
+     * Fields can be absent; progress counts describe a layer rather than the whole operation.
+     * Use the returned Result to determine completion, not status text or a percentage.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun push(
@@ -353,6 +363,7 @@ class Images(private val dockerClient: DockerClient) {
      * Callbacks are sequential and apply backpressure; callback exceptions and cancellation propagate.
      * There is no implicit request/idle deadline. Cancelling closes the request without rolling back daemon work.
      *
+     * @sample dev.limebeck.libs.docker.guide.loadArchive
      * @param quiet Ask Docker to suppress verbose load progress.
      * @param body Tar archive channel consumed by this operation; retries require a fresh source.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
@@ -369,9 +380,12 @@ class Images(private val dockerClient: DockerClient) {
      * Callbacks are sequential and apply backpressure; callback exceptions and cancellation propagate.
      * There is no implicit request/idle deadline. Cancelling closes the request without rolling back daemon work.
      *
+     * @sample dev.limebeck.libs.docker.guide.loadArchive
      * @param quiet Ask Docker to suppress verbose load progress.
      * @param body Tar archive channel consumed by this operation; retries require a fresh source.
      * @param onProgress Suspending callback invoked sequentially for each progress record.
+     * Fields can be absent; progress counts describe a layer rather than the whole operation.
+     * Use the returned Result to determine completion, not status text or a percentage.
      * @return Operation response on success, or the Docker error response. Transport failures and cancellation can throw.
      */
     suspend fun load(

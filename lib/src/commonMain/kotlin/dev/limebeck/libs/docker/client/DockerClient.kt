@@ -45,6 +45,10 @@ import kotlin.io.encoding.Base64
  * [close] shuts down the owned HTTP client; raw exec/attach sessions must be closed separately.
  * No API negotiation, Docker context discovery or automatic retry/reconnect is performed.
  *
+ * Import dev.limebeck.libs.docker.client.api.* to access containers, images, exec and other API groups.
+ *
+ * @sample dev.limebeck.libs.docker.guide.listContainers
+ * @see DockerClientConfig
  * @param config Serialization, endpoint and in-memory registry authentication settings.
  */
 open class DockerClient(

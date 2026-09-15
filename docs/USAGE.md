@@ -57,7 +57,7 @@ API entry points: [DockerClient][dev.limebeck.libs.docker.client.DockerClient], 
 
 ### Results and exceptions
 
-Ordinary operations return this library's `Result<T, ErrorResponse>`, not Kotlin's single-parameter `Result<T>`. Use `fold`, `onError` or `errorOrNull` to handle daemon errors. `getOrThrow()` is convenient when any error should abort the current workflow; it throws `IllegalStateException` for an error result.
+Ordinary operations return this library's `Result<T, ErrorResponse>`, not Kotlin's single-parameter `Result<T>`. Use `fold`, `onError` or `errorOrNull` to handle daemon errors. `getOrThrow()` is convenient when any error should abort the current workflow; SDK errors with operation context throw `DockerResultException` (an `IllegalStateException`), retaining the original error and available cause. Read `failure.dockerContext` for sanitized operation details; raw errors and causes may contain sensitive data. Caller-created error results without context throw a plain `IllegalStateException`.
 
 <!-- compile-sample -->
 ```kotlin

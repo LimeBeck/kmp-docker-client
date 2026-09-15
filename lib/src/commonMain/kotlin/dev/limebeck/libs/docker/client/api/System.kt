@@ -74,9 +74,11 @@ class System(private val dockerClient: DockerClient) {
      * There is no automatic reconnect. Docker history is finite: save a cursor, deduplicate replay and
      * refresh resource state after reconnect. An interrupted connection may also finish as normal EOF.
      *
-     * @param since Start timestamp accepted by Docker; null requests new events only.
-     * @param until End timestamp accepted by Docker; null leaves the subscription live.
-     * @param filters Docker filter names mapped to accepted values; encoded as JSON by the SDK.
+     * @sample dev.limebeck.libs.docker.guide.observeForThirtySeconds
+     * @param since Unix timestamp in seconds (optionally fractional), or an RFC 3339 timestamp;
+     * null requests new events only.
+     * @param until End timestamp in the same format as since; null leaves the subscription live.
+     * @param filters For example mapOf("type" to listOf("container"), "event" to listOf("start", "die")); encoded as JSON.
      * @return Cold flow of daemon events; failures are reported during collection.
      */
     fun events(

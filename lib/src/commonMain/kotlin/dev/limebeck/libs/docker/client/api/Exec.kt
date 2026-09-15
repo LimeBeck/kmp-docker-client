@@ -44,9 +44,15 @@ class Exec(private val dockerClient: DockerClient) {
      * Collect one output flow once. Use incomingChunks for terminal bytes and incremental UTF-8 decoding.
      * Close the session when finished, including when output is never collected.
      *
+     * Transport and non-HTTP handshake failures throw their original exception; read
+     * [dev.limebeck.libs.docker.client.diagnostics.dockerContext] for safe operation details.
+     * Cancellation propagates. Output and send failures can also occur after this method returns.
+     *
      * @param id Exec instance ID returned by Containers.execCreate.
      * @param consoleSize Initial TTY dimensions as rows to columns; null leaves Docker defaults.
-     * @return Owned interactive session, or the Docker error response.
+     * @sample dev.limebeck.libs.docker.guide.openShell
+     * @see Containers.execCreate
+     * @return Owned interactive session, or a daemon HTTP error response.
      */
     suspend fun startInteractive(
         id: String,
@@ -59,10 +65,16 @@ class Exec(private val dockerClient: DockerClient) {
      * Collect one output flow once. Use incomingChunks for terminal bytes and incremental UTF-8 decoding.
      * Close the session when finished, including when output is never collected.
      *
+     * Transport and non-HTTP handshake failures throw their original exception; read
+     * [dev.limebeck.libs.docker.client.diagnostics.dockerContext] for safe operation details.
+     * Cancellation propagates. Output and send failures can also occur after this method returns.
+     *
      * @param id Exec instance ID returned by Containers.execCreate.
      * @param consoleSize Initial TTY dimensions as rows to columns; null leaves Docker defaults.
      * @param tty TTY mode matching the original exec configuration.
-     * @return Owned interactive session, or the Docker error response.
+     * @sample dev.limebeck.libs.docker.guide.openShell
+     * @see Containers.execCreate
+     * @return Owned interactive session, or a daemon HTTP error response.
      */
     @OptIn(ExperimentalUuidApi::class)
     suspend fun startInteractive(

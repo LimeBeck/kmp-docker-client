@@ -8,6 +8,11 @@ import dev.limebeck.libs.docker.client.diagnostics.*
  *
  * Callback exceptions propagate unchanged; this wrapper does not catch transport exceptions.
  * Use [fold] to handle both branches or [getOrThrow] when a typed error should abort the operation.
+ * A successful result containing a Flow does not guarantee that collecting that flow will succeed.
+ * Error values and this result's string representation can contain raw daemon data; do not expose
+ * them as safe diagnostics. Use [dockerContext] on SDK exceptions for sanitized operation metadata.
+ *
+ * @sample dev.limebeck.libs.docker.guide.inspectContainer
  */
 @JvmInline
 value class Result<out T, out E>(
@@ -47,8 +52,17 @@ value class Result<out T, out E>(
     fun errorOrNull(): E? = if (isError) (unboxed as Failure).error as E else null
 
     /**
-     * Returns the success value.
-     * @throws IllegalStateException If this result contains an error.
+     * Returns the success value, or throws for a typed error.
+     *
+     * SDK errors carrying operation context throw [DockerResultException]. Read its [DockerResultException.error]
+     * for the original error, its cause when available, and [dockerContext] for safe operation metadata.
+     * Results created by callers can lack context and throw a plain [IllegalStateException] whose message
+     * includes the error value. Original errors and causes may contain sensitive data.
+     *
+     * @throws DockerResultException If an error contains SDK operation context.
+     * @throws IllegalStateException If an error has no operation context.
+     * @see fold
+     * @sample dev.limebeck.libs.docker.guide.inspectWithContext
      */
     @Suppress("UNCHECKED_CAST")
     fun getOrThrow(): T {
@@ -94,7 +108,7 @@ value class Result<out T, out E>(
     }
 
     /**
-     * Transforms the success value, preserving errors unchanged. Transform exceptions propagate.
+     * Transforms the success value, preserving errors and their operation context/cause unchanged. Transform exceptions propagate.
      */
     inline fun <R> map(transform: (T) -> R): Result<R, E> {
         return if (isSuccess) {
@@ -107,7 +121,8 @@ value class Result<out T, out E>(
     }
 
     /**
-     * Transforms the error value, preserving success unchanged. Transform exceptions propagate.
+     * Transforms the error value, preserving success unchanged and retaining SDK operation context/cause.
+     * The retained cause describes the original failure, not the transformed error. Transform exceptions propagate.
      */
     inline fun <R> mapError(transform: (E) -> R): Result<T, R> {
         return if (isError) {

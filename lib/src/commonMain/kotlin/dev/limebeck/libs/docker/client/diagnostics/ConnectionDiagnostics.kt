@@ -38,6 +38,8 @@ data class ConnectionDiagnostic(
  * A successful probe establishes reachability/API acceptance, not permission for every Docker operation.
  * Does not retry or close this client. Cancellation from the caller always propagates.
  *
+ * @sample dev.limebeck.libs.docker.guide.checkDockerConnection
+ * @throws IllegalArgumentException If timeoutMillis is not positive.
  * @param timeoutMillis Positive HTTP request/connect/socket timeout for this probe only.
  * @return Diagnostic with a category and actionable guidance; raw transport details are deliberately omitted.
  */
