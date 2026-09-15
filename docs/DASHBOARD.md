@@ -11,6 +11,23 @@ The bundled htmx dashboard demonstrates single-host SDK workflows. Its UI behavi
 
 Both arguments are optional. The defaults are `/var/run/docker.sock` and port `8080`; the HTTP host remains `127.0.0.1`. A separate socket and port allow testing without changing the user's normal Docker daemon or dashboard instance.
 
+## Download a compiled executable
+
+Successful Release CI builds and the Docker 28.5.2/JDK 21 cell of PR CI upload an
+`htmx-dashboard-linux-x64` artifact. Open the workflow run in GitHub Actions,
+download it from **Artifacts**, and extract `htmxDashboard.kexe`.
+
+The executable targets Linux X64. Artifact extraction does not preserve executable
+permission, so restore it before launching:
+
+```sh
+chmod +x htmxDashboard.kexe
+./htmxDashboard.kexe /var/run/docker.sock 8080
+```
+
+The same socket permissions, arguments and loopback binding described above apply.
+The binary is a workflow artifact, not an attachment to the GitHub Release.
+
 ## Container workflow
 
 The create form accepts an image, one command argument per line, environment entries, loopback-published ports, named-volume mounts and an existing network. Empty command arguments use the image default. Pull the image first. Containers created through the form are marked as managed by the sample.

@@ -63,6 +63,16 @@ jobs:
           path: |
             lib/build/test-results/**/*.xml
 
+      - name: Build dashboard release executable
+        run: ./gradlew :sample:htmxDashboard:linkReleaseExecutableLinuxX64 --warning-mode=fail --console=plain --max-workers=2 -PlibVersion=$LIB_VERSION
+
+      - name: Upload dashboard executable
+        uses: actions/upload-artifact@v6
+        with:
+          name: htmx-dashboard-linux-x64
+          path: sample/htmxDashboard/build/bin/linuxX64/releaseExecutable/htmxDashboard.kexe
+          if-no-files-found: error
+
       - name: Publish libs as artifacts
         uses: actions/upload-artifact@v6
         with:

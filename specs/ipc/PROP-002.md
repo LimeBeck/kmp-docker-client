@@ -32,6 +32,12 @@ Test artifacts:
 - Both `build` and `test` jobs must upload their reports with distinct artifact names (`unit-test-results-build` and `unit-test-results-test`).
 - Report publication must run after both jobs reach a terminal state, including when `test` is skipped because `build` failed, and download only `unit-test-results-*` artifacts.
 
+### Dashboard binary artifact {#ci.dashboard-artifact}
+- Release CI build and the PR CI Docker 28.5.2/JDK 21 cell explicitly link the dashboard release executable with :sample:htmxDashboard:linkReleaseExecutableLinuxX64.
+- Upload sample/htmxDashboard/build/bin/linuxX64/releaseExecutable/htmxDashboard.kexe as the htmx-dashboard-linux-x64 workflow artifact; a missing file is an error.
+- The artifact targets Linux X64. Document restoring executable permission after extraction. This is workflow artifact publication, not Maven publication or a GitHub Release asset.
+- Binary packaging does not add dashboard UI acceptance to SDK release gates.
+
 ### Pull-request validation {#ci.pr}
 - PR CI runs build (including all platform tests) and Dokka with --warning-mode=fail and at most two Gradle workers.
 - PR CI uses ubuntu-24.04 with the Cartesian matrix Docker 28.5.2/29.0.0 × Temurin JDK 17/21. Every cell builds/tests JVM, Node.js and Linux X64 against the same explicit API 1.51 URL prefix. Test report artifact names include Docker and JDK versions; fail-fast is disabled.
