@@ -75,19 +75,24 @@ fun Routing.composeRoute(client: DockerClient) {
                 val base = if (service == null) projectPath(name) else servicePath(name, service)
                 val streamPath = "/compose/logs?project=${name.queryValue()}&mode=${if (live) "live" else "history"}" +
                     (selected?.joinToString("", prefix = "&selection=selected") { "&services=${it.queryValue()}" } ?: "")
-                val activeTab = query["tab"]?.takeIf { it in setOf("services", "containers", "volumes", "networks", "logs") }
-                    ?: if (query["selection"] != null || query["mode"] != null) "logs" else "services"
+                val activeTab = query["tab"]?.takeIf { it in setOf("topology", "services", "containers", "volumes", "networks", "logs") }
+                    ?: if (query["selection"] != null || query["mode"] != null) "logs" else "topology"
                 val members = available.flatMap { it.containers } + if (service == null) project.unassignedContainers else emptyList()
                 val inspections = members.associate { it.id to client.containers.getInfo(it.id).getOrThrow() }
                 val filters = mapOf("label" to listOf("com.docker.compose.project=$name"))
                 val volumes = client.volumes.getList(filters = filters).getOrThrow().volumes.orEmpty()
                 val networks = client.networks.list(filters = filters).getOrThrow()
+                val topologyNetworks = if (activeTab == "topology") client.networks.list().getOrThrow() else networks
+                val selectedContainer = query["container"]
+                require(selectedContainer == null || selectedContainer in inspections) { "Container is not part of this project/service snapshot." }
+                val detail = query["detail"]?.takeIf { it in setOf("overview", "logs", "inspect", "stats", "config") } ?: "overview"
                 respondSmart(if (service == null) name else "$name / $service") {
-                  div("compose-workspace") {
+                  div("compose-workspace${if (activeTab == "topology") " topology-workspace" else ""}") {
                     breadcrumb(if (service == null) "Compose" else name, if (service == null) "/compose" else projectPath(name))
                     composeProjectHeader(name, service, base, available.size, members, inspections)
                     composeProjectTabs(base, activeTab, available.size, members.size, volumes.size, networks.size)
                     when (activeTab) {
+                        "topology" -> composeTopology(base, inspections, topologyNetworks, selectedContainer, detail)
                         "services" -> composeServiceTable(name, available, inspections)
                         "containers" -> {
                             composeContainers(members)

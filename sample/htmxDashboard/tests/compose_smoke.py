@@ -18,7 +18,7 @@ for path in ['/compose', '/compose/project?' + query, '/compose/service?' + quer
     for headers, full in [({}, True), ({'HX-Request': 'true'}, False), ({'HX-Request': 'true', 'HX-History-Restore-Request': 'true'}, True)]:
         html = get(path, **headers)
         assert ('aria-label="Main navigation"' in html) == full
-page = get('/compose/project?' + query)
+page = get('/compose/project?' + query + '&tab=services')
 for label in ['worker', 'stopped', 'healthy', 'exited', 'One-off', 'Project sections', 'Search services']:
     assert label in page, label
 assert 'name="services"' in get('/compose/project?' + query + '&tab=logs')

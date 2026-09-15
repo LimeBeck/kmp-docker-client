@@ -45,7 +45,7 @@ private fun FlowContent.metric(count: Int, label: String, hint: String, tone: St
 internal fun FlowContent.composeProjectTabs(base: String, active: String, services: Int, containers: Int, volumes: Int, networks: Int) {
     nav("compose-tabs") {
         attributes["aria-label"] = "Project sections"
-        listOf("services" to services, "containers" to containers, "volumes" to volumes, "networks" to networks, "logs" to null).forEach { (tab, count) ->
+        listOf("topology" to null, "services" to services, "containers" to containers, "volumes" to volumes, "networks" to networks, "logs" to null).forEach { (tab, count) ->
             a(href = "$base&tab=$tab", classes = if (active == tab) "active" else "") {
                 attributes["hx-get"] = "$base&tab=$tab"; attributes["hx-target"] = "#main-content"; attributes["hx-push-url"] = "true"
                 if (active == tab) attributes["aria-current"] = "page"

@@ -105,10 +105,10 @@ one-off containers, individual states and health. Service links show one service
 open the existing container details and terminal. Missing project/service labels remain explicit.
 Projects without containers cannot be discovered.
 
-Project pages open on a searchable service table with state/health badges and expandable
-container lists. Summary cards show discovered services and observed container counts;
+Project pages open on Topology; the Services tab retains the searchable table with
+state/health badges and expandable container lists. Summary cards show discovered services and observed container counts;
 replicas show running / observed regular containers, not the desired YAML scale.
-Services, Containers, Volumes, Networks and Logs have separate tabs. Volumes and networks
+Topology, Services, Containers, Volumes, Networks and Logs have separate tabs. Volumes and networks
 include resources carrying the project label, excluding external unlabeled resources.
 The directory comes from Docker labels and is never opened. Ports include configured or
 exposed container ports, including stopped containers; they are not host port bindings.
@@ -141,3 +141,28 @@ The sidebar loads Engine version, OS, architecture, memory and CPU from `/host/s
 once per full page load; section navigation retains it without polling. The metadata
 is a snapshot, not a live connection monitor. A failed read shows Engine unavailable
 with a page-reload hint.
+
+### Compose topology
+
+Network areas group the project containers by their inspected network endpoints, including
+external networks. A container attached to multiple networks appears in each area.
+The network membership diagram does not infer traffic or application dependencies.
+
+Host binding cards link to container cards. Solid lines represent current Engine port
+mappings; dashed lines represent configuration without an active mapping. Loopback,
+all-interface and specific/default addresses have distinct labels and colors. Exposed
+ports alone never produce host binding lines. Missing addresses remain unassigned.
+
+Selecting a container opens Overview, Logs, Inspect, Stats and Config in a side panel.
+Stats shows the existing latest-memory stream for a running container; no historical
+CPU/memory graph is inferred. Streams close when the panel or page is replaced.
+Health check output, port bindings and mounts appear in separate sections.
+
+The desktop topology uses a split layout: compact summary and network canvas on the left,
+container inspector alongside the summary on the right, with service/network tables below.
+Brand SVGs are bundled from Simple Icons (CC0), with a generic fallback for other images.
+Validate topology with:
+
+```sh
+scripts/with-compose-fixture.sh python3 sample/htmxDashboard/tests/topology_smoke.py http://127.0.0.1:18081
+```
