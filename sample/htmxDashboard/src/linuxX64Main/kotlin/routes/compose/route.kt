@@ -22,6 +22,7 @@ internal fun projectPath(project: String) = "/compose/project?project=${project.
 internal fun servicePath(project: String, service: String) = "/compose/service?project=${project.queryValue()}&service=${service.queryValue()}"
 
 fun Routing.composeRoute(client: DockerClient) {
+    composeControlRoutes(client)
     get("/compose") {
         pageAction("Compose") {
             val snapshot = client.compose.discover().getOrThrow()

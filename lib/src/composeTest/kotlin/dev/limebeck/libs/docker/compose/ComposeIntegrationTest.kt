@@ -17,6 +17,36 @@ import kotlin.time.Duration.Companion.seconds
 
 class ComposeIntegrationTest {
     @Test
+    fun controlsPreserveContainersVolumesAndOtherServices() = runTest(timeout = 60.seconds) {
+        DockerClient().use { client ->
+            val before = client.compose.getService(FIXTURE_PROJECT, "control").getOrThrow()!!.replicas.single()
+            assertTrue(client.compose.start(FIXTURE_PROJECT, "control").getOrThrow().isSuccess)
+            val info = client.containers.getInfo(before.id).getOrThrow()
+            val token = client.compose.logs(FIXTURE_PROJECT, "control", ContainerLogsParameters(tail = "1"))
+                .toList().single().log.line.trim()
+            assertTrue(token.isNotBlank())
+            val stopped = client.compose.stop(FIXTURE_PROJECT, "control", timeoutSeconds = 0).getOrThrow()
+            assertTrue(stopped.isSuccess)
+            assertEquals(listOf(before.id), stopped.results.map { it.container.id })
+            assertEquals(ContainerState.Status.EXITED, client.containers.getInfo(before.id).getOrThrow().state?.status)
+            assertTrue(client.compose.stop(FIXTURE_PROJECT, "control").getOrThrow().isSuccess)
+            assertTrue(client.compose.start(FIXTURE_PROJECT, setOf("control")).getOrThrow().isSuccess)
+            assertTrue(client.compose.restart(FIXTURE_PROJECT, "control", timeoutSeconds = 0).getOrThrow().isSuccess)
+            val after = client.containers.getInfo(before.id).getOrThrow()
+            assertEquals(ContainerState.Status.RUNNING, after.state?.status)
+            assertEquals(info.mounts, after.mounts)
+            val history = client.compose.logs(FIXTURE_PROJECT, "control", ContainerLogsParameters(tail = "all"))
+                .toList().map { it.log.line.trim() }.filter { it.isNotBlank() }
+            assertTrue(history.size >= 2)
+            assertTrue(history.all { it == token }, "Named-volume data must survive stop/start/restart")
+            assertTrue(client.compose.getService(FIXTURE_PROJECT, "worker").getOrThrow()!!.replicas
+                .all { it.state?.status == ContainerState.Status.RUNNING })
+            assertEquals(ContainerState.Status.EXITED,
+                client.compose.getService(FIXTURE_PROJECT, "stopped").getOrThrow()!!.replicas.single().state?.status)
+        }
+    }
+
+    @Test
     fun discoversRealComposeReplicasStoppedOneOffAndIncompleteContainers() = runTest(timeout = 60.seconds) {
         DockerClient().use { client ->
             assertSame(client.compose, client.compose)

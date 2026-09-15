@@ -35,4 +35,5 @@ val dashboardStyles = """
 .topology-table{min-width:0;table-layout:fixed;font-size:11px}.topology-table th{font-size:10px;padding:7px 5px}.topology-table td{padding:7px 5px;min-width:0!important;overflow-wrap:anywhere}.topology-table td:first-child{color:var(--accent)}
 .topology-bindings{grid-template-columns:repeat(auto-fit,minmax(78px,1fr))}.topology-binding{padding:5px 4px}.topology-network{min-height:310px}.topology-detail .host-panel-heading .hint{clear:both;padding-top:6px}.topology-network-heading{margin-bottom:22px}
 @media(min-width:1101px){.topology-workspace>.breadcrumb{display:none}.topology-workspace>.compose-heading{grid-row:1}.topology-workspace>.compose-metrics{grid-row:2}.topology-workspace>.compose-tabs{grid-row:3}.topology-main{grid-row:4}.topology-detail{grid-row:2 / span 4}}
+.topology-detail .info-row dt{min-width:0;overflow-wrap:anywhere}.topology-detail .topology-mounts .info-row{grid-template-columns:minmax(0,1fr);gap:3px;margin:12px 0}.topology-detail .topology-mounts .info-row:last-child{margin-bottom:0}
 """.trimIndent()

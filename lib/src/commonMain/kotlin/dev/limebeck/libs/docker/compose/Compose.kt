@@ -13,12 +13,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /** Cached Compose integration using this client's endpoint and lifetime. */
 val DockerClient.compose: Compose by api { client: DockerClient -> Compose(client) }
 
 /**
- * Read-only discovery and logs for existing Compose containers. No CLI or source files are needed.
+ * Discovery, logs and controls for existing Compose containers. No CLI or source files are needed.
  * The caller owns the supplied client; this integration never closes it.
  * HTTP failures return SDK errors; transport/decoding failures and cancellation propagate.
  * Snapshots are not atomic: a container removed between list and inspect can fail discovery.
@@ -66,6 +68,130 @@ class Compose internal constructor(private val source: ComposeSource) {
     suspend fun getService(project: String, service: String): Result<ComposeService?, ErrorResponse> {
         require(service.isNotBlank()) { "Service name must not be blank" }
         return getProject(project).map { it?.services?.find { candidate -> candidate.name == service } }
+    }
+
+    /** Start existing regular replicas of one service. See the service-set overload. */
+    suspend fun start(
+        project: String,
+        service: String,
+        includeOneOff: Boolean = false,
+    ): Result<ComposeOperationReport, ErrorResponse> =
+        start(project, setOf(service), includeOneOff)
+
+    /**
+     * Start existing containers selected by exact project and service labels.
+     * Null services selects the whole project; an empty set makes no Docker requests.
+     * By default only confirmed regular replicas are included; [includeOneOff] also includes
+     * one-off containers and containers with unknown one-off metadata.
+     * Discovery completes before mutations. Requests run sequentially in snapshot order,
+     * continuing after HTTP errors and preserving each SDK result in the returned report.
+     * Start/stop accept HTTP 304 (already in the requested state) as success.
+     * An outer success means the batch completed, not that every container succeeded.
+     * Missing projects/services produce an empty report. No resources are created or removed.
+     * Transport/decoding failures and cancellation propagate, stopping subsequent requests;
+     * already applied changes remain and a failed request may have reached Docker.
+     * No dependency ordering, readiness checks, retries or rollback are provided.
+     */
+    suspend fun start(
+        project: String,
+        services: Set<String>? = null,
+        includeOneOff: Boolean = false,
+    ): Result<ComposeOperationReport, ErrorResponse> =
+        operate(project, services, includeOneOff, ComposeOperation.START, null)
+
+    /** Stop existing regular replicas of one service. See the service-set overload. */
+    suspend fun stop(
+        project: String,
+        service: String,
+        includeOneOff: Boolean = false,
+        timeoutSeconds: Int? = null,
+    ): Result<ComposeOperationReport, ErrorResponse> =
+        stop(project, setOf(service), includeOneOff, timeoutSeconds)
+
+    /**
+     * Stop existing containers selected by exact project and service labels.
+     * Null services selects the whole project; an empty set makes no Docker requests.
+     * By default only confirmed regular replicas are included; [includeOneOff] also includes
+     * one-off containers and containers with unknown one-off metadata.
+     * Discovery completes before mutations. Requests run sequentially in snapshot order,
+     * continuing after HTTP errors and preserving each SDK result in the returned report.
+     * Start/stop accept HTTP 304 (already in the requested state) as success.
+     * An outer success means the batch completed, not that every container succeeded.
+     * Missing projects/services produce an empty report. No resources are created or removed.
+     * Transport/decoding failures and cancellation propagate, stopping subsequent requests;
+     * already applied changes remain and a failed request may have reached Docker.
+     * No dependency ordering, readiness checks, retries or rollback are provided.
+     * [timeoutSeconds] is the per-container stop grace period: null uses Docker defaults,
+     * -1 waits indefinitely, 0 kills immediately, positive values wait that many seconds.
+     */
+    suspend fun stop(
+        project: String,
+        services: Set<String>? = null,
+        includeOneOff: Boolean = false,
+        timeoutSeconds: Int? = null,
+    ): Result<ComposeOperationReport, ErrorResponse> =
+        operate(project, services, includeOneOff, ComposeOperation.STOP, timeoutSeconds)
+
+    /** Restart existing regular replicas of one service. See the service-set overload. */
+    suspend fun restart(
+        project: String,
+        service: String,
+        includeOneOff: Boolean = false,
+        timeoutSeconds: Int? = null,
+    ): Result<ComposeOperationReport, ErrorResponse> =
+        restart(project, setOf(service), includeOneOff, timeoutSeconds)
+
+    /**
+     * Restart existing containers selected by exact project and service labels.
+     * Null services selects the whole project; an empty set makes no Docker requests.
+     * By default only confirmed regular replicas are included; [includeOneOff] also includes
+     * one-off containers and containers with unknown one-off metadata.
+     * Discovery completes before mutations. Requests run sequentially in snapshot order,
+     * continuing after HTTP errors and preserving each SDK result in the returned report.
+     * Start/stop accept HTTP 304 (already in the requested state) as success.
+     * An outer success means the batch completed, not that every container succeeded.
+     * Missing projects/services produce an empty report. No resources are created or removed.
+     * Transport/decoding failures and cancellation propagate, stopping subsequent requests;
+     * already applied changes remain and a failed request may have reached Docker.
+     * No dependency ordering, readiness checks, retries or rollback are provided.
+     * [timeoutSeconds] is the per-container stop grace period: null uses Docker defaults,
+     * -1 waits indefinitely, 0 kills immediately, positive values wait that many seconds.
+     */
+    suspend fun restart(
+        project: String,
+        services: Set<String>? = null,
+        includeOneOff: Boolean = false,
+        timeoutSeconds: Int? = null,
+    ): Result<ComposeOperationReport, ErrorResponse> =
+        operate(project, services, includeOneOff, ComposeOperation.RESTART, timeoutSeconds)
+
+    private suspend fun operate(
+        project: String, services: Set<String>?, includeOneOff: Boolean,
+        operation: ComposeOperation, timeoutSeconds: Int?,
+    ): Result<ComposeOperationReport, ErrorResponse> {
+        require(project.isNotBlank()) { "Project name must not be blank" }
+        val selection = services?.toSet()
+        require(selection == null || selection.none { it.isBlank() }) { "Service names must not be blank" }
+        require(timeoutSeconds == null || timeoutSeconds >= -1) { "Timeout must be -1 or nonnegative" }
+        currentCoroutineContext().ensureActive()
+        if (selection != null && selection.isEmpty()) {
+            return Result.success(ComposeOperationReport(project, operation, emptyList()))
+        }
+        return getProject(project).map { snapshot ->
+            val candidates = snapshot?.let { it.services.flatMap { service -> service.containers } + it.unassignedContainers }.orEmpty()
+            val selected = candidates.filter {
+                (selection == null || it.service in selection) && (includeOneOff || it.oneOff == false)
+            }
+            val results = selected.map { container ->
+                currentCoroutineContext().ensureActive()
+                val response = source.operate(container.id, operation, timeoutSeconds)
+                // Docker start/stop return 304 when the requested state is already satisfied.
+                val alreadyInState = operation != ComposeOperation.RESTART &&
+                    (response.unboxed as? Result.Failure)?.context?.httpStatus == 304
+                ComposeContainerOperationResult(container, if (alreadyInState) Result.success(Unit) else response)
+            }
+            ComposeOperationReport(project, operation, results)
+        }
     }
 
     /** Reads all replicas of one service; equivalent to logs(project, setOf(service), ...). */
@@ -143,12 +269,18 @@ private fun <T> Result<*, ErrorResponse>.propagateError(): Result<T, ErrorRespon
 }
 
 internal interface ComposeSource {
+    suspend fun operate(id: String, operation: ComposeOperation, timeoutSeconds: Int?): Result<Unit, ErrorResponse>
     suspend fun list(): Result<List<ContainerSummary>, ErrorResponse>
     suspend fun inspect(id: String): Result<ContainerInspectResponse, ErrorResponse>
     suspend fun logs(id: String, parameters: ContainerLogsParameters): Result<Flow<LogLine>, ErrorResponse>
 }
 
 private class EngineComposeSource(private val client: DockerClient) : ComposeSource {
+    override suspend fun operate(id: String, operation: ComposeOperation, timeoutSeconds: Int?) = when (operation) {
+        ComposeOperation.START -> client.containers.start(id)
+        ComposeOperation.STOP -> client.containers.stop(id, t = timeoutSeconds)
+        ComposeOperation.RESTART -> client.containers.restart(id, t = timeoutSeconds)
+    }
     override suspend fun list() = client.containers.getList(all = true)
     override suspend fun inspect(id: String) = client.containers.getInfo(id)
     override suspend fun logs(id: String, parameters: ContainerLogsParameters) = client.containers.getLogs(id, parameters)

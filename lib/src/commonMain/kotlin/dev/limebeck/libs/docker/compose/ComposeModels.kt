@@ -2,6 +2,8 @@ package dev.limebeck.libs.docker.compose
 
 import dev.limebeck.libs.docker.client.model.ContainerState
 import dev.limebeck.libs.docker.client.model.LogLine
+import dev.limebeck.libs.docker.client.model.ErrorResponse
+import dev.limebeck.libs.docker.client.model.Result
 
 /** Container-backed discovery snapshot. No desired configuration or readiness is inferred. */
 data class ComposeDiscovery(
@@ -49,3 +51,23 @@ data class ComposeLogLine(
     val oneOff: Boolean?,
     val log: LogLine,
 )
+
+
+/** Engine operations on existing containers; these are not Compose up/down. */
+enum class ComposeOperation { START, STOP, RESTART }
+
+/** SDK response paired with the pre-operation snapshot. Errors retain context; start/stop HTTP 304 becomes success. */
+data class ComposeContainerOperationResult(
+    val container: ComposeContainer,
+    val result: Result<Unit, ErrorResponse>,
+)
+
+/** Completed batch; inspect [results] even when the enclosing SDK Result is successful. */
+data class ComposeOperationReport(
+    val project: String,
+    val operation: ComposeOperation,
+    val results: List<ComposeContainerOperationResult>,
+) {
+    /** True when every attempted request succeeded; also true for an empty selection. */
+    val isSuccess: Boolean get() = results.all { it.result.isSuccess }
+}

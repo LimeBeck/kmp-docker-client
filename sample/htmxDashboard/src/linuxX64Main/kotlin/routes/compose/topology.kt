@@ -130,7 +130,7 @@ internal fun FlowContent.composeTopology(base: String, inspections: Map<String, 
                     if (ports.isEmpty()) p("muted") { +"No host bindings. Exposed ports alone are not published." }
                     ports.forEach { infoRow("${it.address}:${it.hostPort}", "${it.port}${if (!it.active) " (configured)" else ""}") }
                 }
-                section("panel") { h2 { +"Volumes and mounts" }; if (chosen.mounts.isNullOrEmpty()) p("muted") { +"No mounts" }
+                section("panel topology-mounts") { h2 { +"Volumes and mounts" }; if (chosen.mounts.isNullOrEmpty()) p("muted") { +"No mounts" }
                     chosen.mounts.orEmpty().forEach { infoRow(it.name ?: it.source ?: "Unknown source", "${it.destination ?: "Unknown destination"} · ${if (it.RW == true) "rw" else "ro"}") }
                 }
             }

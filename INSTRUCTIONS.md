@@ -78,6 +78,9 @@ Update WAL:
 ### 5.3 Brevity budget {#wal.budget}
 Keep WAL concise; collapse already-stable history into short complete items.
 
+### 5.4 Release-facing documentation {#wal.release-docs}
+The owner requires documentation changes to describe the new version as current when merged. Use the target version in examples and describe implemented features in the present tense; omit temporary upcoming/unreleased/source-only/publication-pending wording from current user guides. Keep actual publication status in WAL and release evidence, and retain historical release records. This documentation convention does not authorize publishing or tagging.
+
 ## 6. Project adaptation notes (kmp-docker-client) {#project}
 
 ### 6.1 Scope priorities {#project.scope}

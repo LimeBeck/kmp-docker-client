@@ -1,6 +1,6 @@
 # Dashboard example
 
-The bundled htmx dashboard demonstrates single-host SDK workflows. Its UI behavior is not an SDK release gate. It remains a development example bound to loopback; user authentication, roles, credential storage and audit are application concerns. It includes read-only Compose discovery and logs.
+The bundled htmx dashboard demonstrates single-host SDK workflows. Its UI behavior is not an SDK release gate. It remains a development example bound to loopback; user authentication, roles, credential storage and audit are application concerns. It includes Compose discovery, logs and existing-container controls.
 
 ## Run
 
@@ -100,6 +100,12 @@ History restoration requests receive the full document, with `main-content` mark
 
 ## Compose projects
 
+In 1.2.0, project headers and service action menus provide Start, Stop and Restart
+for existing regular replicas. Each action asks for confirmation and displays a per-container
+report, including partial HTTP failures and empty selections. Stop/restart use a 10-second
+grace period per container. One-offs are excluded; volumes remain. An interrupted request can
+leave partial changes, so refresh before retrying. Dependencies and readiness are not managed.
+
 Compose lists existing container-backed projects. Open a project to inspect services, replicas,
 one-off containers, individual states and health. Service links show one service; container links
 open the existing container details and terminal. Missing project/service labels remain explicit.
@@ -119,13 +125,13 @@ containers without service labels. Filters are carried in the URL and survive br
 Every record identifies its service, container and stdout/stderr/unknown stream. History requests
 200 records per container, while the view retains at most 200 total. Reconnect discovers new
 replicas; subscriptions are closed on navigation and upstream requests are cancelled on disconnect.
-The SDK's 64-container subscription limit applies. No Compose mutations or YAML/CLI operations
-are exposed yet.
+The SDK's 64-container subscription limit applies. YAML/CLI operations are not exposed yet.
 
 With a running dashboard, exercise Compose pages and streams against a disposable fixture:
 
 ```sh
 scripts/with-compose-fixture.sh python3 sample/htmxDashboard/tests/compose_smoke.py http://127.0.0.1:18081
+scripts/with-compose-fixture.sh python3 sample/htmxDashboard/tests/compose_controls_smoke.py http://127.0.0.1:18081
 ```
 
 ## Host overview

@@ -81,7 +81,7 @@ API extensions already exist through extension properties and the public api() d
 Related contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.context`.
 
 ### Phased Compose integration {#deferred.compose}
-On 2026-09-15 the owner selected both existing-project management and compose.yaml lifecycle support, delivered incrementally. Stage 1 is assigned to the owner-authorized 1.1.0 release on 2026-09-15; later-stage release numbers and dates remain unassigned. Compose remains an integration layer above the Engine APIs, consistent with #boundary. At the owner’s request, stage 1 is packaged inside lib; a future CLI backend can remain a separate module. The sequence below does not change other accepted milestones or the current platform baseline.
+On 2026-09-15 the owner selected both existing-project management and compose.yaml lifecycle support, delivered incrementally. Stage 1 is assigned to the owner-authorized 1.1.0 release on 2026-09-15. The owner requested a version bump on 2026-09-15; the additive existing-container control stage targets 1.2.0. CLI/file-lifecycle release numbers and dates remain unassigned. Compose remains an integration layer above the Engine APIs, consistent with #boundary. At the owner’s request, stage 1 is packaged inside lib; a future CLI backend can remain a separate module. The sequence below does not change other accepted milestones or the current platform baseline.
 
 #### Existing-project discovery {#deferred.compose.discovery}
 - Introduce a Compose integration package inside lib using the existing DockerClient and its configured endpoint. Discover projects and services from Compose labels, including stopped containers; expose replicas, individual container states and health without implying that a project is healthy merely because containers are running.
@@ -92,11 +92,23 @@ On 2026-09-15 the owner selected both existing-project management and compose.ya
 Stage 1 implementation uses the `dev.limebeck.libs.docker.compose` package inside `lib` and `DockerClient.compose`, with container-backed discovery, nullable project/service lookup and cold multiplexed logs. Network/volume-only projects are not discovered. Missing project/service labels remain explicit unassigned containers; invalid replica/one-off labels remain unknown. Discovery returns SDK error Results without losing context; log collection propagates failures and cancels sibling streams. The owner selected multi-service logs: services is a nullable set of exact names; null selects all project containers, an empty set produces an empty flow without Docker requests, and blank names are invalid. Copy the selection on API invocation. Provide a single-service String overload delegating to the set-based method with identical options and validation. Log selection defaults to at most 64 streams, rejecting larger selections before opening logs. Usage and limitations: docs/COMPOSE.md. This stage does not assign a release version or add mutation/UI operations.
 
 #### Existing-resource controls and dashboard {#deferred.compose.controls}
-The owner requested dashboard integration of the read-only stage 1 API on 2026-09-15: project/service views, replica state/health, existing container links and multi-service history/live logs. Mutating Compose controls remain deferred.
+The owner requested dashboard integration of the read-only stage 1 API on 2026-09-15: project/service views, replica state/health, existing container links and multi-service history/live logs. The owner authorized the next existing-container control stage on 2026-09-15.
 The owner subsequently requested a project-page layout based on a supplied reference: summary cards, service table, search/status filtering and resource tabs. Counts and metadata reflect observed Docker resources; the view does not imply desired YAML scale or open label-supplied filesystem paths.
 - Add explicit start/stop/restart operations for existing project/service containers, reporting per-container results and partial failures. These controls do not promise Compose dependency ordering, readiness or reconciliation.
 - Add dashboard project/service views, state and logs, followed by these controls. Reuse existing resource details and terminal support.
 - Acceptance: project isolation, partial failure reporting, cancellation, preserved volumes and dashboard smoke checks. Do not expose these controls as compose up/down.
+
+The existing-container controls use the same package and client endpoint as discovery. Provide
+start/stop/restart with nullable exact service sets and a single-service String overload. Empty
+sets perform no requests; missing matches return an empty report. Default to confirmed regular
+replicas; includeOneOff explicitly includes one-offs and unknown metadata. Complete discovery
+before sequential mutations, retain per-container HTTP failures and continue the batch. Start/stop
+HTTP 304 means the requested state is already satisfied and is accepted as success. Transport or
+decoding exceptions and cancellation propagate and stop later requests without rollback; an
+in-flight request may already have changed Docker. Stop/restart accept a per-container timeout
+in seconds (null: daemon default, -1: indefinite, 0: immediate, positive: grace period).
+The dashboard exposes project and service controls with confirmation and a result table, excludes
+one-offs, and uses a 10-second stop/restart grace period. These controls are part of version 1.2.0.
 
 #### Compose file lifecycle {#deferred.compose.cli}
 - Add an optional backend invoking an installed Docker Compose CLI for config validation, up, down, pull and build. Delegate interpolation, file merging, profiles, dependencies and recreation to Compose.

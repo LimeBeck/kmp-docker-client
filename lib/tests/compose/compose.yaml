@@ -10,3 +10,10 @@ services:
   stopped:
     image: alpine:3.21
     command: [sh, -c, 'echo stopped-out; echo stopped-err >&2']
+  control:
+    image: alpine:3.21
+    command: [sh, -c, 'test -s /data/token || cat /proc/sys/kernel/random/uuid > /data/token; cat /data/token; exec sleep 86400']
+    volumes:
+      - control-data:/data
+volumes:
+  control-data:
