@@ -10,14 +10,14 @@ A Kotlin Multiplatform Docker API client for managing a single Docker host, with
 
 ## Installation
 
-`1.0.0` is published on Maven Central. Its public API is unchanged from `1.0.0-rc`.
+`1.0.1` is published on Maven Central. It adds scoped client ownership, connection diagnostics and exception context; see the [migration notes](docs/MIGRATION-1.0.0.md#101).
 
 For a JVM project, add:
 
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.0.0")
+    implementation("dev.limebeck.libs:docker-client:1.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
 }
@@ -27,7 +27,7 @@ For a Multiplatform project, put these dependencies in `commonMain.dependencies`
 
 ## Quick start
 
-`DockerClient.use` below requires the upcoming 1.0.1 build. With published 1.0.0/1.0.0-rc, use `try/finally` and `docker.client.close()` instead.
+`DockerClient.use` is available since 1.0.1. With 1.0.0/1.0.0-rc, use `try/finally` and `docker.client.close()` instead.
 
 Run this suspending function from your application's coroutine scope. A JVM CLI can call it inside `runBlocking`.
 
