@@ -58,7 +58,7 @@ The [user guide](docs/USAGE.md) covers:
 
 Detailed guides: [container lifecycle](docs/CONTAINER-LIFECYCLE.md), [image progress](docs/IMAGE-PROGRESS.md), [stream recovery](docs/STREAM-RECOVERY.md).
 
-The unreleased [Compose API](docs/COMPOSE.md), included in `lib`, adds discovery and logs for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
+The [Compose API planned for 1.1.0](docs/COMPOSE.md), included in `lib`, adds discovery and logs for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
 
 ## API scope
 
@@ -78,7 +78,7 @@ Image callbacks report progress; only the final Result establishes the operation
 
 ## Development and documentation
 
-Use JDK 21 for development. The repository's default version is `1.0.1`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
+Use JDK 21 for development. The repository's default version is `1.1.0`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
 
 ```sh
 # Requires a development Docker daemon at /var/run/docker.sock.

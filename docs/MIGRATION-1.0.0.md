@@ -47,3 +47,11 @@ The published diagnostic report intentionally omits the development-only `endpoi
 ### Exception context (since 1.0.1)
 
 The SDK adds a suppressed `DockerContextException` carrying safe operation metadata while retaining original exception types/causes. Read `Throwable.dockerContext`; do not parse messages or assume suppressed exceptions are empty. Cancellation remains unannotated. `DockerApiException.message` no longer embeds raw daemon text (read its existing `error` property in trusted code). Non-HTTP exec/attach handshake failures now throw the original exception instead of reducing it to an ErrorResponse string. SDK HTTP error Results and image progress failures retain context through map/mapError. Their getOrThrow now raises DockerResultException (still an IllegalStateException), exposing the original error through its error property and the cause when available. Caller-created Results may remain unannotated.
+
+## 1.1.0 release target
+
+Adds `dev.limebeck.libs.docker.compose` inside the existing artifact: import
+`dev.limebeck.libs.docker.compose.compose` to discover existing Compose projects
+and stream their logs. Existing Engine APIs and client ownership remain unchanged.
+See [Compose guide](COMPOSE.md) for multi-service selection, one-offs and stream limits.
+No Compose YAML parser or CLI dependency is introduced in the SDK.

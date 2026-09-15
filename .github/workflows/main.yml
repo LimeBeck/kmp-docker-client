@@ -53,7 +53,7 @@ jobs:
           test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Build with Gradle
-        run: ./gradlew build --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
+        run: scripts/with-compose-fixture.sh ./gradlew build :lib:checkKotlinAbi --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Upload Build Test Results
         if: always()
@@ -123,7 +123,7 @@ jobs:
           test "$(curl --fail --silent --show-error --unix-socket /var/run/docker.sock http://localhost/v1.51/_ping)" = "OK"
 
       - name: Run tests with Gradle
-        run: ./gradlew :lib:allTests --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
+        run: scripts/with-compose-fixture.sh ./gradlew :lib:allTests --warning-mode=fail --max-workers=2 -PlibVersion=$LIB_VERSION
 
       - name: Verify isolated daemon restart and resubscription
         timeout-minutes: 8

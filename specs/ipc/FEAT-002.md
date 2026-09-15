@@ -81,7 +81,7 @@ API extensions already exist through extension properties and the public api() d
 Related contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/PROP-001.md#errors.context`.
 
 ### Phased Compose integration {#deferred.compose}
-On 2026-09-15 the owner selected both existing-project management and compose.yaml lifecycle support, delivered incrementally. Release numbers and dates remain unassigned. Compose remains an integration layer above the Engine APIs, consistent with #boundary. At the owner’s request, stage 1 is packaged inside lib; a future CLI backend can remain a separate module. The sequence below does not change other accepted milestones or the current platform baseline.
+On 2026-09-15 the owner selected both existing-project management and compose.yaml lifecycle support, delivered incrementally. Stage 1 is assigned to the owner-authorized 1.1.0 release on 2026-09-15; later-stage release numbers and dates remain unassigned. Compose remains an integration layer above the Engine APIs, consistent with #boundary. At the owner’s request, stage 1 is packaged inside lib; a future CLI backend can remain a separate module. The sequence below does not change other accepted milestones or the current platform baseline.
 
 #### Existing-project discovery {#deferred.compose.discovery}
 - Introduce a Compose integration package inside lib using the existing DockerClient and its configured endpoint. Discover projects and services from Compose labels, including stopped containers; expose replicas, individual container states and health without implying that a project is healthy merely because containers are running.
