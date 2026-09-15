@@ -2,299 +2,191 @@ package routes.containers
 
 import dev.limebeck.libs.docker.client.model.ContainerInspectResponse
 import dev.limebeck.libs.docker.client.model.ContainerSummary
+import io.ktor.http.Parameters
 import kotlinx.html.*
-import ui.badge
-import ui.card
-import ui.infoCard
-import ui.infoRow
-import ui.renderLiveStream
-
+import ui.*
+import routes.images.renderPullForm
 
 fun FlowContent.containerTable(containers: List<ContainerSummary>) {
-    div("bg-gray-800 rounded-lg shadow-lg overflow-x-auto border border-gray-700") {
-        attributes["role"] = "region"
-        attributes["aria-label"] = "Containers"
-        attributes["tabindex"] = "0"
-        table("w-full min-w-[48rem] table-fixed text-left") {
-            thead("bg-gray-700 text-gray-400 uppercase text-xs") {
-                tr {
-                    listOf("ID" to "w-36", "Name" to "w-1/4", "Image" to "", "State" to "w-28", "Actions" to "w-48").forEach { (label, width) ->
-                        th(classes = "px-4 py-3 $width") { +label }
-                    }
-                }
-            }
-            tbody("divide-y divide-gray-700") {
-                containers.forEach { container ->
-                    tr("hover:bg-gray-700/50 transition-colors") {
-                        td("px-4 py-4 font-mono text-sm") { +(container.id?.take(12) ?: "-") }
-                        td("px-4 py-4 font-mono text-sm [overflow-wrap:anywhere]") {
-                            +(container.names?.joinToString(", ") { it.removePrefix("/") } ?: "-")
-                        }
-                        td("px-4 py-4 [overflow-wrap:anywhere]") { +(container.image ?: "-") }
-                        td("px-4 py-4") {
-                            val dotColor =
-                                if (container.state == ContainerSummary.State.RUNNING) "bg-green-400" else "bg-red-400"
-                            div("flex items-center gap-2") {
-                                div("w-2 h-2 shrink-0 rounded-full $dotColor") {}
-                                +(container.state?.value ?: "unknown")
-                            }
-                        }
-                        td("px-4 py-4") {
-                            div("flex flex-wrap gap-x-3 gap-y-2 text-sm") {
-                                button(classes = "text-blue-400 hover:text-blue-300 font-medium") {
-                                    attributes["hx-get"] = "/containers/${container.id}"
-                                    attributes["hx-target"] = "#main-content"
-                                    attributes["hx-push-url"] = "true"
-                                    +"Inspect"
-                                }
-
-                                if (container.state == ContainerSummary.State.RUNNING) {
-                                    button(classes = "text-orange-400 hover:text-orange-300 font-medium") {
-                                        attributes["hx-post"] = "/containers/${container.id}/stop"
-                                        attributes["hx-target"] = "#main-content"
-                                        +"Stop"
-                                    }
-                                } else {
-                                    button(classes = "text-green-400 hover:text-green-300 font-medium") {
-                                        attributes["hx-post"] = "/containers/${container.id}/start"
-                                        attributes["hx-target"] = "#main-content"
-                                        +"Start"
-                                    }
-                                }
-
-                                button(classes = "text-red-400 hover:text-red-300 font-medium") {
-                                    attributes["hx-delete"] = "/containers/${container.id}"
-                                    attributes["hx-target"] = "#main-content"
-                                    attributes["hx-confirm"] = "Are you sure you want to remove this container?"
-                                    +"Remove"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectResponse?, pendingReplacement: Boolean = false) {
-    div("space-y-6") {
-        div("flex justify-between items-center") {
-            h1("text-3xl font-bold text-blue-400") {
-                +"Container: ${info?.name?.removePrefix("/") ?: id.take(12)}"
-            }
-            a(classes = "text-gray-400 hover:text-white cursor-pointer") {
-                attributes["hx-get"] = "/containers"
-                attributes["hx-target"] = "#main-content"
-                attributes["hx-push-url"] = "true"
-                +"← Back to List"
-            }
-        }
-
-        div("flex flex-wrap gap-3") {
-            badge(
-                text = "Image: ${info?.config?.image ?: info?.image ?: "n/a"}",
-                bgColor = "bg-blue-900/40 border-blue-700"
-            )
-            badge(
-                text = "Status: ${info?.state?.status ?: "unknown"}",
-                bgColor = if (info?.state?.running == true)
-                    "bg-green-900/40 border-green-700"
-                else
-                    "bg-red-900/40 border-red-700"
-            )
-            badge("Platform: ${info?.platform ?: "n/a"}")
-        }
-
-        card("flex items-center gap-4 bg-blue-900/10 border-blue-800/50") {
-            span("text-sm font-bold uppercase text-blue-300 mr-2") { +"Actions:" }
-            if (info?.state?.running == true) {
-                button(classes = "bg-orange-600 hover:bg-orange-500 px-4 py-2 rounded text-sm font-bold") {
-                    attributes["hx-post"] = "/containers/$id/stop"
-                    attributes["hx-target"] = "#main-content"
-                    +"Stop"
-                }
-                form(classes = "flex items-center gap-4") {
-                    attributes["hx-post"] = "/containers/$id/exec"
-                    attributes["hx-target"] = "#main-content"
-                    input(
-                        type = InputType.text,
-                        name = "command",
-                        classes = "bg-gray-700 text-white p-2 rounded"
-                    ) {
-                        placeholder = "Command"
-                        value = "/bin/sh"
-                    }
-                    button(
-                        type = ButtonType.submit,
-                        classes = "bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded text-sm font-bold"
-                    ) {
-                        +"Exec"
-                    }
-                }
-            } else {
-                button(classes = "bg-green-600 hover:bg-green-500 px-4 py-2 rounded text-sm font-bold") {
-                    attributes["hx-post"] = "/containers/$id/start"
-                    attributes["hx-target"] = "#main-content"
-                    +"Start"
-                }
-            }
-            button(classes = "border border-red-500 text-red-500 hover:bg-red-500/10 px-4 py-2 rounded text-sm font-bold") {
-                attributes["hx-delete"] = "/containers/$id"
-                attributes["hx-target"] = "#main-content"
-                attributes["hx-confirm"] = "Are you sure?"
-                +"Delete"
-            }
-        }
-
-        if (info?.config?.labels?.get(MANAGED_LABEL) == "true") {
-            card("space-y-3") {
-                if (pendingReplacement) {
-                    p { +"Replacement started. Verify application readiness and retained data before confirming. The previous container is stopped and retained for rollback." }
-                    p { +"Rollback restores the previous container configuration; it does not undo writes to shared volumes." }
-                    button(classes = "bg-green-700 rounded p-2 mr-3") {
-                        attributes["hx-post"] = "/containers/$id/confirm"
-                        attributes["hx-target"] = "#main-content"
-                        attributes["hx-confirm"] = "Readiness verified? Delete the previous container and retain its named volumes?"
-                        +"Confirm replacement"
-                    }
-                    button(classes = "bg-orange-700 rounded p-2") {
-                        attributes["hx-post"] = "/containers/$id/rollback"
-                        attributes["hx-target"] = "#main-content"
-                        +"Roll back"
-                    }
-                } else {
-                    a(href = "/containers/$id/recreate", classes = "text-blue-400") { +"Recreate with changed configuration" }
-                }
-            }
-        }
-
-        if (info != null) {
-            details("bg-gray-800/50 rounded-lg border border-gray-700") {
-                summary("text-gray-400 text-xs uppercase font-bold p-4 cursor-pointer hover:bg-gray-700/50 transition-colors") {
-                    +"Details"
-                }
-                div("p-4 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4") {
-                    infoCard("General Information") {
-                        infoRow("Full ID", id, isCode = true)
-                        infoRow("Created", info.created ?: "-")
-                        infoRow("Driver", info.driver ?: "-")
-                        infoRow("Restart Count", info.restartCount?.toString() ?: "0")
-                    }
-
-                    infoCard("Configuration") {
-                        val cmd = (listOfNotNull(info.path) + (info.args ?: emptyList())).joinToString(" ")
-                        infoRow("Command", cmd.ifEmpty { "-" }, isCode = true)
-                        infoRow("State", info.state?.status?.value ?: "-")
-                    }
-
-                    infoCard("Network") {
-                        val ports = info.networkSettings?.ports
-                        if (ports.isNullOrEmpty()) {
-                            infoRow("Ports", "No ports exposed")
-                        } else {
-                            ports.forEach { (containerPort, hostBindings) ->
-                                val hostPortStrings =
-                                    hostBindings?.map { "${it.hostIp}:${it.hostPort}" }?.joinToString()
-                                infoRow(containerPort, hostPortStrings ?: "Not mapped", isCode = true)
-                            }
-                        }
-                    }
-
-                    infoCard("Environment Variables") {
-                        val env = info.config?.env
-                        if (env.isNullOrEmpty()) {
-                            infoRow("Variables", "No environment variables set")
-                        } else {
-                            env.forEach {
-                                val (key, value) = it.split("=", limit = 2)
-                                infoRow(key, value, isCode = true)
-                            }
-                        }
-                    }
-
-                    infoCard("Volumes") {
-                        val mounts = info.mounts
-                        if (mounts.isNullOrEmpty()) {
-                            infoRow("Mounts", "No volumes mounted")
-                        } else {
-                            mounts.forEach {
-                                infoRow(it.destination ?: "n/a", it.source ?: "anonymous", isCode = true)
-                            }
-                        }
-                    }
-                }
-            }
+    div { attributes["data-resource-list"] = ""
+        if (containers.isEmpty()) {
+            emptyState("No containers yet", "Create a container from an image to get started.", "Create container", "/containers/create")
         } else {
-            div("grid grid-cols-1 md:grid-cols-2 gap-4") {
-                infoCard("General Information") {
-                    infoRow("Full ID", id)
+            filterToolbar(containers.mapNotNull { it.state?.value }.distinct().sorted())
+            div("table-wrap") {
+                attributes["role"] = "region"; attributes["aria-label"] = "Containers"; attributes["tabindex"] = "0"
+                table("resource-table") {
+                    thead { tr { listOf("Name", "Image", "State", "Actions").forEach { th { scope = ThScope.col; +it } } } }
+                    tbody {
+                        containers.forEach { container ->
+                            val id = container.id.orEmpty()
+                            val name = container.names?.joinToString(", ") { it.removePrefix("/") }.orEmpty().ifEmpty { id.take(12) }
+                            val state = container.state?.value ?: "unknown"
+                            tr {
+                                attributes["data-name"] = name.lowercase(); attributes["data-state"] = state
+                                attributes["data-search-text"] = "$name $id ${container.image.orEmpty()}".lowercase()
+                                td { attributes["data-label"] = "Name"; pageLink(name, "/containers/$id", "resource-name"); code("resource-id") { +id.take(12) } }
+                                td { attributes["data-label"] = "Image"; code("image-name") { +(container.image ?: "Unknown image") } }
+                                td { attributes["data-label"] = "State"; stateBadge(state); container.status?.let { small("resource-id") { +it } } }
+                                td { attributes["data-label"] = "Actions"; div("actions") {
+                                    if (state == "running") actionButton("Stop", "/containers/$id/stop")
+                                    else if (state in listOf("exited", "created")) actionButton("Start", "/containers/$id/start")
+                                    actionMenu("More", "More actions for $name") {
+                                            pageLink("Logs", "/containers/$id?tab=logs", "btn btn-small")
+                                            actionButton("Delete", "/containers/$id", "delete", "Delete $name? A running container will be forcibly stopped. Its writable layer is removed; named volumes are retained.", danger = true)
+                                    }
+                                } }
+                            }
+                        }
+                    }
                 }
             }
-            div("p-4 bg-red-900/20 border border-red-900 text-red-400 rounded") {
-                +"Failed to get detailed inspect data"
-            }
-        }
-
-        if (info?.state?.running == true) {
-            renderLiveStream("/containers/$id/stats", "stats-view", append = false)
-            renderLogsWindow(id)
+            tableFoot()
         }
     }
 }
 
-fun FlowContent.renderLogsWindow(containerId: String) {
-    renderLiveStream("/containers/$containerId/logs", "logs-view")
-}
-
-fun FlowContent.renderCreateForm(info: ContainerInspectResponse? = null, action: String = "/containers/create") {
-    div("mb-6 bg-gray-800 rounded-lg p-4 border border-gray-700") {
-        h2("text-xl font-bold mb-4 text-blue-400") { +(if (info == null) "Create New Container" else "Prepare Replacement") }
-        form {
-            attributes["hx-post"] = action
-            attributes["hx-target"] = "#main-content"
-            method = FormMethod.post
-            this.action = action
-            fun FlowContent.field(name: String, title: String, content: String, hint: String = "", multiline: Boolean = false) {
-                div("mb-4") {
-                    label(classes = "block text-gray-400 mb-2") { htmlFor = "config-$name"; +title }
-                    if (multiline) {
-                        textArea(classes = "bg-gray-700 text-white p-2 rounded w-full") {
-                            id = "config-$name"; this.name = name; rows = "3"; +content
-                        }
-                    } else {
-                        input(type = InputType.text, name = name, classes = "bg-gray-700 text-white p-2 rounded w-full") {
-                            id = "config-$name"; value = content; required = name == "image"
-                        }
-                    }
-                    if (hint.isNotEmpty()) p("text-sm text-gray-400") { +hint }
-                }
-            }
-            if (info == null) field("name", "Name (optional)", "")
-            field("image", "Image", info?.config?.image.orEmpty(), "Pull the image first from Images.")
-            field("cmd", "Command arguments", info?.config?.cmd?.joinToString("\n") ?: "/bin/sh", "One argument per line. Empty uses the image default.", true)
-            details("mb-4") {
-                open = info != null
-                summary("text-blue-400 cursor-pointer mb-3") { +"Environment, ports, volumes and network" }
-                field("env", "Environment", info?.config?.env?.joinToString("\n").orEmpty(), "One KEY=value per line.", true)
-                field("ports", "Published ports", info?.hostConfig?.portBindings.orEmpty().flatMap { (port, bindings) ->
-                    bindings.orEmpty().map { "${it.hostIp}:${it.hostPort}:$port" }
-                }.joinToString("\n"), "One 127.0.0.1:host-port:container-port/tcp per line; host port 0 chooses an available port.", true)
-                field("volumes", "Named volumes", info?.mounts.orEmpty().filter { it.type?.value == "volume" }.joinToString("\n") {
-                    "${it.name}:${it.destination}"
-                }, "One volume-name:/container/path per line. Named volumes survive container deletion; missing volumes are created by Docker.", true)
-                field("network", "Existing network (optional)", info?.networkSettings?.networks?.keys?.singleOrNull()?.takeUnless { it == "bridge" }.orEmpty())
-            }
-            label(classes = "block mb-4") {
-                input(type = InputType.checkBox, name = "tty") { checked = info?.config?.tty ?: true }
-                +" Interactive TTY"
-            }
-            if (info != null) p("text-orange-300 mb-4") {
-                +"The previous container is stopped only after preparation succeeds. Verify the replacement before confirming. Shared-volume writes cannot be rolled back automatically."
-            }
-            button(type = ButtonType.submit, classes = "bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold") {
-                +(if (info == null) "Create and Run" else "Prepare replacement")
+fun FlowContent.renderContainerDetailsPage(id: String, info: ContainerInspectResponse?, pendingReplacement: Boolean = false, tab: String = "overview") {
+    breadcrumb("Containers", "/containers")
+    if (info == null) { pageHeading("Container unavailable"); renderError("Could not inspect this container. Return to the list and retry."); return }
+    val name = info.name?.removePrefix("/") ?: id.take(12)
+    val state = info.state?.status?.value ?: "unknown"
+    pageHeading(name, info.config?.image ?: info.image ?: "Unknown image") {
+        if (info.state?.running == true) actionButton("Stop", "/containers/$id/stop")
+        else if (state in listOf("exited", "created")) actionButton("Start", "/containers/$id/start")
+        actionMenu("More actions", "More actions for $name", small = false) {
+            if (info.config?.labels?.get(MANAGED_LABEL) == "true" && !pendingReplacement) pageLink("Recreate", "/containers/$id/recreate", "btn btn-small")
+            actionButton("Delete container", "/containers/$id", "delete", "Delete $name? This forcibly stops a running container and removes its writable layer. Named volumes are retained.", danger = true)
+        }
+    }
+    div("actions") {
+        val failed = state == "exited" && info.state?.exitCode?.let { it != 0 } == true
+        stateBadge(if (failed) "error" else state, if (failed) "Exited (${info.state?.exitCode})" else state.replaceFirstChar(Char::uppercase))
+        code("muted") { +id.take(12) }; badge(info.platform ?: "Platform unknown")
+    }
+    if (pendingReplacement) {
+        div("panel stack") {
+            h2 { +"Replacement needs verification" }
+            p { +"Check application readiness and retained data before confirming. Running alone does not mean ready." }
+            infoRow("Previous container", info.config?.labels?.get(PREVIOUS_LABEL).orEmpty(), true)
+            p("hint") { +"The previous container is stopped. Rollback restores its configuration, but cannot undo writes to shared volumes." }
+            div("actions") {
+                actionButton("Confirm replacement", "/containers/$id/confirm", confirm = "Readiness and retained data verified? Delete the previous container and retain named volumes?")
+                actionButton("Roll back", "/containers/$id/rollback", confirm = "Remove this replacement and restore the previous container? Writes to shared volumes are not undone.")
             }
         }
+    }
+    nav("tabs") {
+        attributes["aria-label"] = "Container sections"
+        listOf("overview", "logs", "terminal", "configuration").forEach { item ->
+            a(href = "/containers/$id?tab=$item") {
+                attributes["hx-get"] = href; attributes["hx-target"] = "#main-content"; attributes["hx-push-url"] = "true"
+                if (item == tab) attributes["aria-current"] = "page"
+                +item.replaceFirstChar(Char::uppercase)
+            }
+        }
+    }
+    when (tab) {
+        "logs" -> renderLogsWindow(id)
+        "terminal" -> if (info.state?.running == true) {
+            card("stack") {
+                h2 { +"Open a terminal" }; p("muted") { +"Start a new interactive exec session in this container." }
+                form(classes = "stack") {
+                    attributes["hx-post"] = "/containers/$id/exec"; attributes["hx-target"] = "#main-content"; attributes["hx-sync"] = "this:drop"
+                    label("field") { +"Command"; input(type = InputType.text, name = "command") { value = "/bin/sh"; attributes["aria-describedby"] = "command-hint" } }
+                    p("hint") { this.id = "command-hint"; +"Space-separated arguments, without shell quote expansion. Empty opens /bin/sh." }
+                    div("actions") { button(type = ButtonType.submit, classes = "btn btn-primary") { +"Open terminal" } }
+                }
+                p("hint") { +"Closing the connection ends this session. Opening again creates a new session." }
+            }
+        } else emptyState("Container is not running", "Start the container before opening a terminal. Its previous logs remain available.")
+        "configuration" -> div("grid") {
+            infoCard("Command") { infoRow("Entrypoint and arguments", (listOfNotNull(info.path) + info.args.orEmpty()).joinToString(" "), true); infoRow("Driver", info.driver ?: "Unavailable") }
+            infoCard("Environment") {
+                if (info.config?.env.isNullOrEmpty()) p("muted") { +"No environment variables" }
+                info.config?.env?.forEach { value -> infoRow(value.substringBefore('='), value.substringAfter('=', ""), true) }
+            }
+        }
+        else -> div("stack") {
+            div("grid") {
+                infoCard("Container") { infoRow("Full ID", id, true); infoRow("Created", info.created ?: "Unavailable"); infoRow("Restarts", info.restartCount?.toString() ?: "Unavailable") }
+                infoCard("Published ports") {
+                    if (info.networkSettings?.ports.isNullOrEmpty()) p("muted") { +"No ports published" }
+                    info.networkSettings?.ports?.forEach { (port, bindings) -> infoRow(port, bindings?.joinToString { "${it.hostIp}:${it.hostPort}" }.orEmpty().ifEmpty { "Not mapped" }, true) }
+                }
+                infoCard("Volumes") {
+                    if (info.mounts.isNullOrEmpty()) p("muted") { +"No volumes mounted" }
+                    info.mounts?.forEach { infoRow(it.destination ?: "Unknown destination", it.name ?: it.source ?: "Anonymous", true) }
+                }
+                infoCard("Networks") {
+                    if (info.networkSettings?.networks.isNullOrEmpty()) p("muted") { +"No networks attached" }
+                    info.networkSettings?.networks?.keys?.forEach { p { +it } }
+                }
+            }
+            if (info.state?.running == true) renderLiveStream("/containers/$id/stats", "stats-view", append = false, title = "Memory")
+        }
+    }
+}
+
+fun FlowContent.renderLogsWindow(containerId: String) { renderLiveStream("/containers/$containerId/logs", "logs-view", title = "Container logs") }
+
+fun FlowContent.renderCreateForm(info: ContainerInspectResponse? = null, action: String = "/containers/create", submitted: Parameters? = null, error: String? = null, errorField: String? = null) {
+    val replacing = action != "/containers/create"
+    val back = if (replacing) action.removeSuffix("/recreate") else "/containers"
+    fun value(name: String, fallback: String) = if (submitted != null) submitted[name].orEmpty() else fallback
+    div("form-page") {
+        breadcrumb(if (replacing) "Container" else "Containers", back)
+        pageHeading(if (replacing) "Prepare replacement" else "Create container", if (replacing) "Review the configuration before replacing the current container." else "Configure a new container on your local Docker host.")
+        div { id = "config-form-region"
+            if (error != null) renderError(error)
+            form(classes = "stack") {
+                method = FormMethod.post; this.action = action; attributes["hx-post"] = action; attributes["hx-target"] = "#main-content"; attributes["hx-sync"] = "this:drop"; attributes["data-config-form"] = ""
+                attributes["hx-history"] = "false"
+                fun FlowContent.field(name: String, title: String, content: String, hint: String = "", multiline: Boolean = false, repeat: Boolean = false) {
+                    div {
+                        if (repeat) {
+                            attributes["data-repeat"] = name
+                            h3 { +title }
+                            div("repeat-fields") {
+                                value(name, content).split('\n').ifEmpty { listOf("") }.forEach { line ->
+                                    div("repeat-row") {
+                                        input(type = InputType.text, name = "${name}-row") { this.value = line; attributes["aria-label"] = "$title entry"; attributes["aria-describedby"] = "hint-$name"; if (name == errorField) attributes["aria-invalid"] = "true" }
+                                        button(type = ButtonType.button, classes = "btn btn-small") { attributes["data-remove-row"] = ""; attributes["aria-label"] = "Remove $title entry"; +"Remove" }
+                                    }
+                                }
+                            }
+                            button(type = ButtonType.button, classes = "btn btn-small") { attributes["data-add-row"] = ""; +"Add entry" }
+
+                        } else label("field") {
+                            +title
+                            if (multiline) textArea { id = "config-$name"; this.name = name; rows = "3"; attributes["aria-describedby"] = "hint-$name"; if (name == errorField) attributes["aria-invalid"] = "true"; +value(name, content) }
+                            else input(type = InputType.text, name = name) { id = "config-$name"; this.value = value(name, content); required = name == "image"; attributes["aria-describedby"] = "hint-$name"; if (name == errorField) attributes["aria-invalid"] = "true" }
+                        }
+                        p("hint") { id = "hint-$name"; +hint }
+                        if (name == errorField && error != null) p("field-error") { +error }
+                    }
+                }
+                card("form-section") {
+                    h2 { +"Basics" }
+                    if (!replacing) field("name", "Name (optional)", "", "Leave empty to let Docker choose a name.")
+                    field("image", "Image", info?.config?.image.orEmpty(), "Use an image already available on this host. Pull a missing image below without leaving this form.")
+                    field("cmd", "Command arguments", info?.config?.cmd?.joinToString("\n") ?: "/bin/sh", "One argument per line. Empty uses the image default.", multiline = true)
+                    label("check") { input(type = InputType.checkBox, name = "tty") { checked = if (submitted != null) submitted["tty"] == "on" else info?.config?.tty ?: true }; +"Interactive TTY" }
+                }
+                details("panel section-disclosure") {
+                    open = replacing || submitted != null
+                    summary { +"Environment, ports, volumes and network" }
+                    div("stack") {
+                        field("env", "Environment", info?.config?.env?.joinToString("\n").orEmpty(), "KEY=value. Values stay in this page and are not saved to browser storage.", repeat = true)
+                        field("ports", "Published ports", info?.hostConfig?.portBindings.orEmpty().flatMap { (port, bindings) -> bindings.orEmpty().map { "${it.hostIp}:${it.hostPort}:$port" } }.joinToString("\n"), "127.0.0.1:host-port:container-port/tcp (or /udp). Host port 0 chooses an available port.", repeat = true)
+                        field("volumes", "Named volumes", info?.mounts.orEmpty().filter { it.type?.value == "volume" }.joinToString("\n") { "${it.name}:${it.destination}" }, "volume-name:/container/path. Named volumes survive container deletion; missing volumes are created.", repeat = true)
+                        field("network", "Existing network (optional)", info?.networkSettings?.networks?.keys?.singleOrNull()?.takeUnless { it == "bridge" }.orEmpty(), "Leave empty for the Docker default network.")
+                    }
+                }
+                if (replacing) div("notice notice-warning") { +"The previous container is stopped only after preparation succeeds. Verify readiness before confirming. Shared-volume writes cannot be rolled back automatically." }
+                div("form-footer") { pageLink("Cancel", back, "btn"); button(type = ButtonType.submit, classes = "btn btn-primary") { +(if (replacing) "Prepare replacement" else "Create and run") } }
+            }
+        }
+        details("panel section-disclosure") { summary { +"Need to pull an image first?" }; renderPullForm(embedded = true) }
     }
 }

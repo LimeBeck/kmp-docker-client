@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
     val socket = args.getOrNull(0) ?: "/var/run/docker.sock"
     val httpPort = args.getOrNull(1)?.toInt() ?: 8080
     require(httpPort in 1..65535) { "HTTP port must be between 1 and 65535" }
-    logLevel = LogLevel.DEBUG
+    logLevel = LogLevel.INFO
     val dockerClient = DockerClient(DockerClientConfig(
         connectionConfig = DockerClientConfig.ConnectionConfig.SocketConnection(socket),
     ))
@@ -39,7 +39,7 @@ fun main(args: Array<String>) {
     }) {
         install(WebSockets)
         routing {
-            get("/") { call.respondRedirect("/system") }
+            get("/") { call.respondRedirect("/containers") }
 
             containersRoute(dockerClient)
             execRoute(dockerClient)

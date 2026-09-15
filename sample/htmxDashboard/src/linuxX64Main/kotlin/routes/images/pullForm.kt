@@ -2,27 +2,33 @@ package routes.images
 
 import kotlinx.html.*
 
-fun FlowContent.renderPullForm() {
-    div("mb-6 bg-gray-800 p-4 rounded border border-gray-700") {
+fun FlowContent.renderPullForm(embedded: Boolean = false) {
+    div("panel stack") {
         id = "image-pull-panel"
-        form {
-            input(type = InputType.text, name = "image-pull-name", classes = "bg-gray-700 p-2 rounded mr-3") {
+        form(classes = "toolbar") {
+            label("field") { +"Image name"
+            input(type = InputType.text, name = "image-pull-name", classes = "") {
                 placeholder = "e.g. alpine:latest"; required = true
             }
-            button(type = ButtonType.submit, classes = "bg-blue-600 p-2 rounded mr-3") { +"Pull image" }
-            button(type = ButtonType.button, classes = "bg-gray-700 p-2 rounded") { attributes["data-cancel"] = ""; +"Cancel pull" }
+            }
+            button(type = ButtonType.submit, classes = "btn btn-primary") { +"Pull image" }
+            button(type = ButtonType.button, classes = "btn") { disabled = true; attributes["data-cancel"] = ""; +"Cancel pull" }
         }
-        p("text-sm text-gray-400 my-2") { +"Cancellation closes the request. Docker may finish work in the background; refresh images before retrying." }
-        pre("max-h-64 overflow-auto whitespace-pre-wrap text-sm") {
-            attributes["aria-live"] = "polite"; attributes["data-output"] = ""
+        p("hint") { +"Cancellation closes the request. Docker may finish work in the background; refresh images before retrying." }
+        pre("stream-output") {
+            attributes["aria-label"] = "Image pull progress"; attributes["data-output"] = ""
         }
-        a(href = "/images", classes = "text-blue-400") { +"Refresh images" }
+        p("status") { attributes["data-pull-status"] = ""; attributes["role"] = "status"; +"Ready to pull" }
+        if (embedded) p("hint") { +"After a successful pull, continue configuring the container above." }
+        else a(href = "/images") { +"Refresh images" }
         script { unsafe { +"""
             (function() {
                 const panel = document.getElementById('image-pull-panel');
                 const form = panel.querySelector('form');
                 const output = panel.querySelector('[data-output]');
                 const submit = form.querySelector('[type=submit]');
+                const cancel = panel.querySelector('[data-cancel]');
+                const status = panel.querySelector('[data-pull-status]');
                 let controller = null;
                 let disposed = false;
                 function line(text) {
@@ -33,7 +39,7 @@ fun FlowContent.renderPullForm() {
                     event.preventDefault();
                     if (controller) return;
                     controller = new AbortController();
-                    submit.disabled = true;
+                    submit.disabled = true; cancel.disabled = false; status.textContent = 'Pulling…';
                     output.textContent = '';
                     let finalState = false;
                     try {
@@ -54,17 +60,17 @@ fun FlowContent.renderPullForm() {
                                 if (!record) continue;
                                 const message = JSON.parse(record);
                                 if (message.state !== 'heartbeat') line(message.message);
-                                if (message.state === 'success' || message.state === 'error') finalState = true;
+                                if (message.state === 'success' || message.state === 'error') { finalState = true; status.textContent = message.message; status.className = 'status ' + (message.state === 'success' ? 'status-running' : 'status-error'); }
                             }
                             if (part.done) break;
                         }
                         if (!finalState || pending.trim()) throw new Error('Progress stream ended without a final result');
                     } catch (error) {
-                        if (!disposed) line(error.name === 'AbortError' ? 'Cancelled. Refresh images to reconcile Docker state.' : 'Failed: ' + error.message);
+                        if (!disposed) { const message = error.name === 'AbortError' ? 'Cancelled. Refresh images to reconcile Docker state.' : 'Failed: ' + error.message; line(message); status.textContent = message; status.className = 'status status-error'; }
                     } finally {
                         controller?.abort();
                         controller = null;
-                        if (!disposed) submit.disabled = false;
+                        if (!disposed) { submit.disabled = false; cancel.disabled = true; }
                     }
                 };
                 panel.querySelector('[data-cancel]').onclick = function() { controller?.abort(); };

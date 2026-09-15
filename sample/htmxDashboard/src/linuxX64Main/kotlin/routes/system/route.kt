@@ -8,6 +8,7 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.*
 import logger
 import routes.respondSmart
+import routes.pageAction
 import routes.withHeartbeat
 import ui.escapeHtml
 
@@ -15,9 +16,11 @@ fun Routing.systemRoute(dockerClient: DockerClient) {
     route("/system") {
         get {
             logger.info { "Fetching system info and version" }
-            val info = dockerClient.system.getInfo().getOrNull()
-            val version = dockerClient.system.getVersion().getOrNull()
-            respondSmart("System Info") { renderSystemPage(info, version) }
+            pageAction("System") {
+            val info = dockerClient.system.getInfo().getOrThrow()
+            val version = dockerClient.system.getVersion().getOrThrow()
+            respondSmart("System") { renderSystemPage(info, version) }
+            }
         }
 
         get("/events") {
@@ -27,7 +30,7 @@ fun Routing.systemRoute(dockerClient: DockerClient) {
                 withHeartbeat { send ->
                     dockerClient.system.events().collect { event ->
                         val html =
-                            "<div class='py-1 border-b border-gray-800'><span class='text-blue-400'>${event.action.orEmpty().escapeHtml()}</span> <span class='text-gray-500'>${event.type}</span> ${
+                            "<div class='event-row'><span class='event-action'>${event.action.orEmpty().escapeHtml()}</span> <span class='muted'>${event.type}</span> ${
                                 event.actor?.attributes?.get("name").orEmpty().escapeHtml()
                             }</div>"
                         send("data: $html\n\n")

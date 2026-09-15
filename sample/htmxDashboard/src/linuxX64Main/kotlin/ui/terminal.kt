@@ -3,12 +3,14 @@ package ui
 import kotlinx.html.*
 
 fun FlowContent.renderTerminalPanel(socketPath: String) {
-    div("bg-gray-800 rounded-lg border border-gray-700 p-4") {
+    div("terminal-panel") {
         id = "terminal-panel"
+        attributes["data-terminal"] = ""
         style = "display:flex; flex-direction:column; height:65vh; min-height:280px; overflow:hidden;"
         attributes["data-socket-path"] = socketPath
-        div("flex justify-end mb-2") {
-            button(classes = "px-3 py-1 rounded bg-gray-700 hover:bg-gray-600") {
+        div("terminal-head") {
+            span("status") { attributes["data-terminal-status"] = ""; attributes["role"] = "status"; +"Connecting…" }
+            button(classes = "btn btn-small") {
                 id = "terminal-fullscreen"
                 type = ButtonType.button
                 attributes["aria-pressed"] = "false"
@@ -25,8 +27,9 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                 (function() {
                     const panel = document.getElementById('terminal-panel');
                     const host = panel.querySelector('#terminal');
+                    const status = panel.querySelector('[data-terminal-status]');
                     const button = panel.querySelector('#terminal-fullscreen');
-                    const term = new Terminal({cursorBlink: true, theme: {background: '#1f2937'}});
+                    const term = new Terminal({cursorBlink: true, theme: {background: '#191d24', foreground: '#e9edf5'}});
                     const fit = new FitAddon.FitAddon();
                     term.loadAddon(fit);
                     term.open(host);
@@ -102,12 +105,12 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                         }
                     }
                     document.addEventListener('keydown', escapeFullscreen, true);
-                    socket.onopen = function() { scheduleFit(); term.focus(); };
+                    socket.onopen = function() { status.textContent = 'Connected'; scheduleFit(); term.focus(); };
                     socket.onmessage = function(event) {
                         if (!disposed) term.write(typeof event.data === 'string' ? event.data : new Uint8Array(event.data));
                     };
                     socket.onclose = function() {
-                        if (!disposed) term.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n');
+                        if (!disposed) { status.textContent = 'Disconnected · return to open a new session'; term.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n'); }
                     };
                     const input = term.onData(function(data) {
                         if (socket.readyState === WebSocket.OPEN) socket.send(encoder.encode(data));
@@ -121,6 +124,7 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                         observer.disconnect();
                         window.removeEventListener('resize', scheduleFit);
                         window.removeEventListener('pagehide', cleanup);
+                        panel.removeEventListener('dashboard:dispose', cleanup);
                         document.removeEventListener('fullscreenchange', fullscreenChanged);
                         document.removeEventListener('keydown', escapeFullscreen, true);
                         document.removeEventListener('htmx:beforeCleanupElement', cleanup);
@@ -132,6 +136,7 @@ fun FlowContent.renderTerminalPanel(socketPath: String) {
                     }
                     document.addEventListener('htmx:beforeCleanupElement', cleanup);
                     window.addEventListener('pagehide', cleanup);
+                    panel.addEventListener('dashboard:dispose', cleanup);
                     if (document.fonts) document.fonts.ready.then(scheduleFit);
                     scheduleFit();
                 })();

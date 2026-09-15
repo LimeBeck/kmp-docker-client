@@ -2,114 +2,47 @@ package routes.images
 
 import dev.limebeck.libs.docker.client.model.ImageInspect
 import dev.limebeck.libs.docker.client.model.ImageSummary
-import kotlinx.html.FlowContent
-import kotlinx.html.a
-import kotlinx.html.button
-import kotlinx.html.div
-import kotlinx.html.h1
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.table
-import kotlinx.html.tbody
-import kotlinx.html.td
-import kotlinx.html.th
-import kotlinx.html.thead
-import kotlinx.html.tr
-import ui.badge
-import ui.card
-import ui.infoCard
-import ui.infoRow
-
+import kotlinx.html.*
+import ui.*
 
 fun FlowContent.renderImagesPage(images: List<ImageSummary>) {
-    h1("text-3xl font-bold mb-6 text-purple-400") { +"🖼️ Images" }
-
-    renderPullForm()
-    card("mb-6 flex gap-4") {
-        button(classes = "border border-red-500 text-red-500 hover:bg-red-500/10 px-6 py-2 rounded font-bold") {
-            attributes["hx-post"] = "/images/prune"
-            attributes["hx-target"] = "#main-content"
-            attributes["hx-confirm"] = "Are you sure you want to delete all unused images?"
-            +"Prune"
-        }
-    }
-
-    div("bg-gray-800 rounded-lg overflow-hidden border border-gray-700") {
-        table("w-full text-left") {
-            thead("bg-gray-700 text-gray-400 uppercase text-xs") {
+    pageHeading("Images", "${images.size} images available on this host") { pageLink("Pull image", "/images/pull", "btn btn-primary") }
+    div("actions") { actionButton("Prune dangling images", "/images/prune", confirm = "Remove dangling images not referenced by a container? Tagged images are retained. Docker determines which images are eligible when this runs.", danger = true) }
+    if (images.isEmpty()) { emptyState("No images yet", "Pull an image to create your first container.", "Pull image", "/images/pull"); return }
+    filterToolbar()
+    div("table-wrap") {
+        attributes["role"] = "region"; attributes["aria-label"] = "Images"; attributes["tabindex"] = "0"
+        table { thead { tr { listOf("Image", "Size", "Actions").forEach { th { scope = ThScope.col; +it } } } }
+            tbody { images.forEach { image ->
+                val name = image.repoTags?.joinToString(", ").orEmpty().ifEmpty { "Untagged image" }
                 tr {
-                    listOf("ID", "Tags", "Size", "Action").forEach { th(classes = "px-6 py-3") { +it } }
+                    attributes["data-name"] = name.lowercase(); attributes["data-search-text"] = "$name ${image.id}".lowercase()
+                    td { attributes["data-label"] = "Image"; pageLink(name, "/images/${image.id}", "resource-name"); code("resource-id") { +image.id.removePrefix("sha256:").take(12) } }
+                    td("numeric") { attributes["data-label"] = "Size"; +bytes(image.propertySize.toULong()) }
+                    td { attributes["data-label"] = "Actions"; actionMenu(accessibleLabel = "Actions for $name") {
+                        pageLink("Inspect", "/images/${image.id}", "btn btn-small")
+                        actionButton("Delete", "/images/${image.id}", "delete", "Delete $name (${image.id.removePrefix("sha256:").take(12)})? Containers using this image may prevent deletion.", danger = true)
+                    } }
                 }
-            }
-            tbody("divide-y divide-gray-700") {
-                images.forEach { image ->
-                    tr("hover:bg-gray-700/50") {
-                        td("px-6 py-4 font-mono text-sm") { +(image.id.removePrefix("sha256:").take(12)) }
-                        td("px-6 py-4") { +(image.repoTags?.joinToString(", ") ?: "") }
-                        td("px-6 py-4") { +("${(image.propertySize) / 1024 / 1024} MB") }
-                        td("px-6 py-4 flex gap-3") {
-                            button(classes = "text-blue-400 hover:text-blue-300 font-medium") {
-                                attributes["hx-get"] = "/images/${image.id}"
-                                attributes["hx-target"] = "#main-content"
-                                attributes["hx-push-url"] = "true"
-                                +"Inspect"
-                            }
-                            button(classes = "text-red-400 hover:text-red-300") {
-                                attributes["hx-delete"] = "/images/${image.id}"
-                                attributes["hx-target"] = "#main-content"
-                                attributes["hx-confirm"] = "Delete this image?"
-                                +"Delete"
-                            }
-                        }
-                    }
-                }
-            }
+            } }
         }
     }
+    tableFoot()
 }
 
 fun FlowContent.renderImageDetailsPage(id: String, info: ImageInspect?) {
-    div("space-y-6") {
-        div("flex justify-between items-center") {
-            h1("text-3xl font-bold text-purple-400") {
-                +"Image: ${info?.repoTags?.firstOrNull() ?: id.take(12)}"
-            }
-            a(classes = "text-gray-400 hover:text-white cursor-pointer") {
-                attributes["hx-get"] = "/images"
-                attributes["hx-target"] = "#main-content"
-                attributes["hx-push-url"] = "true"
-                +"← Back to List"
-            }
+    breadcrumb("Images", "/images")
+    pageHeading(info?.repoTags?.firstOrNull() ?: "Image details", id)
+    if (info == null) { renderError("Could not inspect this image. Return to Images and retry."); return }
+    div("grid") {
+        infoCard("Metadata") {
+            infoRow("Full ID", info.id ?: "Unavailable", true); infoRow("Author", info.author.orEmpty().ifEmpty { "Not specified" })
+            infoRow("Architecture", "${info.architecture ?: "Unknown"} / ${info.os ?: "Unknown"}"); infoRow("Created", info.created ?: "Unavailable")
         }
-
-        if (info != null) {
-            div("grid grid-cols-1 md:grid-cols-2 gap-4") {
-                infoCard("Image Metadata") {
-                    infoRow("Full ID", info.id ?: "-", isCode = true)
-                    infoRow("Author", info.author ?: "-")
-                    infoRow("Architecture", "${info.architecture} / ${info.os}")
-                    infoRow("Docker Version", info.dockerVersion ?: "-")
-                    infoRow("Created", info.created ?: "-")
-                }
-                infoCard("Configuration") {
-                    infoRow("Size", "${(info.propertySize ?: 0) / 1024 / 1024} MB")
-                    infoRow("Virtual Size", "${(info.virtualSize ?: 0) / 1024 / 1024} MB")
-                    infoRow("Working Dir", info.config?.workingDir ?: "-")
-                    infoRow("Entrypoint", info.config?.entrypoint?.joinToString(" ") ?: "-")
-                }
-            }
-
-            if (!info.repoTags.isNullOrEmpty()) {
-                infoCard("Tags") {
-                    div("flex flex-wrap gap-2") {
-                        info.repoTags!!.forEach { badge(it, "bg-purple-900/40 border-purple-700") }
-                    }
-                }
-            }
-        } else {
-            div("p-4 bg-red-900/20 border border-red-900 text-red-400 rounded") {
-                +"Failed to get detailed image data"
-            }
+        infoCard("Configuration") {
+            infoRow("Size", bytes(info.propertySize?.toULong())); infoRow("Working directory", info.config?.workingDir.orEmpty().ifEmpty { "/" })
+            infoRow("Entrypoint", info.config?.entrypoint?.joinToString(" ") ?: "Image default", true)
         }
+        infoCard("Tags") { if (info.repoTags.isNullOrEmpty()) p("muted") { +"No tags" } else info.repoTags?.forEach { p { badge(it) } } }
     }
 }

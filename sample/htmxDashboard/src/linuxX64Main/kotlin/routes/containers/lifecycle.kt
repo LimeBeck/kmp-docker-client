@@ -16,42 +16,48 @@ import kotlinx.coroutines.withContext
 import kotlinx.html.*
 import kotlinx.serialization.json.JsonObject
 import routes.respondSmart
-import ui.renderError
+import routes.operationError
+import routes.pageAction
 import kotlin.random.Random
 
 const val MANAGED_LABEL = "dev.limebeck.dashboard.managed"
 const val PREVIOUS_LABEL = "dev.limebeck.dashboard.previous"
 const val PREVIOUS_RUNNING_LABEL = "dev.limebeck.dashboard.previous-running"
 
+private fun Parameters.configurationParameters(): Parameters = Parameters.build {
+    appendAll(this@configurationParameters)
+    listOf("env", "ports", "volumes").forEach { name ->
+        if (!this@configurationParameters.contains(name)) {
+            append(name, this@configurationParameters.getAll("$name-row").orEmpty().filter { it.isNotBlank() }.joinToString("\n"))
+        }
+    }
+}
+
 private fun Parameters.lines(name: String) = get(name).orEmpty().lines().map(String::trim).filter(String::isNotEmpty)
 
 private fun Parameters.configuration(): ContainerCreateRequest {
     val image = get("image").orEmpty().trim()
-    require(image.isNotEmpty()) { "Image is required" }
+    checkField("image", image.isNotEmpty(), "Image is required")
     val environment = lines("env")
-    require(environment.all { it.substringBefore('=', "").matches(Regex("[A-Za-z_][A-Za-z0-9_]*")) }) {
-        "Environment: enter one KEY=value per line"
-    }
+    checkField("env", environment.all { it.substringBefore('=', "").matches(Regex("[A-Za-z_][A-Za-z0-9_]*")) }, "Environment: enter KEY=value")
     val ports = lines("ports").associate { line ->
         val match = Regex("127\\.0\\.0\\.1:(\\d+):(\\d+)(?:/(tcp|udp))?").matchEntire(line)
-        requireNotNull(match) { "Ports: use 127.0.0.1:host-port:container-port/tcp (or /udp)" }
-        val host = match.groupValues[1].toInt()
-        val target = match.groupValues[2].toInt()
-        require(host in 0..65535 && target in 1..65535) { "Invalid port number" }
+        if (match == null) throw FormFieldException("ports", "Ports: use 127.0.0.1:host-port:container-port/tcp (or /udp)")
+        val host = match.groupValues[1].toIntOrNull() ?: -1
+        val target = match.groupValues[2].toIntOrNull() ?: -1
+        checkField("ports", host in 0..65535 && target in 1..65535, "Host port must be 0–65535; container port must be 1–65535")
         val key = "$target/${match.groupValues[3].ifEmpty { "tcp" }}"
         key to listOf(PortBinding(hostIp = "127.0.0.1", hostPort = host.toString()))
     }
     val mounts = lines("volumes").map { line ->
         val parts = line.split(':', limit = 2)
-        require(parts.size == 2 && parts[0].matches(Regex("[A-Za-z0-9][A-Za-z0-9_.-]+")) && parts[1].startsWith('/')) {
-            "Volumes: use volume-name:/absolute/container/path"
-        }
+        checkField("volumes", parts.size == 2 && parts[0].matches(Regex("[A-Za-z0-9][A-Za-z0-9_.-]+")) && parts[1].startsWith('/'), "Volumes: use volume-name:/absolute/container/path")
         Mount(type = Mount.Type.VOLUME, source = parts[0], target = parts[1])
     }
     val network = get("network").orEmpty().trim()
     return ContainerCreateRequest(
         image = image,
-        cmd = lines("cmd").takeIf { it.isNotEmpty() },
+        cmd = get("cmd")?.takeIf { it.isNotBlank() }?.lines(),
         env = environment,
         tty = get("tty") == "on",
         openStdin = get("tty") == "on",
@@ -66,10 +72,18 @@ private fun Parameters.configuration(): ContainerCreateRequest {
 
 suspend fun RoutingContext.containerAction(block: suspend () -> Unit) {
     try { block() } catch (e: CancellationException) { throw e }
+    catch (e: Exception) { operationError(e.message ?: "Container operation failed") }
+}
+
+class FormFieldException(val field: String, message: String) : IllegalArgumentException(message)
+private fun checkField(field: String, condition: Boolean, message: String) {
+    if (!condition) throw FormFieldException(field, message)
+}
+private suspend fun RoutingContext.configurationAction(params: Parameters, action: String, block: suspend () -> Unit) {
+    try { block() } catch (e: CancellationException) { throw e }
     catch (e: Exception) {
-        respondSmart("Container operation failed") {
-            renderError(e.message ?: "Container operation failed")
-            a(href = "/containers") { +"Back to containers" }
+        respondSmart("Check container configuration", HttpStatusCode.UnprocessableEntity) {
+            renderCreateForm(action = action, submitted = params, error = e.message ?: "Container operation failed", errorField = (e as? FormFieldException)?.field)
         }
     }
 }
@@ -85,8 +99,8 @@ fun Route.lifecycleRoutes(client: DockerClient) {
     // Replacement/rollback transitions are serialized within this single-process sample.
     val transitions = Mutex()
     post("/create") {
-        containerAction {
-            val params = call.receiveParameters()
+        val params = call.receiveParameters().configurationParameters()
+        configurationAction(params, "/containers/create") {
             val id = client.containers.create(
                 name = params["name"]?.trim()?.takeIf { it.isNotEmpty() },
                 config = params.configuration(),
@@ -100,7 +114,7 @@ fun Route.lifecycleRoutes(client: DockerClient) {
         }
     }
     get("/{id}/recreate") {
-        containerAction {
+        pageAction("Recreate container") {
             val id = call.parameters["id"]!!
             val info = client.containers.getInfo(id).getOrThrow()
             require(info.config?.labels?.get(MANAGED_LABEL) == "true") {
@@ -111,8 +125,8 @@ fun Route.lifecycleRoutes(client: DockerClient) {
         }
     }
     post("/{id}/recreate") {
-        containerAction {
-            val params = call.receiveParameters()
+        val params = call.receiveParameters().configurationParameters()
+        configurationAction(params, "/containers/${call.parameters["id"]!!}/recreate") {
             val desired = params.configuration()
             transitions.withLock {
                 val id = call.parameters["id"]!!

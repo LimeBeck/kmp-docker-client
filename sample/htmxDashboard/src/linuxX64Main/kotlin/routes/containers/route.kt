@@ -1,5 +1,8 @@
 package routes.containers
 
+import ui.pageHeading
+import ui.pageLink
+
 import dev.limebeck.libs.docker.client.DockerClient
 import dev.limebeck.libs.docker.client.api.containers
 import dev.limebeck.libs.docker.client.model.ContainerLogsParameters
@@ -18,6 +21,7 @@ import kotlinx.html.h1
 import kotlinx.html.id
 import logger
 import routes.respondSmart
+import routes.pageAction
 import routes.withHeartbeat
 import routes.redirectSmart
 import ui.escapeHtml
@@ -26,110 +30,50 @@ import ui.renderError
 fun Routing.containersRoute(dockerClient: DockerClient) {
     route("/containers") {
         get {
-            logger.info { "Fetching containers list" }
-            val containers = dockerClient.containers.getList(true).getOrThrow()
-            respondSmart("Containers") {
-                h1("text-3xl font-bold mb-6 text-blue-400") { +"🐳 Containers" }
-                renderCreateForm()
-                containerTable(containers)
+            pageAction("Containers") {
+                val containers = dockerClient.containers.getList(true).getOrThrow()
+                respondSmart("Containers") {
+                    pageHeading("Containers", "${containers.count { it.state == dev.limebeck.libs.docker.client.model.ContainerSummary.State.RUNNING }} running · ${containers.size} total") {
+                        pageLink("Create container", "/containers/create", "btn btn-primary")
+                    }
+                    containerTable(containers)
+                }
             }
         }
+        get("/create") { respondSmart("Create container") { renderCreateForm() } }
 
         get("/{id}") {
             val id = call.parameters["id"]!!
             logger.info { "Fetching container info for id: $id" }
-            containerAction {
+            pageAction("Container details") {
                 val info = dockerClient.containers.getInfo(id).getOrThrow()
                 val previous = info.config?.labels?.get(PREVIOUS_LABEL)
                 val pending = previous != null && dockerClient.containers.getInfo(previous).isSuccess
-                respondSmart("Container Details") { renderContainerDetailsPage(id, info, pending) }
+                respondSmart("Container Details") { renderContainerDetailsPage(id, info, pending, call.request.queryParameters["tab"].orEmpty().takeIf { it in listOf("overview", "logs", "terminal", "configuration") } ?: "overview") }
             }
         }
 
         lifecycleRoutes(dockerClient)
 
         post("/{id}/start") {
-            val containerId = call.parameters["id"]!!
-            logger.info { "Starting container: $containerId" }
-            val result = dockerClient.containers.start(containerId)
-
-            result.fold(
-                onSuccess = {
-                    logger.info { "Container $containerId started successfully" }
-                    redirectSmart("/containers/$containerId")
-                },
-                onError = { error ->
-                    logger.error(Exception(error.message)) { "Failed to start container $containerId" }
-                    val containers = dockerClient.containers.getList(all = true).getOrNull() ?: emptyList()
-                    call.respondHtml {
-                        body {
-                            h1("text-3xl font-bold mb-6 text-blue-400") { +"🐳 Containers" }
-                            div("mb-8") { id = "container-details" }
-                            containerTable(containers)
-                            div {
-                                attributes["hx-swap-oob"] = "afterbegin:#alerts"
-                                renderError("Failed to start container: ${error.message}")
-                            }
-                        }
-                    }
-                }
-            )
+            containerAction {
+                val id = call.parameters["id"]!!
+                dockerClient.containers.start(id).getOrThrow()
+                redirectSmart("/containers/$id?notice=started")
+            }
         }
-
         post("/{id}/stop") {
-            val containerId = call.parameters["id"]!!
-            logger.info { "Stopping container: $containerId" }
-            val result = dockerClient.containers.stop(containerId)
-
-            result.fold(
-                onSuccess = {
-                    logger.info { "Container $containerId stopped successfully" }
-                    redirectSmart("/containers/$containerId")
-                },
-                onError = { error ->
-                    logger.error(Exception(error.message)) { "Failed to stop container $containerId" }
-                    val containers = dockerClient.containers.getList(all = true).getOrNull() ?: emptyList()
-                    call.respondHtml {
-                        body {
-                            h1("text-3xl font-bold mb-6 text-blue-400") { +"🐳 Containers" }
-                            div("mb-8") { id = "container-details" }
-                            containerTable(containers)
-                            div {
-                                attributes["hx-swap-oob"] = "afterbegin:#alerts"
-                                renderError("Failed to stop container: ${error.message}")
-                            }
-                        }
-                    }
-                }
-            )
+            containerAction {
+                val id = call.parameters["id"]!!
+                dockerClient.containers.stop(id).getOrThrow()
+                redirectSmart("/containers/$id?notice=stopped")
+            }
         }
-
         delete("/{id}") {
-            val containerId = call.parameters["id"]!!
-            logger.info { "Removing container: $containerId" }
-            val result = dockerClient.containers.remove(containerId, force = true)
-
-            result.fold(
-                onSuccess = {
-                    logger.info { "Container $containerId removed successfully" }
-                    redirectSmart("/containers")
-                },
-                onError = { error ->
-                    logger.error(Exception(error.message)) { "Failed to remove container $containerId" }
-                    val containers = dockerClient.containers.getList(all = true).getOrNull() ?: emptyList()
-                    call.respondHtml {
-                        body {
-                            h1("text-3xl font-bold mb-6 text-blue-400") { +"🐳 Containers" }
-                            div("mb-8") { id = "container-details" }
-                            containerTable(containers)
-                            div {
-                                attributes["hx-swap-oob"] = "afterbegin:#alerts"
-                                renderError("Failed to remove container: ${error.message}")
-                            }
-                        }
-                    }
-                }
-            )
+            containerAction {
+                dockerClient.containers.remove(call.parameters["id"]!!, force = true).getOrThrow()
+                redirectSmart("/containers?notice=removed")
+            }
         }
 
         get("/{id}/logs") {
@@ -139,20 +83,21 @@ fun Routing.containersRoute(dockerClient: DockerClient) {
             call.respondBytesWriter(contentType = ContentType.Text.EventStream) {
                 withHeartbeat { send ->
                     try {
+                        val running = dockerClient.containers.getInfo(id).getOrThrow().state?.running == true
                         val logsFlow = dockerClient.containers.getLogs(
                             id = id,
-                            parameters = ContainerLogsParameters(follow = true, stdout = true, stderr = true, tail = "20")
+                            parameters = ContainerLogsParameters(follow = running, stdout = true, stderr = true, tail = "200")
                         ).getOrThrow()
 
                         logsFlow.collect { log ->
-                            val color = if (log.type == LogLine.Type.STDERR) "text-red-400" else "text-gray-400"
+                            val channel = if (log.type == LogLine.Type.STDERR) "stderr" else "stdout"
                             val html =
-                                "<div class='leading-relaxed'><span class='$color'>${log.line.escapeHtml().replace("\n", "<br>")}</span></div>"
+                                "<div data-channel='$channel'><span>${log.line.escapeHtml().replace("\n", "<br>")}</span></div>"
                             send("data: $html\n\n")
                         }
                         send("event: done\ndata: end\n\n")
                     } catch (e: CancellationException) { throw e } catch (e: Exception) {
-                        send("data: <div class='text-orange-500 italic'>Stream disconnected</div>\n\n")
+                        send("event: failure\ndata: Log stream disconnected. Reconnect to retry.\n\n")
                     }
                 }
             }
@@ -164,9 +109,12 @@ fun Routing.containersRoute(dockerClient: DockerClient) {
             call.respondBytesWriter(contentType = ContentType.Text.EventStream) {
                 withHeartbeat { send ->
                     dockerClient.containers.getStats(id).getOrThrow().collect { stats ->
-                        val memory = stats.memoryStats?.usage?.toString() ?: "unavailable"
-                        val limit = stats.memoryStats?.limit?.toString() ?: "unavailable"
-                        send("data: Memory: $memory / $limit bytes<br>Read: ${stats.read}\n\n")
+                        val memory = ui.bytes(stats.memoryStats?.usage)
+                        val limit = ui.bytes(stats.memoryStats?.limit)
+                        val used = stats.memoryStats?.usage
+                        val total = stats.memoryStats?.limit
+                        val percent = if (used != null && total != null && total > 0uL) " (${(used.toDouble() / total.toDouble() * 1000).toLong() / 10.0}%)" else ""
+                        send("data: Memory: $memory / $limit$percent<br>Updated: ${stats.read.toString().escapeHtml()}\n\n")
                     }
                     send("event: done\ndata: end\n\n")
                 }
@@ -174,6 +122,7 @@ fun Routing.containersRoute(dockerClient: DockerClient) {
         }
 
         post("/{id}/exec") {
+            containerAction {
             val id = call.parameters["id"]!!
             val command = call.receiveParameters()["command"]?.trim()?.takeIf { it.isNotEmpty() }
             val exec = dockerClient.containers.execCreate(
@@ -187,6 +136,7 @@ fun Routing.containersRoute(dockerClient: DockerClient) {
             ).getOrThrow()
             call.response.headers.append("HX-Redirect", "/exec/${exec.id}")
             call.respond(HttpStatusCode.OK)
+            }
         }
     }
 }

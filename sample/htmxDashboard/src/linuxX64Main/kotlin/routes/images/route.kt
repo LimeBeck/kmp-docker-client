@@ -16,23 +16,32 @@ import logger
 import routes.respondSmart
 import routes.withHeartbeat
 import routes.redirectSmart
-import ui.renderError
+import routes.pageAction
+import routes.containers.containerAction
+import ui.pageHeading
+import ui.breadcrumb
 
 
 fun Routing.imagesRoute(dockerClient: DockerClient) {
     route("/images") {
         get {
             logger.info { "Fetching images list" }
-            val images = dockerClient.images.list().getOrNull() ?: emptyList()
-            respondSmart("Images") { renderImagesPage(images) }
+            pageAction("Images") {
+                val images = dockerClient.images.list().getOrThrow()
+                respondSmart("Images") { renderImagesPage(images) }
+            }
         }
 
+        get("/pull") { respondSmart("Pull image") { breadcrumb("Images", "/images"); pageHeading("Pull image", "Download an image from a registry."); renderPullForm() } }
+
         get("/{id}") {
+            pageAction("Image details") {
             val id = call.parameters["id"]!!
             logger.info { "Inspecting image: $id" }
-            val info = dockerClient.images.inspect(id).getOrNull()
+            val info = dockerClient.images.inspect(id).getOrThrow()
             respondSmart("Image Details") {
                 renderImageDetailsPage(id, info)
+            }
             }
         }
 
@@ -61,15 +70,13 @@ fun Routing.imagesRoute(dockerClient: DockerClient) {
 
         post("/prune") {
             logger.info { "Pruning images" }
-            dockerClient.images.prune()
-            redirectSmart("/images")
+            containerAction { dockerClient.images.prune().getOrThrow(); redirectSmart("/images?notice=pruned") }
         }
 
         delete("/{id}") {
             val id = call.parameters["id"]!!
             logger.info { "Removing image: $id" }
-            dockerClient.images.remove(id)
-            redirectSmart("/images")
+            containerAction { dockerClient.images.remove(id).getOrThrow(); redirectSmart("/images?notice=removed") }
         }
     }
 }
