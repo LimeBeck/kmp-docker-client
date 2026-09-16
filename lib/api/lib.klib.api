@@ -249,6 +249,54 @@ final class <#A: out kotlin/Any?> dev.limebeck.libs.docker.client.model/ImagePro
     }
 }
 
+final class dev.limebeck.libs.docker.client.api.swarm/Configs { // dev.limebeck.libs.docker.client.api.swarm/Configs|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api.swarm/Configs.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final suspend fun create(dev.limebeck.libs.docker.client.model/ConfigSpec): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/SwarmCreateResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Configs.create|create(dev.limebeck.libs.docker.client.model.ConfigSpec){}[0]
+    final suspend fun getInfo(kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/Config, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Configs.getInfo|getInfo(kotlin.String){}[0]
+    final suspend fun getList(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<kotlin.collections/List<dev.limebeck.libs.docker.client.model/Config>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Configs.getList|getList(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
+    final suspend fun remove(kotlin/String): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Configs.remove|remove(kotlin.String){}[0]
+    final suspend fun update(kotlin/String, kotlin/ULong, dev.limebeck.libs.docker.client.model/ConfigSpec): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Configs.update|update(kotlin.String;kotlin.ULong;dev.limebeck.libs.docker.client.model.ConfigSpec){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.api.swarm/Nodes { // dev.limebeck.libs.docker.client.api.swarm/Nodes|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api.swarm/Nodes.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final suspend fun getInfo(kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/Node, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Nodes.getInfo|getInfo(kotlin.String){}[0]
+    final suspend fun getList(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<kotlin.collections/List<dev.limebeck.libs.docker.client.model/Node>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Nodes.getList|getList(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
+    final suspend fun remove(kotlin/String, kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Nodes.remove|remove(kotlin.String;kotlin.Boolean){}[0]
+    final suspend fun update(kotlin/String, kotlin/ULong, dev.limebeck.libs.docker.client.model/NodeSpec): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Nodes.update|update(kotlin.String;kotlin.ULong;dev.limebeck.libs.docker.client.model.NodeSpec){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.api.swarm/Secrets { // dev.limebeck.libs.docker.client.api.swarm/Secrets|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api.swarm/Secrets.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final suspend fun create(dev.limebeck.libs.docker.client.model/SecretSpec): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/SwarmCreateResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Secrets.create|create(dev.limebeck.libs.docker.client.model.SecretSpec){}[0]
+    final suspend fun getInfo(kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/Secret, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Secrets.getInfo|getInfo(kotlin.String){}[0]
+    final suspend fun getList(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<kotlin.collections/List<dev.limebeck.libs.docker.client.model/Secret>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Secrets.getList|getList(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
+    final suspend fun remove(kotlin/String): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Secrets.remove|remove(kotlin.String){}[0]
+    final suspend fun update(kotlin/String, kotlin/ULong, dev.limebeck.libs.docker.client.model/SecretSpec): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Secrets.update|update(kotlin.String;kotlin.ULong;dev.limebeck.libs.docker.client.model.SecretSpec){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.api.swarm/Services { // dev.limebeck.libs.docker.client.api.swarm/Services|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api.swarm/Services.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final suspend fun create(dev.limebeck.libs.docker.client.model/ServiceSpec, kotlin/String? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/ServiceCreateResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Services.create|create(dev.limebeck.libs.docker.client.model.ServiceSpec;kotlin.String?){}[0]
+    final suspend fun getInfo(kotlin/String, kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/Service, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Services.getInfo|getInfo(kotlin.String;kotlin.Boolean){}[0]
+    final suspend fun getList(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ..., kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<kotlin.collections/List<dev.limebeck.libs.docker.client.model/Service>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Services.getList|getList(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?;kotlin.Boolean){}[0]
+    final suspend fun getLogs(kotlin/String, dev.limebeck.libs.docker.client.model/SwarmLogsParameters = ...): dev.limebeck.libs.docker.client.model/Result<kotlinx.coroutines.flow/Flow<dev.limebeck.libs.docker.client.model/LogLine>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Services.getLogs|getLogs(kotlin.String;dev.limebeck.libs.docker.client.model.SwarmLogsParameters){}[0]
+    final suspend fun remove(kotlin/String): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Services.remove|remove(kotlin.String){}[0]
+    final suspend fun update(kotlin/String, kotlin/ULong, dev.limebeck.libs.docker.client.model/ServiceSpec, kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/ServiceUpdateResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Services.update|update(kotlin.String;kotlin.ULong;dev.limebeck.libs.docker.client.model.ServiceSpec;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.api.swarm/Tasks { // dev.limebeck.libs.docker.client.api.swarm/Tasks|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api.swarm/Tasks.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final suspend fun getInfo(kotlin/String): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/Task, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Tasks.getInfo|getInfo(kotlin.String){}[0]
+    final suspend fun getList(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<kotlin.collections/List<dev.limebeck.libs.docker.client.model/Task>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Tasks.getList|getList(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
+    final suspend fun getLogs(kotlin/String, dev.limebeck.libs.docker.client.model/SwarmLogsParameters = ...): dev.limebeck.libs.docker.client.model/Result<kotlinx.coroutines.flow/Flow<dev.limebeck.libs.docker.client.model/LogLine>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api.swarm/Tasks.getLogs|getLogs(kotlin.String;dev.limebeck.libs.docker.client.model.SwarmLogsParameters){}[0]
+}
+
 final class dev.limebeck.libs.docker.client.api/Containers { // dev.limebeck.libs.docker.client.api/Containers|null[0]
     constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api/Containers.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
 
@@ -320,6 +368,29 @@ final class dev.limebeck.libs.docker.client.api/Networks { // dev.limebeck.libs.
     final suspend fun list(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<kotlin.collections/List<dev.limebeck.libs.docker.client.model/Network>, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Networks.list|list(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
     final suspend fun prune(kotlin.collections/Map<kotlin/String, kotlin.collections/List<kotlin/String>>? = ...): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/NetworkPruneResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Networks.prune|prune(kotlin.collections.Map<kotlin.String,kotlin.collections.List<kotlin.String>>?){}[0]
     final suspend fun remove(kotlin/String): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Networks.remove|remove(kotlin.String){}[0]
+}
+
+final class dev.limebeck.libs.docker.client.api/Swarm { // dev.limebeck.libs.docker.client.api/Swarm|null[0]
+    constructor <init>(dev.limebeck.libs.docker.client/DockerClient) // dev.limebeck.libs.docker.client.api/Swarm.<init>|<init>(dev.limebeck.libs.docker.client.DockerClient){}[0]
+
+    final val configs // dev.limebeck.libs.docker.client.api/Swarm.configs|{}configs[0]
+        final fun <get-configs>(): dev.limebeck.libs.docker.client.api.swarm/Configs // dev.limebeck.libs.docker.client.api/Swarm.configs.<get-configs>|<get-configs>(){}[0]
+    final val nodes // dev.limebeck.libs.docker.client.api/Swarm.nodes|{}nodes[0]
+        final fun <get-nodes>(): dev.limebeck.libs.docker.client.api.swarm/Nodes // dev.limebeck.libs.docker.client.api/Swarm.nodes.<get-nodes>|<get-nodes>(){}[0]
+    final val secrets // dev.limebeck.libs.docker.client.api/Swarm.secrets|{}secrets[0]
+        final fun <get-secrets>(): dev.limebeck.libs.docker.client.api.swarm/Secrets // dev.limebeck.libs.docker.client.api/Swarm.secrets.<get-secrets>|<get-secrets>(){}[0]
+    final val services // dev.limebeck.libs.docker.client.api/Swarm.services|{}services[0]
+        final fun <get-services>(): dev.limebeck.libs.docker.client.api.swarm/Services // dev.limebeck.libs.docker.client.api/Swarm.services.<get-services>|<get-services>(){}[0]
+    final val tasks // dev.limebeck.libs.docker.client.api/Swarm.tasks|{}tasks[0]
+        final fun <get-tasks>(): dev.limebeck.libs.docker.client.api.swarm/Tasks // dev.limebeck.libs.docker.client.api/Swarm.tasks.<get-tasks>|<get-tasks>(){}[0]
+
+    final suspend fun getInfo(): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/Swarm, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.getInfo|getInfo(){}[0]
+    final suspend fun getUnlockKey(): dev.limebeck.libs.docker.client.model/Result<dev.limebeck.libs.docker.client.model/UnlockKeyResponse, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.getUnlockKey|getUnlockKey(){}[0]
+    final suspend fun init(dev.limebeck.libs.docker.client.model/SwarmInitRequest): dev.limebeck.libs.docker.client.model/Result<kotlin/String, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.init|init(dev.limebeck.libs.docker.client.model.SwarmInitRequest){}[0]
+    final suspend fun join(dev.limebeck.libs.docker.client.model/SwarmJoinRequest): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.join|join(dev.limebeck.libs.docker.client.model.SwarmJoinRequest){}[0]
+    final suspend fun leave(kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.leave|leave(kotlin.Boolean){}[0]
+    final suspend fun unlock(dev.limebeck.libs.docker.client.model/SwarmUnlockRequest): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.unlock|unlock(dev.limebeck.libs.docker.client.model.SwarmUnlockRequest){}[0]
+    final suspend fun update(kotlin/ULong, dev.limebeck.libs.docker.client.model/SwarmSpec, kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): dev.limebeck.libs.docker.client.model/Result<kotlin/Unit, dev.limebeck.libs.docker.client.model/ErrorResponse> // dev.limebeck.libs.docker.client.api/Swarm.update|update(kotlin.ULong;dev.limebeck.libs.docker.client.model.SwarmSpec;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
 }
 
 final class dev.limebeck.libs.docker.client.api/System { // dev.limebeck.libs.docker.client.api/System|null[0]
@@ -8195,6 +8266,32 @@ final class dev.limebeck.libs.docker.client.model/Swarm { // dev.limebeck.libs.d
     }
 }
 
+final class dev.limebeck.libs.docker.client.model/SwarmCreateResponse { // dev.limebeck.libs.docker.client.model/SwarmCreateResponse|null[0]
+    constructor <init>(kotlin/String) // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.<init>|<init>(kotlin.String){}[0]
+
+    final val id // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.id.<get-id>|<get-id>(){}[0]
+
+    final fun component1(): kotlin/String // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.component1|component1(){}[0]
+    final fun copy(kotlin/String = ...): dev.limebeck.libs.docker.client.model/SwarmCreateResponse // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.copy|copy(kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<dev.limebeck.libs.docker.client.model/SwarmCreateResponse> { // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.$serializer|null[0]
+        final val descriptor // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): dev.limebeck.libs.docker.client.model/SwarmCreateResponse // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, dev.limebeck.libs.docker.client.model/SwarmCreateResponse) // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;dev.limebeck.libs.docker.client.model.SwarmCreateResponse){}[0]
+    }
+
+    final object Companion { // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<dev.limebeck.libs.docker.client.model/SwarmCreateResponse> // dev.limebeck.libs.docker.client.model/SwarmCreateResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
 final class dev.limebeck.libs.docker.client.model/SwarmInfo { // dev.limebeck.libs.docker.client.model/SwarmInfo|null[0]
     constructor <init>(kotlin/String? = ..., kotlin/String? = ..., dev.limebeck.libs.docker.client.model/LocalNodeState? = ..., kotlin/Boolean? = ..., kotlin/String? = ..., kotlin.collections/List<dev.limebeck.libs.docker.client.model/PeerNode>? = ..., kotlin/Int? = ..., kotlin/Int? = ..., dev.limebeck.libs.docker.client.model/ClusterInfo? = ...) // dev.limebeck.libs.docker.client.model/SwarmInfo.<init>|<init>(kotlin.String?;kotlin.String?;dev.limebeck.libs.docker.client.model.LocalNodeState?;kotlin.Boolean?;kotlin.String?;kotlin.collections.List<dev.limebeck.libs.docker.client.model.PeerNode>?;kotlin.Int?;kotlin.Int?;dev.limebeck.libs.docker.client.model.ClusterInfo?){}[0]
 
@@ -8334,6 +8431,37 @@ final class dev.limebeck.libs.docker.client.model/SwarmJoinRequest { // dev.lime
 
         final fun serializer(): kotlinx.serialization/KSerializer<dev.limebeck.libs.docker.client.model/SwarmJoinRequest> // dev.limebeck.libs.docker.client.model/SwarmJoinRequest.Companion.serializer|serializer(){}[0]
     }
+}
+
+final class dev.limebeck.libs.docker.client.model/SwarmLogsParameters { // dev.limebeck.libs.docker.client.model/SwarmLogsParameters|null[0]
+    constructor <init>(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Long? = ..., kotlin/String? = ...) // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.<init>|<init>(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Long?;kotlin.String?){}[0]
+
+    final val details // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.details|{}details[0]
+        final fun <get-details>(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.details.<get-details>|<get-details>(){}[0]
+    final val follow // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.follow|{}follow[0]
+        final fun <get-follow>(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.follow.<get-follow>|<get-follow>(){}[0]
+    final val since // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.since|{}since[0]
+        final fun <get-since>(): kotlin/Long? // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.since.<get-since>|<get-since>(){}[0]
+    final val stderr // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.stderr|{}stderr[0]
+        final fun <get-stderr>(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.stderr.<get-stderr>|<get-stderr>(){}[0]
+    final val stdout // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.stdout|{}stdout[0]
+        final fun <get-stdout>(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.stdout.<get-stdout>|<get-stdout>(){}[0]
+    final val tail // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.tail|{}tail[0]
+        final fun <get-tail>(): kotlin/String? // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.tail.<get-tail>|<get-tail>(){}[0]
+    final val timestamps // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.timestamps|{}timestamps[0]
+        final fun <get-timestamps>(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.timestamps.<get-timestamps>|<get-timestamps>(){}[0]
+
+    final fun component1(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component5|component5(){}[0]
+    final fun component6(): kotlin/Long? // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.component7|component7(){}[0]
+    final fun copy(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Long? = ..., kotlin/String? = ...): dev.limebeck.libs.docker.client.model/SwarmLogsParameters // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.copy|copy(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Long?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.limebeck.libs.docker.client.model/SwarmLogsParameters.toString|toString(){}[0]
 }
 
 final class dev.limebeck.libs.docker.client.model/SwarmSpec { // dev.limebeck.libs.docker.client.model/SwarmSpec|null[0]
@@ -10830,6 +10958,8 @@ final val dev.limebeck.libs.docker.client.api/images // dev.limebeck.libs.docker
     final fun (dev.limebeck.libs.docker.client/DockerClient).<get-images>(): dev.limebeck.libs.docker.client.api/Images // dev.limebeck.libs.docker.client.api/images.<get-images>|<get-images>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
 final val dev.limebeck.libs.docker.client.api/networks // dev.limebeck.libs.docker.client.api/networks|@dev.limebeck.libs.docker.client.DockerClient{}networks[0]
     final fun (dev.limebeck.libs.docker.client/DockerClient).<get-networks>(): dev.limebeck.libs.docker.client.api/Networks // dev.limebeck.libs.docker.client.api/networks.<get-networks>|<get-networks>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
+final val dev.limebeck.libs.docker.client.api/swarm // dev.limebeck.libs.docker.client.api/swarm|@dev.limebeck.libs.docker.client.DockerClient{}swarm[0]
+    final fun (dev.limebeck.libs.docker.client/DockerClient).<get-swarm>(): dev.limebeck.libs.docker.client.api/Swarm // dev.limebeck.libs.docker.client.api/swarm.<get-swarm>|<get-swarm>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
 final val dev.limebeck.libs.docker.client.api/system // dev.limebeck.libs.docker.client.api/system|@dev.limebeck.libs.docker.client.DockerClient{}system[0]
     final fun (dev.limebeck.libs.docker.client/DockerClient).<get-system>(): dev.limebeck.libs.docker.client.api/System // dev.limebeck.libs.docker.client.api/system.<get-system>|<get-system>@dev.limebeck.libs.docker.client.DockerClient(){}[0]
 final val dev.limebeck.libs.docker.client.api/volumes // dev.limebeck.libs.docker.client.api/volumes|@dev.limebeck.libs.docker.client.DockerClient{}volumes[0]

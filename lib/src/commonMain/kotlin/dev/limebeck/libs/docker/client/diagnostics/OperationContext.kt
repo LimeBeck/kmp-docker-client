@@ -75,7 +75,9 @@ internal fun operationContext(
         route in setOf("/_ping", "/version", "/info", "/auth", "/events", "/system/df",
             "/containers/json", "/containers/create", "/containers/prune", "/images/json",
             "/images/create", "/images/search", "/images/prune", "/images/load", "/images/get",
-            "/volumes", "/volumes/create", "/volumes/prune", "/networks", "/networks/create", "/networks/prune") -> route
+            "/volumes", "/volumes/create", "/volumes/prune", "/networks", "/networks/create", "/networks/prune",
+            "/secrets", "/secrets/create", "/configs", "/configs/create", "/nodes", "/services", "/services/create", "/tasks",
+            "/swarm", "/swarm/init", "/swarm/join", "/swarm/leave", "/swarm/update", "/swarm/unlockkey", "/swarm/unlock") -> route
         else -> {
             val parts = route.split('/')
             val group = parts.getOrNull(1)
@@ -86,11 +88,14 @@ internal fun operationContext(
                 "exec" -> setOf("start", "json", "resize")
                 "images" -> setOf("json", "history", "push", "tag", "get")
                 "networks" -> setOf("connect", "disconnect")
+                "services" -> setOf("update", "logs")
+                "tasks" -> setOf("logs")
+                "nodes", "secrets", "configs" -> setOf("update")
                 else -> emptySet()
             }
             when {
                 parts.size == 4 && action in actions -> "/$group/{resource}/$action"
-                parts.size == 3 && group in setOf("containers", "images", "volumes", "networks") -> "/$group/{resource}"
+                parts.size == 3 && group in setOf("containers", "images", "volumes", "networks", "secrets", "configs", "nodes", "services", "tasks") -> "/$group/{resource}"
                 else -> "/{unknown}"
             }
         }

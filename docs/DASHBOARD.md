@@ -100,7 +100,7 @@ History restoration requests receive the full document, with `main-content` mark
 
 ## Compose projects
 
-In 1.2.0, project headers and service action menus provide Start, Stop and Restart
+In 1.3.0, project headers and service action menus provide Start, Stop and Restart
 for existing regular replicas. Each action asks for confirmation and displays a per-container
 report, including partial HTTP failures and empty selections. Stop/restart use a 10-second
 grace period per container. One-offs are excluded; volumes remain. An interrupted request can

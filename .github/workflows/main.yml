@@ -129,6 +129,10 @@ jobs:
         timeout-minutes: 8
         run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2 -PlibVersion=$LIB_VERSION
 
+      - name: Verify Swarm APIs
+        timeout-minutes: 15
+        run: bash scripts/with-swarm-fixture.sh ./gradlew :lib:jvmTest --tests '*Swarm*' :lib:jsNodeTest --tests '*Swarm*' :lib:linuxX64Test --tests '*Swarm*' --warning-mode=fail --console=plain --max-workers=2 -PlibVersion=$LIB_VERSION
+
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v6

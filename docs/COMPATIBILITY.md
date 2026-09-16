@@ -1,10 +1,10 @@
 # Compatibility policy
 
-This policy applies to the current **1.2.0** release and the previous 1.1.0, 1.0.1, 1.0.0 and 1.0.0-rc releases. Version 1.2.0 adds controls for existing Compose containers without changing the supported targets. Version 1.1.0 introduced Compose discovery and logs. Version 1.0.1 passed all four Docker/JDK PR matrix cells and release SDK checks; its metadata, JVM, JS and Linux X64 artifacts are available on Maven Central. Stable 1.0.0 passed the Docker/JDK PR matrix, ABI checks and release SDK tests with the same public API as the RC.
+This policy applies to the current **1.3.0** release and the previous 1.1.0, 1.0.1, 1.0.0 and 1.0.0-rc releases. Version 1.3.0 adds Swarm cluster/resource APIs, Swarm logs and controls for existing Compose containers without changing the supported targets. Version 1.1.0 introduced Compose discovery and logs. Version 1.0.1 passed all four Docker/JDK PR matrix cells and release SDK checks; its metadata, JVM, JS and Linux X64 artifacts are available on Maven Central. Stable 1.0.0 passed the Docker/JDK PR matrix, ABI checks and release SDK tests with the same public API as the RC.
 
 ## Supported scope and CI matrix
 
-The target is a single Linux Docker host accessed through a Unix domain socket. Requests use Docker API **1.51**, with no automatic version negotiation. Older daemons that cannot serve 1.51 are unsupported. TCP/TLS, Windows named pipes, browser JavaScript, macOS native binaries, ARM native binaries, Swarm and multi-host orchestration are outside this release target.
+The target is a single Linux Docker host accessed through a Unix domain socket. Requests use Docker API **1.51**, with no automatic version negotiation. Older daemons that cannot serve 1.51 are unsupported. TCP/TLS, Windows named pipes, browser JavaScript, macOS native binaries, ARM native binaries, automatic multi-host orchestration remain outside this release target. Swarm cluster management, nodes, services, tasks, secrets and configs are supported through `client.swarm`; each client addresses one daemon. Resource operations require a manager; init/join/leave/unlock address the configured node. See [Swarm APIs](SWARM.md).
 
 PR CI on Ubuntu 24.04 X64 runs the Cartesian product below. Every cell builds and tests the JVM, Node.js and Linux X64 targets, checks ABI, builds samples and generates Dokka:
 

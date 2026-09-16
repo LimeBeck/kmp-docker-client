@@ -6,11 +6,11 @@ Contract: `spec://io.github.limebeck.kmp-docker-client/specs/ipc/FEAT-002.md#def
 
 ## Availability
 
-Discovery and logs were introduced in **1.1.0**. Existing-container controls are available in **1.2.0**
+Discovery and logs were introduced in **1.1.0**. Existing-container controls are available in **1.3.0**
 inside the same artifact; no separate Compose module is needed.
 
 ```kotlin
-implementation("dev.limebeck.libs:docker-client:1.2.0")
+implementation("dev.limebeck.libs:docker-client:1.3.0")
 ```
 
 Use `implementation(project(":lib"))` when working in this repository.
@@ -100,7 +100,7 @@ SDK `getOrThrow` behavior; errors during streaming preserve the original SDK exc
 
 ## Existing-container controls
 
-Version **1.2.0** provides `start`, `stop` and `restart` in the same package.
+Version **1.3.0** provides `start`, `stop` and `restart` in the same package.
 
 ```kotlin
 val report = docker.compose.restart(

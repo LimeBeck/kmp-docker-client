@@ -80,6 +80,13 @@ jobs:
         if: matrix.docker == 'v29.0.0' && matrix.java == '21'
         run: scripts/with-isolated-docker.sh ./gradlew :lib:daemonRestartTest --warning-mode=fail --console=plain --max-workers=2
 
+      - name: Verify Swarm APIs
+        if: matrix.java == '21'
+        timeout-minutes: 15
+        env:
+          MATRIX_DOCKER: ${{ matrix.docker }}
+        run: RC_DOCKER_IMAGE="docker:${MATRIX_DOCKER#v}-dind" bash scripts/with-swarm-fixture.sh ./gradlew :lib:jvmTest --tests '*Swarm*' :lib:jsNodeTest --tests '*Swarm*' :lib:linuxX64Test --tests '*Swarm*' --warning-mode=fail --console=plain --max-workers=2
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v6

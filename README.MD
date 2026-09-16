@@ -12,14 +12,14 @@ A Kotlin Multiplatform Docker API client for managing a single Docker host, with
 
 ## Installation
 
-`1.2.0` adds start/stop/restart controls for existing Compose containers alongside discovery and multi-service logs. See the [Compose guide](docs/COMPOSE.md).
+`1.3.0` adds all Swarm API 1.51 operations through `client.swarm`, including cluster management, services, tasks and logs. It also includes start/stop/restart controls for existing Compose containers. See the [Swarm guide](docs/SWARM.md) and [Compose guide](docs/COMPOSE.md).
 
 For a JVM project, add:
 
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.2.0")
+    implementation("dev.limebeck.libs:docker-client:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
 }
@@ -60,11 +60,11 @@ The [user guide](docs/USAGE.md) covers:
 
 Detailed guides: [container lifecycle](docs/CONTAINER-LIFECYCLE.md), [image progress](docs/IMAGE-PROGRESS.md), [stream recovery](docs/STREAM-RECOVERY.md).
 
-The [Compose API in 1.2.0](docs/COMPOSE.md), included in `lib`, provides discovery, logs and start/stop/restart controls for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
+The [Compose API in 1.3.0](docs/COMPOSE.md), included in `lib`, provides discovery, logs and start/stop/restart controls for existing Compose projects on JVM, NodeJS and Linux X64, using the same Docker client and endpoint.
 
 ## API scope
 
-The SDK implements container, image, volume, network, exec and system operations. Models are generated from Docker's OpenAPI 1.51 schema. Complete Docker API coverage is not claimed: Swarm, nodes, services, tasks, secrets, configs and plugins are outside the current scope. Compose orchestration, user authentication, roles and audit belong to the application.
+The SDK implements container, image, volume, network, exec and system operations. Models are generated from Docker's OpenAPI 1.51 schema. Swarm cluster management, nodes, services, tasks, secrets and configs are available through `client.swarm`; see the [Swarm guide](docs/SWARM.md). Complete Docker API coverage is not claimed: plugins remain outside the implemented scope. Compose orchestration, user authentication, roles and audit belong to the application.
 
 Image callbacks report progress; only the final Result establishes the operation outcome within the documented transport limitations. Live streams open on collection and close on cancellation/completion. The SDK never reconnects or replays commands implicitly. Use `incomingChunks` for terminal output and incremental UTF-8 decoding. Read the guide before adding retries or container replacement.
 
@@ -80,7 +80,7 @@ Image callbacks report progress; only the final Result establishes the operation
 
 ## Development and documentation
 
-Use JDK 21 for development. The repository's default version is `1.2.0`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
+Use JDK 21 for development. The repository's default version is `1.3.0`; this setting does not publish artifacts. Versions live in `gradle/libs.versions.toml`. After changing Kotlin/JS dependencies, run `./gradlew kotlinUpgradeYarnLock` and commit the lockfile.
 
 ```sh
 # Requires a development Docker daemon at /var/run/docker.sock.
