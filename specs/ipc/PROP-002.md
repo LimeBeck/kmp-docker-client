@@ -69,7 +69,7 @@ Test artifacts:
   - Maven Central credentials: `OSSRH_USERNAME`, `OSSRH_PASSWORD`
 
 ### Development version {#publish.development}
-- The default `libVersion` in `gradle.properties` is `1.0.1`, the next release target.
+- The default `libVersion` in `gradle.properties` is `1.3.0`, the owner-authorized Swarm release target (2026-09-16).
 - Release tags continue to override this default through `-PlibVersion`; changing the default does not publish a release.
 
 ## Test results publication contract {#test-results}

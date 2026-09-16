@@ -4,7 +4,7 @@
 
 KMP Docker Client provides coroutine-based access to a single Docker host. Start here for complete workflows, then use the package and class navigation below for individual API methods.
 
-This guide covers **1.2.0**, including Compose discovery, multi-service logs and existing-container controls, `DockerClient.use`, connection diagnostics and exception context. Supported targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
+This guide covers **1.3.0**, including Swarm cluster/resource APIs and logs, Compose discovery, multi-service logs and existing-container controls, `DockerClient.use`, connection diagnostics and exception context. Supported targets are JVM, Kotlin/JS on Node.js and Linux X64 Native, tested on Linux with Docker 28.5.2/29.0.0 and API 1.51. JVM bytecode targets Java 17. macOS/Windows support is planned separately.
 
 ### Install
 
@@ -13,7 +13,7 @@ Use Maven Central. In a Kotlin Multiplatform project, add the dependencies to `c
 ```kotlin
 repositories { mavenCentral() }
 dependencies {
-    implementation("dev.limebeck.libs:docker-client:1.2.0")
+    implementation("dev.limebeck.libs:docker-client:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("io.ktor:ktor-client-core:3.5.2")
     implementation("io.ktor:ktor-io:3.5.2")
@@ -323,3 +323,60 @@ HTTP handshake rejections still return an error Result. Caller-created sessions 
 The 1.0.0 release preserves the published 1.0.0-rc API. From 0.1.0, `DriverData.data` is nullable and `DockerClient.logger` uses Ktor's logger type. From 0.0.x, also account for unsigned counters and session ownership changes. See [migration](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/MIGRATION-1.0.0.md) and [compatibility policy](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/COMPATIBILITY.md). Generated public models are covered by the same compatibility policy as handwritten APIs.
 
 Full Docker API coverage, Compose orchestration and application authentication/roles are not supplied by the SDK. The bundled dashboard is an independent example; its UI behavior is not a library release gate.
+
+
+## Swarm resources
+
+Use `docker.swarm.secrets` and `docker.swarm.configs` with a Swarm manager. Accessing these
+groups does not initialize Swarm. Creation accepts Base64 data; update changes only labels
+and requires the version from inspect. Secret payloads cannot be read back. See the
+[Swarm guide](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/SWARM.md) for operations, errors and isolated integration tests.
+
+<!-- compile-sample -->
+```kotlin
+suspend fun updateSecretLabels(docker: DockerClient, id: String) {
+    val secret = docker.swarm.secrets.getInfo(id).getOrThrow()
+    val spec = requireNotNull(secret.spec)
+    val version = requireNotNull(secret.version?.index)
+    docker.swarm.secrets.update(
+        id, version, spec.copy(labels = spec.labels.orEmpty() + ("owner" to "application")),
+    ).getOrThrow()
+}
+```
+
+
+### Create and inspect a Swarm service
+
+<!-- compile-sample -->
+```kotlin
+suspend fun createSwarmWorker(docker: DockerClient): String {
+    val response = docker.swarm.services.create(
+        ServiceSpec(
+            name = "worker",
+            taskTemplate = TaskSpec(
+                containerSpec = TaskSpecContainerSpec(
+                    image = "alpine:latest",
+                    command = listOf("sleep", "3600"),
+                ),
+            ),
+            mode = ServiceSpecMode(replicated = ServiceSpecModeReplicated(replicas = 1)),
+        ),
+    ).getOrThrow()
+    return requireNotNull(response.ID)
+}
+
+suspend fun labelSwarmService(docker: DockerClient, id: String) {
+    val service = docker.swarm.services.getInfo(id).getOrThrow()
+    val spec = requireNotNull(service.spec)
+    docker.swarm.services.update(
+        id, requireNotNull(service.version?.index),
+        spec.copy(labels = spec.labels.orEmpty() + ("owner" to "application")),
+    ).getOrThrow()
+}
+```
+
+Creation schedules tasks asynchronously. Inspect `docker.swarm.tasks.getList` with a `service`
+filter to observe them; use `docker.swarm.services.getLogs` or `docker.swarm.tasks.getLogs`
+with `SwarmLogsParameters` to read their logs. See the
+[Swarm guide](https://github.com/LimeBeck/kmp-docker-client/blob/master/docs/SWARM.md)
+for cluster lifecycle, concurrency and stream failure semantics.

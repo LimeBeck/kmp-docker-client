@@ -211,6 +211,28 @@ public final class dev/limebeck/libs/docker/client/api/NetworksKt {
 	public static final fun getNetworks (Ldev/limebeck/libs/docker/client/DockerClient;)Ldev/limebeck/libs/docker/client/api/Networks;
 }
 
+public final class dev/limebeck/libs/docker/client/api/Swarm {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun getConfigs ()Ldev/limebeck/libs/docker/client/api/swarm/Configs;
+	public final fun getInfo-2cwJxqY (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getNodes ()Ldev/limebeck/libs/docker/client/api/swarm/Nodes;
+	public final fun getSecrets ()Ldev/limebeck/libs/docker/client/api/swarm/Secrets;
+	public final fun getServices ()Ldev/limebeck/libs/docker/client/api/swarm/Services;
+	public final fun getTasks ()Ldev/limebeck/libs/docker/client/api/swarm/Tasks;
+	public final fun getUnlockKey-2cwJxqY (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun init-MstoyBY (Ldev/limebeck/libs/docker/client/model/SwarmInitRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun join-MstoyBY (Ldev/limebeck/libs/docker/client/model/SwarmJoinRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun leave-MstoyBY (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun leave-MstoyBY$default (Ldev/limebeck/libs/docker/client/api/Swarm;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun unlock-MstoyBY (Ldev/limebeck/libs/docker/client/model/SwarmUnlockRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun update-GM0PgZo (JLdev/limebeck/libs/docker/client/model/SwarmSpec;ZZZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun update-GM0PgZo$default (Ldev/limebeck/libs/docker/client/api/Swarm;JLdev/limebeck/libs/docker/client/model/SwarmSpec;ZZZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class dev/limebeck/libs/docker/client/api/SwarmKt {
+	public static final fun getSwarm (Ldev/limebeck/libs/docker/client/DockerClient;)Ldev/limebeck/libs/docker/client/api/Swarm;
+}
+
 public final class dev/limebeck/libs/docker/client/api/System {
 	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
 	public final fun dataUsage-2cwJxqY (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -240,6 +262,60 @@ public final class dev/limebeck/libs/docker/client/api/Volumes {
 
 public final class dev/limebeck/libs/docker/client/api/VolumesKt {
 	public static final fun getVolumes (Ldev/limebeck/libs/docker/client/DockerClient;)Ldev/limebeck/libs/docker/client/api/Volumes;
+}
+
+public final class dev/limebeck/libs/docker/client/api/swarm/Configs {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun create-MstoyBY (Ldev/limebeck/libs/docker/client/model/ConfigSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getInfo-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getList-MstoyBY (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getList-MstoyBY$default (Ldev/limebeck/libs/docker/client/api/swarm/Configs;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun remove-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun update-ygXfpc0 (Ljava/lang/String;JLdev/limebeck/libs/docker/client/model/ConfigSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/limebeck/libs/docker/client/api/swarm/Nodes {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun getInfo-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getList-MstoyBY (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getList-MstoyBY$default (Ldev/limebeck/libs/docker/client/api/swarm/Nodes;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun remove-W-yKd0Q (Ljava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun remove-W-yKd0Q$default (Ldev/limebeck/libs/docker/client/api/swarm/Nodes;Ljava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun update-ygXfpc0 (Ljava/lang/String;JLdev/limebeck/libs/docker/client/model/NodeSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/limebeck/libs/docker/client/api/swarm/Secrets {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun create-MstoyBY (Ldev/limebeck/libs/docker/client/model/SecretSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getInfo-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getList-MstoyBY (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getList-MstoyBY$default (Ldev/limebeck/libs/docker/client/api/swarm/Secrets;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun remove-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun update-ygXfpc0 (Ljava/lang/String;JLdev/limebeck/libs/docker/client/model/SecretSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/limebeck/libs/docker/client/api/swarm/Services {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun create-W-yKd0Q (Ldev/limebeck/libs/docker/client/model/ServiceSpec;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun create-W-yKd0Q$default (Ldev/limebeck/libs/docker/client/api/swarm/Services;Ldev/limebeck/libs/docker/client/model/ServiceSpec;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getInfo-W-yKd0Q (Ljava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getInfo-W-yKd0Q$default (Ldev/limebeck/libs/docker/client/api/swarm/Services;Ljava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getList-W-yKd0Q (Ljava/util/Map;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getList-W-yKd0Q$default (Ldev/limebeck/libs/docker/client/api/swarm/Services;Ljava/util/Map;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getLogs-W-yKd0Q (Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getLogs-W-yKd0Q$default (Ldev/limebeck/libs/docker/client/api/swarm/Services;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun remove-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun update-VQbAC9k (Ljava/lang/String;JLdev/limebeck/libs/docker/client/model/ServiceSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun update-VQbAC9k$default (Ldev/limebeck/libs/docker/client/api/swarm/Services;Ljava/lang/String;JLdev/limebeck/libs/docker/client/model/ServiceSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class dev/limebeck/libs/docker/client/api/swarm/Tasks {
+	public fun <init> (Ldev/limebeck/libs/docker/client/DockerClient;)V
+	public final fun getInfo-MstoyBY (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getList-MstoyBY (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getList-MstoyBY$default (Ldev/limebeck/libs/docker/client/api/swarm/Tasks;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getLogs-W-yKd0Q (Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getLogs-W-yKd0Q$default (Ldev/limebeck/libs/docker/client/api/swarm/Tasks;Ljava/lang/String;Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class dev/limebeck/libs/docker/client/diagnostics/ConnectionDiagnostic {
@@ -7657,6 +7733,33 @@ public final class dev/limebeck/libs/docker/client/model/Swarm$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class dev/limebeck/libs/docker/client/model/SwarmCreateResponse {
+	public static final field Companion Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse;Ljava/lang/String;ILjava/lang/Object;)Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/limebeck/libs/docker/client/model/SwarmCreateResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/limebeck/libs/docker/client/model/SwarmCreateResponse;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/limebeck/libs/docker/client/model/SwarmCreateResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class dev/limebeck/libs/docker/client/model/SwarmInfo {
 	public static final field Companion Ldev/limebeck/libs/docker/client/model/SwarmInfo$Companion;
 	public fun <init> ()V
@@ -7780,6 +7883,31 @@ public final synthetic class dev/limebeck/libs/docker/client/model/SwarmJoinRequ
 
 public final class dev/limebeck/libs/docker/client/model/SwarmJoinRequest$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/limebeck/libs/docker/client/model/SwarmLogsParameters {
+	public fun <init> ()V
+	public fun <init> (ZZZZZLjava/lang/Long;Ljava/lang/String;)V
+	public synthetic fun <init> (ZZZZZLjava/lang/Long;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (ZZZZZLjava/lang/Long;Ljava/lang/String;)Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;
+	public static synthetic fun copy$default (Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;ZZZZZLjava/lang/Long;Ljava/lang/String;ILjava/lang/Object;)Ldev/limebeck/libs/docker/client/model/SwarmLogsParameters;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDetails ()Z
+	public final fun getFollow ()Z
+	public final fun getSince ()Ljava/lang/Long;
+	public final fun getStderr ()Z
+	public final fun getStdout ()Z
+	public final fun getTail ()Ljava/lang/String;
+	public final fun getTimestamps ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/limebeck/libs/docker/client/model/SwarmSpec {

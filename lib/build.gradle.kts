@@ -43,6 +43,22 @@ val generateComposeFixture = tasks.register("generateComposeFixture") {
     }
 }
 
+// Enabled only by scripts/with-swarm-fixture.sh against a disposable manager.
+val swarmFixtureSocket = providers.gradleProperty("swarmFixtureSocket")
+val swarmFixtureSources = layout.buildDirectory.dir("generated/swarmFixture")
+val generateSwarmFixture = tasks.register("generateSwarmFixture") {
+    inputs.property("socket", swarmFixtureSocket.orElse(""))
+    outputs.dir(swarmFixtureSources)
+    doLast {
+        val socket = swarmFixtureSocket.get()
+        require(socket.matches(Regex("/tmp/kmp-rc\\.[A-Za-z0-9]+/docker\\.sock")))
+        swarmFixtureSources.get().file("SwarmFixture.kt").asFile.apply {
+            parentFile.mkdirs()
+            writeText("package dev.limebeck.libs.docker.client.api\ninternal const val SWARM_SOCKET = \"$socket\"\n")
+        }
+    }
+}
+
 kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
     abiValidation {
@@ -85,6 +101,10 @@ kotlin {
 
         }
         commonTest {
+            if (swarmFixtureSocket.isPresent) {
+                kotlin.srcDir("src/swarmTest/kotlin")
+                kotlin.srcDir(generateSwarmFixture.map { swarmFixtureSources.get() })
+            }
             if (fixtureProject.isPresent) {
                 kotlin.srcDir("src/composeTest/kotlin")
                 kotlin.srcDir(generateComposeFixture.map { fixtureSources.get() })
@@ -95,6 +115,7 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        if (swarmFixtureSocket.isPresent) jvmTest { kotlin.srcDir("src/swarmJvmTest/kotlin") }
         jvmTest.dependencies {
             implementation(libs.logback)
         }

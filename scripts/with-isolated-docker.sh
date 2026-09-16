@@ -15,7 +15,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 container_id=$(docker run -d --privileged --name "$container_name" \
   --label dev.limebeck.rc-acceptance=true \
-  -v "$socket_dir:/rc-run" docker:29.0.0-dind \
+  -v "$socket_dir:/rc-run" "${RC_DOCKER_IMAGE:-docker:29.0.0-dind}" \
   dockerd --host=unix:///rc-run/docker.sock --tls=false)
 export RC_DOCKER_SOCKET="$socket_dir/docker.sock"
 export RC_DOCKER_CONTAINER="$container_name"
